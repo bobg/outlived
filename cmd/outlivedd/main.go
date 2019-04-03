@@ -8,11 +8,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"regexp"
 	"time"
-)
 
-var envInitRegex = regexp.MustCompile(`export\s+([^=]+)=(.*)`)
+	"github.com/bobg/aesite"
+)
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -39,7 +38,10 @@ func main() {
 	rand.Seed(*seed)
 
 	if *test {
-		testMode(ctx, *projectID)
+		err := aesite.DSTest(ctx, *projectID)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	c, err := newController(ctx, *projectID, *locationID)
