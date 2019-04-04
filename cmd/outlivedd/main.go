@@ -49,8 +49,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// http.HandleFunc("/", c.handleHome)
+	http.HandleFunc("/", c.handleHome)
 	http.HandleFunc("/load", c.handleLoad)
+	http.HandleFunc("/signup", c.handleSignup)
 
 	log.Printf("listening for requests on %s", *addr)
 

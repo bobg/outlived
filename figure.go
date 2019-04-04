@@ -8,6 +8,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
+	"google.golang.org/api/iterator"
 	"google.golang.org/appengine/log"
 )
 
@@ -21,6 +22,42 @@ type Figure struct {
 }
 
 func FiguresAliveFor(ctx context.Context, client *datastore.Client, days int) ([]*Figure, error) {
+	q, err := figureQuery(ctx, client)
+	if err != nil {
+		return nil, errors.Wrap(err, "constructing query")
+	}
+	q = q.Filter("DaysAlive =", days)
+	var figures []*Figure
+	_, err = client.GetAll(ctx, q, &figures)
+	return figures, errors.Wrap(err, "querying figures")
+}
+
+func FiguresAliveForAtMost(ctx context.Context, client *datastore.Client, days int) ([]*Figure, error) {
+	q, err := figureQuery(ctx, client)
+	if err != nil {
+		return nil, errors.Wrap(err, "constructing query")
+	}
+	q = q.Filter("DaysAlive <=", days).Order("-DaysAlive")
+	it := client.Run(ctx, q)
+	var figures []*Figure
+	for {
+		var fig Figure
+		_, err := it.Next(&fig)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "iterating")
+		}
+		if len(figures) > 0 && fig.DaysAlive != figures[0].DaysAlive {
+			break
+		}
+		figures = append(figures, &fig)
+	}
+	return figures, nil
+}
+
+func figureQuery(ctx context.Context, client *datastore.Client) (*datastore.Query, error) {
 	timestampMSBytes, err := aesite.GetSetting(ctx, client, "generation")
 	if err != nil {
 		return nil, errors.Wrap(err, "getting generation setting")
@@ -29,10 +66,7 @@ func FiguresAliveFor(ctx context.Context, client *datastore.Client, days int) ([
 	if n <= 0 {
 		return nil, errors.Wrapf(err, "decoding generation setting %x", timestampMSBytes)
 	}
-	q := datastore.NewQuery("Figure").Filter("DaysAlive =", days).Filter("TimestampMS = ", timestampMS)
-	var figures []*Figure
-	_, err = client.GetAll(ctx, q, &figures)
-	return figures, errors.Wrap(err, "querying figures")
+	return datastore.NewQuery("Figure").Filter("TimestampMS = ", timestampMS), nil
 }
 
 const putMultiLimit = 500

@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <title>
+      Outlived
+    </title>
+  </head>
+  <body>
+    <h1>Outlived</h1>
+
+    {{ if .user }}
+
+      <div id="account-div">
+        Signed in as {{ .user.Email }}
+        <a href="/settings">Settings</a>
+        <a href="/logout">Logout</a>
+      </div>
+
+      <div id="alive">
+        <p>You were born {{ .alive }} days ago.</p>
+
+        {{ if .figures }}
+          <p>You have recently outlived:</p>
+          <ul>
+            {{ range .figures }}
+              <li>
+                <a href="https://en.wikipedia.org{{ .Link }}">{{ .Name }}</a>,
+                {{ .Desc }},
+                born {{ .Born }},
+                died {{ .Died }}
+              </li>
+            {{ end }}
+          </ul>
+        {{ end }}
+      </div>
+
+    {{ else }}
+
+      <div id="noaccount-div">
+        <form id="email-pw-form">
+          <input type="text" id="email" name="email"></input>
+          <input type="password" id="password" name="password"></input>
+          <button id="signup-button">Sign up</button>
+          <button id="login-button">Log in</button>
+        </form>
+      </div>
+
+    {{ end }}
+
+  </body>
+</html>
