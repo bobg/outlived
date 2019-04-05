@@ -52,6 +52,7 @@ func main() {
 	http.HandleFunc("/", c.handleHome)
 	http.HandleFunc("/load", c.handleLoad)
 	http.HandleFunc("/signup", c.handleSignup)
+	http.HandleFunc("/verify", c.handleVerify)
 
 	log.Printf("listening for requests on %s", *addr)
 
