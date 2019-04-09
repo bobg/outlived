@@ -16,7 +16,7 @@ func (c *controller) handleSignup(w http.ResponseWriter, req *http.Request) {
 	)
 	born, err := outlived.ParseDate(bornStr)
 	if err != nil {
-		httpErr(w, 0, http.StatusBadRequest, "parsing birthdate: %s", err)
+		httpErr(w, http.StatusBadRequest, "parsing birthdate: %s", err)
 		return
 	}
 	u := &outlived.User{
