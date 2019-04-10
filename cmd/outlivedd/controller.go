@@ -20,7 +20,7 @@ type controller struct {
 }
 
 type mailSender interface {
-	send(ctx context.Context, recipients []mail.Address, subject string, body io.Reader) error
+	send(ctx context.Context, recipients []*mail.Address, subject string, body io.Reader) error
 }
 
 func newController(ctx context.Context, projectID, locationID string) (*controller, error) {
