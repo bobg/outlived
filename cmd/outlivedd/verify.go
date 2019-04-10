@@ -31,5 +31,5 @@ func (c *controller) handleVerify(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// xxx redirect somewhere
+	http.Redirect(w, req, "/", http.StatusSeeOther)
 }
