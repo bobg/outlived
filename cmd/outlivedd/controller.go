@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"io"
+	"net/mail"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2beta3"
 	"cloud.google.com/go/datastore"
@@ -12,8 +14,13 @@ import (
 type controller struct {
 	dsClient   *datastore.Client
 	ctClient   *cloudtasks.Client
+	sender     mailSender
 	projectID  string
 	locationID string
+}
+
+type mailSender interface {
+	send(ctx context.Context, recipients []mail.Address, subject string, body io.Reader) error
 }
 
 func newController(ctx context.Context, projectID, locationID string) (*controller, error) {

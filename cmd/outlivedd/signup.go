@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
+	htemplate "html/template"
 	"net/http"
+	"net/mail"
+	ttemplate "text/template"
 
 	"github.com/bobg/aesite"
 
@@ -27,5 +31,32 @@ func (c *controller) handleSignup(w http.ResponseWriter, req *http.Request) {
 		httpErr(w, 0, "creating new user: %s", err)
 		return
 	}
-	// xxx send verification mail
+
+	ttmpl, err := ttemplate.ParseFiles("content/verify.mail.tmpl")
+	if err != nil {
+		httpErr(w, 0, "parsing verification-mail template: %s", err)
+		return
+	}
+	buf := new(bytes.Buffer)
+	err = ttmpl.Execute(buf, map[string]interface{}{"link": link})
+	if err != nil {
+		httpErr(w, 0, "executing verification-mail template: %s", err)
+		return
+	}
+	err = c.sender.send(req.Context(), []mail.Address{addr}, "Verify your Outlived account", bytes.NewReader(buf.Bytes()))
+	if err != nil {
+		httpErr(w, 0, "sending verification mail: %s", err)
+		return
+	}
+
+	htmpl, err := htemplate.ParseFiles("content/postsignup.html.tmpl")
+	if err != nil {
+		httpErr(w, 0, "parsing post-signup page template: %s", err)
+		return
+	}
+	err = htmpl.Execute(w, nil)
+	if err != nil {
+		httpErr(w, 0, "rendering post-signup page: %s", err)
+		return
+	}
 }
