@@ -5,7 +5,6 @@ import (
 	"fmt"
 	htemplate "html/template"
 	"net/http"
-	"net/mail"
 	"net/url"
 	ttemplate "text/template"
 
@@ -13,6 +12,8 @@ import (
 
 	"github.com/bobg/outlived"
 )
+
+const from = "Outlived <bobg+outlived@emphatic.com>" // xxx
 
 func (c *controller) handleSignup(w http.ResponseWriter, req *http.Request) {
 	var (
@@ -47,19 +48,13 @@ func (c *controller) handleSignup(w http.ResponseWriter, req *http.Request) {
 	}
 	link = req.URL.ResolveReference(link)
 
-	addr, err := mail.ParseAddress(u.Email)
-	if err != nil {
-		httpErr(w, 0, "parsing address %s: %s", u.Email, addr)
-		return
-	}
-
 	buf := new(bytes.Buffer)
 	err = ttmpl.Execute(buf, map[string]interface{}{"link": link})
 	if err != nil {
 		httpErr(w, 0, "executing verification-mail template: %s", err)
 		return
 	}
-	err = c.sender.send(req.Context(), []*mail.Address{addr}, "Verify your Outlived account", bytes.NewReader(buf.Bytes()))
+	err = c.sender.send(req.Context(), from, []string{u.Email}, "Verify your Outlived account", bytes.NewReader(buf.Bytes()))
 	if err != nil {
 		httpErr(w, 0, "sending verification mail: %s", err)
 		return

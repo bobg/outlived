@@ -26,10 +26,12 @@ func main() {
 	}()
 
 	var (
-		seed       = flag.Int64("seed", time.Now().Unix(), "RNG seed")
-		projectID  = flag.String("project", "outlived-163105", "project ID")
-		locationID = flag.String("location", "xxx", "location ID")
 		addr       = flag.String("addr", ":80", "web server listen address")
+		creds      = flag.String("creds", "", "credentials file")
+		locationID = flag.String("location", "xxx", "location ID")
+		projectID  = flag.String("project", "outlived-163105", "project ID")
+		seed       = flag.Int64("seed", time.Now().Unix(), "RNG seed")
+		smtpAddr   = flag.String("smtp", "localhost:587", "smtp submission address")
 		test       = flag.Bool("test", false, "run in test mode")
 	)
 
@@ -38,13 +40,17 @@ func main() {
 	rand.Seed(*seed)
 
 	if *test {
+		if *creds != "" {
+			log.Fatal("cannot supply both -test and -creds")
+		}
+
 		err := aesite.DSTest(ctx, *projectID)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	c, err := newController(ctx, *projectID, *locationID)
+	c, err := newController(ctx, *creds, *projectID, *locationID, *smtpAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
