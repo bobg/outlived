@@ -9,12 +9,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/chromedp/chromedp"
 	"github.com/pkg/errors"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -64,7 +66,7 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 	var (
 		startM = flagset.Int("startm", 1, "start month")
 		startD = flagset.Int("startd", 1, "start day (of month)")
-		limit  = flagset.Duration("limit", 2*time.Second, "rate limit")
+		limit  = flagset.Duration("limit", time.Second, "rate limit")
 	)
 	err := flagset.Parse(args)
 	if err != nil {
@@ -89,26 +91,26 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 func scrapeDay(ctx context.Context, w *csv.Writer, m, d int, lim *rate.Limiter) error {
 	defer w.Flush()
 
-	url := fmt.Sprintf("https://en.wikipedia.org/wiki/%s_%d", monthName[m], d)
+	link := fmt.Sprintf("https://en.wikipedia.org/wiki/%s_%d", monthName[m], d)
 	err := lim.Wait(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "waiting to get %s", url)
+		return errors.Wrapf(err, "waiting to get %s", link)
 	}
-	log.Printf("getting %s", url)
-	resp, err := http.Get(url)
+	log.Printf("getting %s", link)
+	resp, err := http.Get(link)
 	if err != nil {
-		return errors.Wrapf(err, "getting %s", url)
+		return errors.Wrapf(err, "getting %s", link)
 	}
 	defer resp.Body.Close()
 
 	tree, err := html.Parse(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "parsing %s", url)
+		return errors.Wrapf(err, "parsing %s", link)
 	}
 
 	deaths := findDeathsUL(tree)
 	if deaths == nil {
-		return fmt.Errorf("no Deaths node in %s", url)
+		return fmt.Errorf("no Deaths node in %s", link)
 	}
 
 	for li := deaths.FirstChild; li != nil; li = li.NextSibling {
@@ -165,26 +167,26 @@ func scrapeDay(ctx context.Context, w *csv.Writer, m, d int, lim *rate.Limiter) 
 }
 
 func scrapePerson(ctx context.Context, w *csv.Writer, href, title, desc string, lim *rate.Limiter) error {
-	url := "https://en.wikipedia.org" + href
+	link := "https://en.wikipedia.org" + href
 	err := lim.Wait(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "waiting to scrape %s", url)
+		return errors.Wrapf(err, "waiting to scrape %s", link)
 	}
-	log.Printf("getting %s", url)
-	resp, err := http.Get(url)
+	log.Printf("getting %s", link)
+	resp, err := http.Get(link)
 	if err != nil {
-		return errors.Wrapf(err, "getting %s", url)
+		return errors.Wrapf(err, "getting %s", link)
 	}
 	defer resp.Body.Close()
 
 	tree, err := html.Parse(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "parsing %s", url)
+		return errors.Wrapf(err, "parsing %s", link)
 	}
 
 	infobox := findInfoBox(tree)
 	if infobox == nil {
-		return fmt.Errorf("no infobox in %s", url)
+		return fmt.Errorf("no infobox in %s", link)
 	}
 
 	bornY, bornM, bornD, err := findDateRow(infobox, "Born")
@@ -212,8 +214,80 @@ func scrapePerson(ctx context.Context, w *csv.Writer, href, title, desc string, 
 	bornStr := fmt.Sprintf("%d-%02d-%02d", bornY, bornM, bornD)
 	diedStr := fmt.Sprintf("%d-%02d-%02d", diedY, diedM, diedD)
 
-	return w.Write([]string{title, desc, bornStr, diedStr, strconv.Itoa(aliveDays), href})
-	// log.Printf("got [%s], [%s], [%d-%02d-%02d]-[%d-%02d-%02d] [%d days] from [%s]", title, desc, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, href)
+	pageviews, err := scrapePageviews(ctx, href, lim)
+	if err != nil {
+		return errors.Wrap(err, "getting pageviews")
+	}
+
+	return w.Write([]string{title, desc, bornStr, diedStr, strconv.Itoa(aliveDays), href, strconv.Itoa(pageviews)})
+}
+
+var nameRegex = regexp.MustCompile(`[^/]+$`)
+
+func scrapePageviews(ctx context.Context, href string, lim *rate.Limiter) (int, error) {
+	m := nameRegex.FindString(href)
+	if m == "" {
+		return 0, fmt.Errorf("could not construct pageviews link from href %s", href)
+	}
+
+	u, err := url.Parse("https://tools.wmflabs.org/pageviews")
+	if err != nil {
+		return 0, err
+	}
+
+	v := u.Query()
+	v.Add("project", "en.wikipedia.org")
+	v.Add("pages", m)
+	v.Add("range", "latest-90")
+
+	u.RawQuery = v.Encode()
+
+	err = lim.Wait(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	ctx, cancel := chromedp.NewContext(ctx)
+	defer cancel()
+
+	var body string
+	err = chromedp.Run(
+		ctx,
+		chromedp.Navigate(u.String()),
+		chromedp.WaitVisible("#linear-legend--counts"),
+		chromedp.OuterHTML("body", &body),
+	)
+	if err != nil {
+		return 0, errors.Wrapf(err, "getting body of %s", u)
+	}
+
+	tree, err := html.Parse(strings.NewReader(body))
+	if err != nil {
+		return 0, errors.Wrapf(err, "parsing %s", u)
+	}
+
+	html.Render(os.Stderr, tree) // xxx
+
+	countsNodes := findCountsNodes(tree)
+	for _, node := range countsNodes {
+		buf := new(bytes.Buffer)
+		toPlainText(buf, node)
+		fields := strings.Fields(buf.String())
+		if len(fields) != 2 {
+			continue
+		}
+		if fields[0] != "Pageviews:" {
+			continue
+		}
+		numStr := strings.Replace(fields[1], ",", "", -1)
+		num, err := strconv.Atoi(numStr)
+		if err != nil {
+			continue
+		}
+		return num, nil
+	}
+
+	return 0, fmt.Errorf("did not find pageview count in %s", u)
 }
 
 var errNotFound = errors.New("not found")
@@ -361,4 +435,19 @@ func elClassContains(node *html.Node, probe string) bool {
 		}
 	}
 	return false
+}
+
+func findCountsNodes(node *html.Node) []*html.Node {
+	if elClassContains(node, "linear-legend--counts") {
+		log.Printf("xxx found linear-legend--counts node %s", node)
+		return []*html.Node{node}
+	}
+
+	var result []*html.Node
+	for child := node.FirstChild; child != nil; child = child.NextSibling {
+		nodes := findCountsNodes(child)
+		result = append(result, nodes...)
+	}
+
+	return result
 }

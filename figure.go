@@ -17,6 +17,7 @@ type Figure struct {
 	Name, Desc, Link string
 	Born, Died       Date
 	DaysAlive        int
+	Pageviews        int
 
 	TimestampMS int64
 }
