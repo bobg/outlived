@@ -10,6 +10,7 @@ import (
 
 var commands = map[string]func(context.Context, *flag.FlagSet, []string) error{
 	"scrape": cliScrape,
+	"serve": cliServe,
 }
 
 func main() {
@@ -28,6 +29,7 @@ func main() {
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
