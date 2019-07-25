@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -64,7 +65,7 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 	var (
 		startM = flagset.Int("startm", 1, "start month")
 		startD = flagset.Int("startd", 1, "start day (of month)")
-		limit  = flagset.Duration("limit", 2*time.Second, "rate limit")
+		limit  = flagset.Duration("limit", time.Second, "rate limit")
 	)
 	err := flagset.Parse(args)
 	if err != nil {
@@ -89,26 +90,26 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 func scrapeDay(ctx context.Context, w *csv.Writer, m, d int, lim *rate.Limiter) error {
 	defer w.Flush()
 
-	url := fmt.Sprintf("https://en.wikipedia.org/wiki/%s_%d", monthName[m], d)
+	link := fmt.Sprintf("https://en.wikipedia.org/wiki/%s_%d", monthName[m], d)
 	err := lim.Wait(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "waiting to get %s", url)
+		return errors.Wrapf(err, "waiting to get %s", link)
 	}
-	log.Printf("getting %s", url)
-	resp, err := http.Get(url)
+	log.Printf("getting %s", link)
+	resp, err := http.Get(link)
 	if err != nil {
-		return errors.Wrapf(err, "getting %s", url)
+		return errors.Wrapf(err, "getting %s", link)
 	}
 	defer resp.Body.Close()
 
 	tree, err := html.Parse(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "parsing %s", url)
+		return errors.Wrapf(err, "parsing %s", link)
 	}
 
 	deaths := findDeathsUL(tree)
 	if deaths == nil {
-		return fmt.Errorf("no Deaths node in %s", url)
+		return fmt.Errorf("no Deaths node in %s", link)
 	}
 
 	for li := deaths.FirstChild; li != nil; li = li.NextSibling {
@@ -165,26 +166,26 @@ func scrapeDay(ctx context.Context, w *csv.Writer, m, d int, lim *rate.Limiter) 
 }
 
 func scrapePerson(ctx context.Context, w *csv.Writer, href, title, desc string, lim *rate.Limiter) error {
-	url := "https://en.wikipedia.org" + href
+	link := "https://en.wikipedia.org" + href
 	err := lim.Wait(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "waiting to scrape %s", url)
+		return errors.Wrapf(err, "waiting to scrape %s", link)
 	}
-	log.Printf("getting %s", url)
-	resp, err := http.Get(url)
+	log.Printf("getting %s", link)
+	resp, err := http.Get(link)
 	if err != nil {
-		return errors.Wrapf(err, "getting %s", url)
+		return errors.Wrapf(err, "getting %s", link)
 	}
 	defer resp.Body.Close()
 
 	tree, err := html.Parse(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "parsing %s", url)
+		return errors.Wrapf(err, "parsing %s", link)
 	}
 
 	infobox := findInfoBox(tree)
 	if infobox == nil {
-		return fmt.Errorf("no infobox in %s", url)
+		return fmt.Errorf("no infobox in %s", link)
 	}
 
 	bornY, bornM, bornD, err := findDateRow(infobox, "Born")
@@ -212,8 +213,66 @@ func scrapePerson(ctx context.Context, w *csv.Writer, href, title, desc string, 
 	bornStr := fmt.Sprintf("%d-%02d-%02d", bornY, bornM, bornD)
 	diedStr := fmt.Sprintf("%d-%02d-%02d", diedY, diedM, diedD)
 
-	return w.Write([]string{title, desc, bornStr, diedStr, strconv.Itoa(aliveDays), href})
-	// log.Printf("got [%s], [%s], [%d-%02d-%02d]-[%d-%02d-%02d] [%d days] from [%s]", title, desc, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, href)
+	pageviews, err := scrapePageviews(ctx, href, lim)
+	if err != nil {
+		return errors.Wrap(err, "getting pageviews")
+	}
+
+	return w.Write([]string{title, desc, bornStr, diedStr, strconv.Itoa(aliveDays), href, strconv.Itoa(pageviews)})
+}
+
+var nameRegex = regexp.MustCompile(`[^/]+$`)
+
+func scrapePageviews(ctx context.Context, href string, lim *rate.Limiter) (int, error) {
+	m := nameRegex.FindString(href)
+	if m == "" {
+		return 0, fmt.Errorf("could not construct pageviews link from href %s", href)
+	}
+
+	var (
+		now       = time.Now()
+		yesterday = now.Add(-24 * time.Hour)
+		start     = yesterday.Add(-90 * 24 * time.Hour) // 90 days before yesterday
+	)
+
+	// The endpoint accessed via xhr by e.g.
+	// https://tools.wmflabs.org/pageviews?project=en.wikipedia.org&pages=Carl_Sagan&range=latest-90.
+	u := fmt.Sprintf("https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/%s/daily/%d%02d%02d00/%d%02d%02d00", m, start.Year(), start.Month(), start.Day(), yesterday.Year(), yesterday.Month(), yesterday.Day())
+
+	err := lim.Wait(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err := http.Get(u)
+	if err != nil {
+		return 0, errors.Wrapf(err, "fetching %s", u)
+	}
+	defer resp.Body.Close()
+
+	type (
+		respItemType struct {
+			Views int
+		}
+
+		respType struct {
+			Items []*respItemType
+		}
+	)
+
+	var parsed respType
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&parsed)
+	if err != nil {
+		return 0, errors.Wrapf(err, "parsing response from %s", u)
+	}
+
+	var count int
+	for _, item := range parsed.Items {
+		count += item.Views
+	}
+
+	return count, nil
 }
 
 var errNotFound = errors.New("not found")
