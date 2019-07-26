@@ -2,24 +2,25 @@ package site
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
 	"cloud.google.com/go/datastore"
 )
 
-func NewServer(addr string, dsClient *datastore.Client, smtpAddr string) *Server {
+func NewServer(addr, smtpAddr string, dsClient *datastore.Client) *Server {
 	return &Server{
 		addr:     addr,
-		dsClient: dsClient,
 		smtpAddr: smtpAddr,
+		dsClient: dsClient,
 	}
 }
 
 type Server struct {
 	addr     string
-	dsClient *datastore.Client
 	smtpAddr string
+	dsClient *datastore.Client
 }
 
 func (s *Server) Serve(ctx context.Context) {
@@ -35,4 +36,18 @@ func (s *Server) Serve(ctx context.Context) {
 
 	<-ctx.Done()
 	srv.Shutdown(ctx)
+}
+
+func httpErr(w http.ResponseWriter, code int, format string, args ...interface{}) {
+	if code == 0 {
+		code = http.StatusInternalServerError
+	}
+
+	if format == "" && len(args) == 0 {
+		format = "%s"
+		args = []interface{}{http.StatusText(code)}
+	}
+
+	log.Printf(format, args...)
+	http.Error(w, fmt.Sprintf(format, args...), code)
 }
