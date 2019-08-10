@@ -57,7 +57,7 @@ func (s *Server) handleLoad(w http.ResponseWriter, req *http.Request) {
 		}
 		figures = append(figures, f)
 	}
-	err := outlived.ReplaceFigures(ctx, c.dsClient, figures)
+	err := outlived.ReplaceFigures(ctx, s.dsClient, figures)
 	if err != nil {
 		httpErr(w, 0, "writing to datastore: %s", err)
 		return

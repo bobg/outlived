@@ -20,6 +20,7 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		addr      = flagset.String("addr", ":80", "web server listen address")
 		smtpAddr  = flagset.String("smtp", "localhost:587", "smtp submission address")
 		creds     = flagset.String("creds", "", "credentials file")
+		contentDir = flagset.String("dir", "site", "content dir (with html, js, and css subdirs)")
 		projectID = flagset.String("project", "outlived-163105", "project ID")
 		seed      = flagset.Int64("seed", time.Now().Unix(), "RNG seed")
 		test      = flagset.Bool("test", false, "run in test mode")
@@ -49,10 +50,10 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 	}
 	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
 	if err != nil {
-		return nil, errors.Wrap(err, "creating datastore client")
+		return errors.Wrap(err, "creating datastore client")
 	}
 
-	s := site.NewServer(*addr, *smtpAddr, dsClient)
+	s := site.NewServer(*addr, *smtpAddr, *contentDir, dsClient)
 	s.Serve(ctx)
 
 	return nil

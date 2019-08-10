@@ -3,6 +3,7 @@ package site
 import (
 	"html/template"
 	"net/http"
+	"path/filepath"
 
 	"github.com/bobg/aesite"
 
@@ -37,7 +38,7 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	tmpl, err := template.ParseFiles("content/home.html.tmpl") // xxx
+	tmpl, err := template.ParseFiles(filepath.Join(s.contentDir, "html/home.html.tmpl"))
 	if err != nil {
 		httpErr(w, 0, "parsing HTML template: %s", err)
 		return

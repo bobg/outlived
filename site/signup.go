@@ -6,6 +6,7 @@ import (
 	htemplate "html/template"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	ttemplate "text/template"
 
 	"github.com/bobg/aesite"
@@ -36,7 +37,7 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ttmpl, err := ttemplate.ParseFiles("content/verify.mail.tmpl")
+	ttmpl, err := ttemplate.ParseFiles(filepath.Join(s.contentDir, "html/verify.mail.tmpl"))
 	if err != nil {
 		httpErr(w, 0, "parsing verification-mail template: %s", err)
 		return
