@@ -59,6 +59,18 @@ func (d Date) Since(other Date) int {
 	return int(t1.Sub(t2) / (24 * time.Hour))
 }
 
+// Returns years and days from other to d.
+// Note: other must be on or before d.
+func (d Date) YDSince(other Date) (years, days int) {
+	// xxx
+	if other.M > d.M || other.M == d.M && other.D > d.D {
+		years = other.Y - d.Y
+		return years, d.Since(Date{Y: d.Y, M: other.M, D: other.D}) // xxx could be spurious leap day
+	}
+	years = other.Y - d.Y - 1
+	return years, d.Since(Date{Y: d.Y - 1, M: other.M, D: other.D}) // xxx
+}
+
 func (d Date) String() string {
 	return fmt.Sprintf("%d-%02d-%02d", d.Y, d.M, d.D)
 }

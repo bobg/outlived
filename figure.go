@@ -3,6 +3,7 @@ package outlived
 import (
 	"context"
 	"encoding/binary"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -27,21 +28,21 @@ func FiguresAliveFor(ctx context.Context, client *datastore.Client, days int) ([
 	if err != nil {
 		return nil, errors.Wrap(err, "constructing query")
 	}
-	q = q.Filter("DaysAlive =", days)
+	q = q.Filter("DaysAlive =", days).Order("-Pageviews")
 	var figures []*Figure
 	_, err = client.GetAll(ctx, q, &figures)
 	return figures, errors.Wrap(err, "querying figures")
 }
 
-func FiguresAliveForAtMost(ctx context.Context, client *datastore.Client, days int) ([]*Figure, error) {
+func FiguresAliveForAtMost(ctx context.Context, client *datastore.Client, days, limit int) ([]*Figure, error) {
 	q, err := figureQuery(ctx, client)
 	if err != nil {
 		return nil, errors.Wrap(err, "constructing query")
 	}
-	q = q.Filter("DaysAlive <=", days).Order("-DaysAlive")
+	q = q.Filter("DaysAlive <=", days).Order("-DaysAlive").Order("-Pageviews")
 	it := client.Run(ctx, q)
 	var figures []*Figure
-	for {
+	for len(figures) < limit {
 		var fig Figure
 		_, err := it.Next(&fig)
 		if err == iterator.Done {
@@ -50,11 +51,11 @@ func FiguresAliveForAtMost(ctx context.Context, client *datastore.Client, days i
 		if err != nil {
 			return nil, errors.Wrap(err, "iterating")
 		}
-		if len(figures) > 0 && fig.DaysAlive != figures[0].DaysAlive {
-			break
-		}
 		figures = append(figures, &fig)
 	}
+	sort.Slice(figures, func(i, j int) bool {
+		return figures[i].Pageviews > figures[j].Pageviews
+	})
 	return figures, nil
 }
 

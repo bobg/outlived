@@ -3,6 +3,7 @@
     <title>
       Outlived
     </title>
+    <link rel="stylesheet" href="css/datepicker.min.css"></link>
   </head>
   <body>
     <h1>Outlived</h1>
@@ -37,12 +38,15 @@
 
       <div id="noaccount-div">
         <form id="email-pw-form">
-          <input type="text" id="email" name="email"></input>
+          <input type="email" id="email" name="email"></input>
           <input type="password" id="password" name="password"></input>
           <button id="signup-button">Sign up</button>
           <button id="login-button">Log in</button>
+          <div id="datepicker"></div>
         </form>
       </div>
+
+      <script src="js/datepicker.min.js"></script>
 
     {{ end }}
 
