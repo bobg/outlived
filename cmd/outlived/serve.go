@@ -17,13 +17,13 @@ import (
 
 func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 	var (
-		addr      = flagset.String("addr", ":80", "web server listen address")
-		smtpAddr  = flagset.String("smtp", "localhost:587", "smtp submission address")
-		creds     = flagset.String("creds", "", "credentials file")
+		addr       = flagset.String("addr", ":80", "web server listen address")
+		smtpAddr   = flagset.String("smtp", "localhost:587", "smtp submission address")
+		creds      = flagset.String("creds", "", "credentials file")
 		contentDir = flagset.String("dir", "site", "content dir (with html, js, and css subdirs)")
-		projectID = flagset.String("project", "outlived-163105", "project ID")
-		seed      = flagset.Int64("seed", time.Now().Unix(), "RNG seed")
-		test      = flagset.Bool("test", false, "run in test mode")
+		projectID  = flagset.String("project", "outlived-163105", "project ID")
+		seed       = flagset.Int64("seed", time.Now().Unix(), "RNG seed")
+		test       = flagset.Bool("test", false, "run in test mode")
 	)
 
 	err := flagset.Parse(args)

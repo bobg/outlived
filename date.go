@@ -62,13 +62,14 @@ func (d Date) Since(other Date) int {
 // Returns years and days from other to d.
 // Note: other must be on or before d.
 func (d Date) YDSince(other Date) (years, days int) {
-	// xxx
-	if other.M > d.M || other.M == d.M && other.D > d.D {
-		years = other.Y - d.Y
-		return years, d.Since(Date{Y: d.Y, M: other.M, D: other.D}) // xxx could be spurious leap day
+	years = d.Y - other.Y
+	if other.M > d.M || (other.M == d.M && other.D > d.D) {
+		years--
+		days = 1 + Date{other.Y, 12, 31}.Since(other) + d.Since(Date{d.Y, 1, 1})
+	} else {
+		days = d.Since(Date{d.Y, other.M, other.D})
 	}
-	years = other.Y - d.Y - 1
-	return years, d.Since(Date{Y: d.Y - 1, M: other.M, D: other.D}) // xxx
+	return years, days
 }
 
 func (d Date) String() string {

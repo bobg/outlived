@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/bobg/aesite"
 
@@ -22,6 +23,7 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) {
 		figures []*outlived.Figure
 		alive   int
 	)
+	today := outlived.Today()
 	if sess != nil {
 		u = new(outlived.User)
 		err = s.dsClient.Get(ctx, sess.UserKey, u)
@@ -30,9 +32,14 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		today := outlived.Today()
 		alive = today.Since(u.Born)
 		figures, err = outlived.FiguresAliveForAtMost(ctx, s.dsClient, alive-1, 20)
+		if err != nil {
+			httpErr(w, 0, "getting figures: %s", err)
+			return
+		}
+	} else {
+		figures, err = outlived.FiguresDiedOn(ctx, s.dsClient, today.M, today.D, 20)
 		if err != nil {
 			httpErr(w, 0, "getting figures: %s", err)
 			return
@@ -44,9 +51,10 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	dict := map[string]interface{}{
-		"user":    u,
-		"figures": figures,
-		"alive":   alive,
+		"user":     u,
+		"figures":  figures,
+		"alive":    alive,
+		"todaystr": time.Now().Format("Monday, 2 January 2006"),
 	}
 	err = tmpl.Execute(w, dict)
 	if err != nil {

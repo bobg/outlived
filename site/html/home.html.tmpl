@@ -24,7 +24,7 @@
           <ul>
             {{ range .figures }}
               <li>
-                <a href="https://en.wikipedia.org{{ .Link }}">{{ .Name }}</a>,
+                <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">{{ .Name }}</a>,
                 {{ .Desc }},
                 born {{ .Born }},
                 died {{ .Died }}
@@ -35,6 +35,25 @@
       </div>
 
     {{ else }}
+
+      {{ if .figures }}
+
+        <p>Today is {{ .todaystr }}. Died on this date:</p>
+        <ul>
+          {{ range .figures }}
+            <li>
+              <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">{{ .Name }}</a>,
+              {{ .Desc }}.
+              <br>
+              Born {{ .Born }},
+              died {{ .Died }},
+              age {{ .YDAge }}
+              ({{ .DaysAlive }} days).
+            </li>
+          {{ end }}
+        </ul>
+
+      {{ end }}
 
       <div id="noaccount-div">
         <form id="email-pw-form">
