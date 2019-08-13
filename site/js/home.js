@@ -12,20 +12,20 @@ $(document).ready(function() {
     //   setSignupButton2Sensitivity(validatePassword($('#password')));
     // },
   });
-  $('#datepicker').change({
+  $('#datepicker').on('input', function() {
     setSignupButton2Sensitivity(validatePassword($('#password')));
   });
 
   var loggingIn = false;
   var signingUp = false;
 
-  $('#email').change(function() {
+  $('#email').on('input', function() {
     var validEmail = validateEmail($('#email').val());
     $('#login-button-1').attr('disabled', !validEmail);
     $('#signup-button-1').attr('disabled', !validEmail);
   })
 
-  $('#password').change(function() {
+  $('#password').on('input', function() {
     var validPassword = validatePassword($('#password'));
     $('#login-button-2').attr('disabled', !validPassword);
     setSignupButton2Sensitivity(validPassword);
@@ -58,7 +58,11 @@ $(document).ready(function() {
   });
 
   $('#login-button-2').click(function() {
-    // xxx post to /login: email, password
+    var email = $('#email').val();
+    var password = $('#password').val();
+    $.post('/login', {email, password}, function(_data, status) {
+      console.log(`xxx ${status}`);
+    });
   });
 
   $('#cancel-button').click(function() {
@@ -77,5 +81,13 @@ $(document).ready(function() {
 
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
 function validateEmail(mail) {
-  return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail)
+  return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail);
+}
+
+function validatePassword(pw) {
+  return !!pw;
+}
+
+function validateDate(date) {
+  return true; // xxx
 }
