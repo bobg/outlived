@@ -7,16 +7,16 @@ import (
 	"time"
 
 	"github.com/bobg/aesite"
+	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
 )
 
-func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) {
+func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 	sess, err := aesite.GetSession(ctx, s.dsClient, req)
 	if err != nil {
-		httpErr(w, 0, "getting session: %s", err)
-		return
+		return errors.Wrap(err, "getting session")
 	}
 	var (
 		u       *outlived.User
@@ -28,27 +28,23 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) {
 		u = new(outlived.User)
 		err = s.dsClient.Get(ctx, sess.UserKey, u)
 		if err != nil {
-			httpErr(w, 0, "getting user: %s", err)
-			return
+			return errors.Wrap(err, "getting user")
 		}
 
 		alive = today.Since(u.Born)
 		figures, err = outlived.FiguresAliveForAtMost(ctx, s.dsClient, alive-1, 20)
 		if err != nil {
-			httpErr(w, 0, "getting figures: %s", err)
-			return
+			return errors.Wrap(err, "getting figures")
 		}
 	} else {
 		figures, err = outlived.FiguresDiedOn(ctx, s.dsClient, today.M, today.D, 20)
 		if err != nil {
-			httpErr(w, 0, "getting figures: %s", err)
-			return
+			return errors.Wrap(err, "getting figures")
 		}
 	}
 	tmpl, err := template.ParseFiles(filepath.Join(s.contentDir, "html/home.html.tmpl"))
 	if err != nil {
-		httpErr(w, 0, "parsing HTML template: %s", err)
-		return
+		return errors.Wrap(err, "parsing HTML template")
 	}
 	dict := map[string]interface{}{
 		"user":     u,
@@ -57,8 +53,5 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) {
 		"todaystr": time.Now().Format("Monday, 2 January 2006"),
 	}
 	err = tmpl.Execute(w, dict)
-	if err != nil {
-		httpErr(w, 0, "executing HTML template: %s", err)
-		return
-	}
+	return errors.Wrap(err, "executing HTML template")
 }
