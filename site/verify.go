@@ -31,6 +31,11 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 		return codeErr(err, http.StatusBadRequest, "verifying token")
 	}
 
+	sess, err := aesite.NewSession(ctx, s.dsClient, user.Key())
+	if err != nil {
+		return errors.Wrapf(err, "creating session for user %s", user.Email)
+	}
+	sess.SetCookie(w)
 	http.Redirect(w, req, "/", http.StatusSeeOther)
 
 	return nil
