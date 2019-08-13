@@ -35,6 +35,7 @@ type sender interface {
 func (s *Server) Serve(ctx context.Context) {
 	handle("/", s.handleHome)
 	handle("/load", s.handleLoad)
+	handle("/login", s.handleLogin)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
 
