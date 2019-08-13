@@ -38,6 +38,8 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/login", s.handleLogin)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
+	http.HandleFunc("/js/", s.handleStatic)
+	http.HandleFunc("/css/", s.handleStatic)
 
 	log.Printf("listening for requests on %s", s.addr)
 

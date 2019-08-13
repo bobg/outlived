@@ -4,6 +4,10 @@
       Outlived
     </title>
     <link rel="stylesheet" href="css/datepicker.min.css"></link>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="js/datepicker.min.js"></script>
+    <script src="js/datepicker.en.js"></script>
+    <script src="/js/home.js"></script>
   </head>
   <body>
     <h1>Outlived</h1>
@@ -41,9 +45,9 @@
         <span id="email-value" style="display: none"></span>
         <button id="signup-button-1">Sign up</button>
         <button id="login-button-1">Log in</button>
-        <input type="password" id="password" name="password"></input>
+        <input type="password" id="password" name="password" style="display: none"></input>
         <button id="login-button-2" style="display: none">Log in</button>
-        <div id="datepicker" style="display: none"></div>
+        <input id="datepicker" style="display: none"></div>
         <button id="signup-button-2" style="display: none">Sign up</button>
         <button id="cancel-button" style="display: none">Cancel</button>
       </div>
@@ -66,18 +70,6 @@
         </ul>
 
       {{ end }}
-
-      <div id="noaccount-div">
-        <form id="email-pw-form">
-          <input type="email" id="email" name="email"></input>
-          <input type="password" id="password" name="password"></input>
-          <button id="signup-button">Sign up</button>
-          <button id="login-button">Log in</button>
-          <div id="datepicker"></div>
-        </form>
-      </div>
-
-      <script src="js/datepicker.min.js"></script>
 
     {{ end }}
 

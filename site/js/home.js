@@ -1,16 +1,19 @@
 $(document).ready(function() {
-  var selectedDate;
-
   var setSignupButton2Sensitivity = function(validPassword) {
-    $('#signup-button-2').attr('disabled', !validPassword || !selectedDate);
+    var validDate = validateDate($('#datepicker').val());
+    $('#signup-button-2').attr('disabled', !validPassword || !validDate);
   }
 
   $('#datepicker').datepicker({
+    language: 'en',
     view: 'years',
-    onSelect: function(_formattedDate, date, _dp) {
-      selectedDate = date;
-      setSignupButton2Sensitivity(validatePassword($('#password')));
-    },
+    // onSelect: function(_formattedDate, date, _dp) {
+    //   selectedDate = date;
+    //   setSignupButton2Sensitivity(validatePassword($('#password')));
+    // },
+  });
+  $('#datepicker').change({
+    setSignupButton2Sensitivity(validatePassword($('#password')));
   });
 
   var loggingIn = false;
@@ -58,7 +61,7 @@ $(document).ready(function() {
     // xxx post to /login: email, password
   });
 
-  $('#cancel').click(function() {
+  $('#cancel-button').click(function() {
     $('#email').val('');
     $('#email').show();
     $('#email-value').hide();
@@ -71,3 +74,8 @@ $(document).ready(function() {
     $('#cancel-button').hide();
   });
 });
+
+// Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
+function validateEmail(mail) {
+  return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail)
+}
