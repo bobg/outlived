@@ -21,7 +21,7 @@
       </div>
 
       <div id="alive">
-        <p>You were born {{ .alive }} days ago.</p>
+        <p>You were born {{ call .numprinter .alive }} days ago.</p>
 
         {{ if .figures }}
           <p>You have recently outlived:</p>
@@ -29,9 +29,11 @@
             {{ range .figures }}
               <li>
                 <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">{{ .Name }}</a>,
-                {{ .Desc }},
+                {{ if .Desc }}
+                  {{ .Desc }},
+                {{ end }}
                 born {{ .Born }},
-                died {{ .Died }}
+                died {{ .Died }}.
               </li>
             {{ end }}
           </ul>
@@ -59,12 +61,12 @@
           {{ range .figures }}
             <li>
               <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">{{ .Name }}</a>,
-              {{ .Desc }}.
-              <br>
-              Born {{ .Born }},
+              {{ if .Desc }}
+                {{ .Desc }},
+              {{ end }}
+              born {{ .Born }},
               died {{ .Died }},
-              age {{ .YDAge }}
-              ({{ .DaysAlive }} days).
+              age {{ .YDAge }}.
             </li>
           {{ end }}
         </ul>

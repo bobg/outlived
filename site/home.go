@@ -8,6 +8,7 @@ import (
 
 	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
+	"golang.org/x/text/message"
 
 	"github.com/bobg/outlived"
 )
@@ -46,11 +47,18 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "parsing HTML template")
 	}
+
+	p := message.NewPrinter(message.MatchLanguage("en"))
+	numprinter := func(n int) string {
+		return p.Sprintf("%v", n)
+	}
+
 	dict := map[string]interface{}{
-		"user":     u,
-		"figures":  figures,
-		"alive":    alive,
-		"todaystr": time.Now().Format("Monday, 2 January 2006"),
+		"user":       u,
+		"figures":    figures,
+		"alive":      alive,
+		"todaystr":   time.Now().Format("Monday, 2 January 2006"),
+		"numprinter": numprinter,
 	}
 	err = tmpl.Execute(w, dict)
 	return errors.Wrap(err, "executing HTML template")

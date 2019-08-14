@@ -54,6 +54,13 @@ $(document).ready(function() {
   });
 
   $('#signup-button-2').click(function() {
+    var email = $('#email').val();
+    var password = $('#password').val();
+    var born = $('#datepicker').val();
+    $.post('/signup', {email, password, born}, function(_data, status) {
+      console.log(`xxx ${status}`);
+    });
+
     // xxx post to /signup: email, password, born
   });
 
@@ -88,6 +95,24 @@ function validatePassword(pw) {
   return !!pw;
 }
 
+var monthDays = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
 function validateDate(date) {
-  return true; // xxx
+  var m = date.match(/(\d+)\D+(\d+)\D+(\d+)/);
+  if (!m) { return false }
+
+  var today = new Date();
+  var y = parseInt(m[1]);
+  if (y < 1900) { return false }
+  if (y > today.getFullYear()) { return false }
+
+  var mon = parseInt(m[2]);
+  if (mon < 1 || mon > 12) { return false }
+
+  var d = parseInt(m[3]);
+  if (d < 1) { return false }
+
+  if (d > monthDays[mon]) { return false }
+
+  return true;
 }
