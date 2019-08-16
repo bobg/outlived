@@ -26,7 +26,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 		return errors.Wrapf(err, "checking password for user %s", email)
 	}
 	if !ok {
-		// xxx
+		return codeErr(errors.New("email/password invalid"), http.StatusUnauthorized)
 	}
 	sess, err := aesite.NewSession(ctx, s.dsClient, u.Key())
 	if err != nil {

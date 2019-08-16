@@ -32,8 +32,7 @@
                 {{ if .Desc }}
                   {{ .Desc }},
                 {{ end }}
-                born {{ .Born }},
-                died {{ .Died }}.
+                {{ .Born }}&mdash;{{ .Died }}.
               </li>
             {{ end }}
           </ul>
@@ -73,9 +72,8 @@
               {{ if .Desc }}
                 {{ .Desc }},
               {{ end }}
-              born {{ .Born }},
-              died {{ .Died }},
-              age {{ .YDAge }}.
+              {{ .Born }}&mdash;{{ .Died }}
+              (age {{ .YDAge }}).
             </li>
           {{ end }}
         </ul>
