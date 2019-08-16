@@ -43,15 +43,24 @@
     {{ else }}
 
       <div>
-        <input type="email" id="email" name="email"></input>
-        <span id="email-value" style="display: none"></span>
-        <button id="signup-button-1" disabled>Sign up</button>
-        <button id="login-button-1" disabled>Log in</button>
-        <input type="password" id="password" name="password" style="display: none"></input>
-        <button id="login-button-2" style="display: none" disabled>Log in</button>
-        <input id="datepicker" style="display: none"></div>
-        <button id="signup-button-2" style="display: none" disabled>Sign up</button>
-        <button id="cancel-button" style="display: none">Cancel</button>
+        <form id="login-signup-form" method="POST">
+          <label for="email">E-mail address</label>
+          <input type="email" id="email" name="email"></input>
+          <span id="email-value" style="display: none"></span>
+          <button id="signup-button-1" disabled type="button">Sign up</button>
+          <button id="login-button-1" disabled type="button">Log in</button>
+          <div id="password-div" style="display: none">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password"></input>
+          </div>
+          <button id="login-button-2" type="submit" style="display: none" disabled>Log in</button>
+          <div id="datepicker-div" style="display: none">
+            <label for="datepicker">Birthdate</label>
+            <input id="datepicker" placeholder="yyyy-mm-dd"></div>
+          </div>
+          <button id="signup-button-2" type="submit" style="display: none" disabled>Sign up</button>
+          <button id="cancel-button" style="display: none" type="button">Cancel</button>
+        </form>
       </div>
 
       {{ if .figures }}

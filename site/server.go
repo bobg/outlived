@@ -36,6 +36,7 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/", s.handleHome)
 	handle("/load", s.handleLoad)
 	handle("/login", s.handleLogin)
+	handle("/logout", s.handleLogout)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
 	http.HandleFunc("/js/", s.handleStatic)

@@ -5,15 +5,15 @@ $(document).ready(function() {
   }
 
   $('#datepicker').datepicker({
+    dateFormat: 'yyyy-mm-dd',
     language: 'en',
     view: 'years',
-    // onSelect: function(_formattedDate, date, _dp) {
-    //   selectedDate = date;
-    //   setSignupButton2Sensitivity(validatePassword($('#password')));
-    // },
+    onSelect: function() {
+      setSignupButton2Sensitivity(validatePassword($('#password').val()));
+    },
   });
   $('#datepicker').on('input', function() {
-    setSignupButton2Sensitivity(validatePassword($('#password')));
+    setSignupButton2Sensitivity(validatePassword($('#password').val()));
   });
 
   var loggingIn = false;
@@ -26,7 +26,7 @@ $(document).ready(function() {
   })
 
   $('#password').on('input', function() {
-    var validPassword = validatePassword($('#password'));
+    var validPassword = validatePassword($('#password').val());
     $('#login-button-2').attr('disabled', !validPassword);
     setSignupButton2Sensitivity(validPassword);
   });
@@ -34,7 +34,7 @@ $(document).ready(function() {
   var loggingInSigningUp = function() {
     $('#login-button-1').hide();
     $('#signup-button-1').hide();
-    $('#password').show();
+    $('#password-div').show();
     $('#cancel-button').show();
 
     $('#email-value').text($('#email').val());
@@ -44,32 +44,15 @@ $(document).ready(function() {
 
   $('#signup-button-1').click(function() {
     loggingInSigningUp();
-    $('#datepicker').show();
+    $('#datepicker-div').show();
     $('#signup-button-2').show();
+    $('#login-signup-form').attr('action', '/signup')
   });
 
   $('#login-button-1').click(function() {
     loggingInSigningUp();
     $('#login-button-2').show();
-  });
-
-  $('#signup-button-2').click(function() {
-    var email = $('#email').val();
-    var password = $('#password').val();
-    var born = $('#datepicker').val();
-    $.post('/signup', {email, password, born}, function(_data, status) {
-      console.log(`xxx ${status}`);
-    });
-
-    // xxx post to /signup: email, password, born
-  });
-
-  $('#login-button-2').click(function() {
-    var email = $('#email').val();
-    var password = $('#password').val();
-    $.post('/login', {email, password}, function(_data, status) {
-      console.log(`xxx ${status}`);
-    });
+    $('#login-signup-form').attr('action', '/login')
   });
 
   $('#cancel-button').click(function() {
@@ -78,9 +61,9 @@ $(document).ready(function() {
     $('#email-value').hide();
     $('#signup-button-1').show();
     $('#login-button-1').show();
-    $('#password').hide();
+    $('#password-div').hide();
     $('#login-button-2').hide();
-    $('#datepicker').hide();
+    $('#datepicker-div').hide();
     $('#signup-button-2').hide();
     $('#cancel-button').hide();
   });
