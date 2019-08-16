@@ -53,7 +53,12 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		return errors.Wrap(err, "creating datastore client")
 	}
 
-	s := site.NewServer(*addr, *smtpAddr, *contentDir, dsClient)
+	var ctClient *cloudtasks.Client
+	if !*test {
+		ctClient = cloudtasks.NewClient(xxx)
+	}
+
+	s := site.NewServer(*addr, *smtpAddr, *contentDir, dsClient, ctClient)
 	s.Serve(ctx)
 
 	return nil
