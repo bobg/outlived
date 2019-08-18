@@ -26,6 +26,8 @@ github.com/bobg/aesite v0.0.0-20190403131231-b47624814d43 h1:3tLPMMVKSdCchoaMPP/
 github.com/bobg/aesite v0.0.0-20190403131231-b47624814d43/go.mod h1:dO+ceNt0hgdyDqTdhwR64+yxQv63U+rn4jwf5x9riUE=
 github.com/bobg/aesite v0.0.0-20190813060446-71f639fd397a h1:ZsTBKEvVLViFwhaq3zK01s6oKtC/cMGA5T9M0OmOCmk=
 github.com/bobg/aesite v0.0.0-20190813060446-71f639fd397a/go.mod h1:eIWZfwhhqudb0qx+UNgZXd5xPgo2tZmt6P487PWVZa0=
+github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670 h1:XtSWfSk6kHNQvCSMj7frxDiaBoZR9nCci7OOoSeYH9E=
+github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670/go.mod h1:TUZ3/ZfQrnD0AMpTd+1qeiJ8ogd4fo5wbs4d3lwJUD0=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
