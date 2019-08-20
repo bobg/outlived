@@ -18,7 +18,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 	err := aesite.LookupUser(ctx, s.dsClient, email, &u)
 	if err != nil {
-		// xxx distinguish "not found" errors from others
+		// TODO: distinguish "not found" errors from others
 		return errors.Wrapf(err, "looking up user %s", email)
 	}
 	ok, err := u.CheckPW(password)

@@ -260,15 +260,18 @@ func parseDate2(yearStr, monStr, dayStr, bcStr string) (year, mon, day int, err 
 		return 0, 0, 0, errors.Wrap(err, "parsing month")
 	}
 	day, err = strconv.Atoi(dayStr)
-	if err != nil { // xxx also range check?
+	if err != nil {
 		return 0, 0, 0, errors.Wrap(err, "parsing day")
 	}
-	year, err = strconv.Atoi(yearStr) // xxx also range check?
+	year, err = strconv.Atoi(yearStr) // TODO: range check?
 	if err != nil {
 		return 0, 0, 0, errors.Wrap(err, "parsing year")
 	}
 	if bcStr != "" {
 		year = -year
+	}
+	if day < 1 || day > daysInMonth(year, time.Month(mon)) {
+		return 0, 0, 0, fmt.Errorf("day %d out of range", day)
 	}
 	return
 }
