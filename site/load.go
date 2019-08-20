@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -17,6 +18,7 @@ func (s *Server) handleLoad(w http.ResponseWriter, req *http.Request) error {
 
 	ctx := req.Context()
 	csvr := csv.NewReader(req.Body)
+	now := time.Now()
 
 	var figures []*outlived.Figure
 
@@ -52,6 +54,7 @@ func (s *Server) handleLoad(w http.ResponseWriter, req *http.Request) error {
 			Died:      died,
 			DaysAlive: daysAlive,
 			Pageviews: pageViews,
+			Updated:   now,
 		}
 		figures = append(figures, f)
 	}

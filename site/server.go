@@ -23,6 +23,7 @@ func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locat
 		ctClient:   ctClient,
 	}
 	go s.scrape(ctx)
+	go s.expire(ctx)
 	return s
 }
 

@@ -116,6 +116,7 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 			Died:      outlived.Date{Y: diedY, M: time.Month(diedM), D: diedD},
 			DaysAlive: aliveDays,
 			Pageviews: pageviews,
+			Updated:   time.Now(),
 		}
 		return outlived.ReplaceFigures(ctx, s.dsClient, []*outlived.Figure{fig})
 	})

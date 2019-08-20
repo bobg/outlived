@@ -22,6 +22,8 @@ type Figure struct {
 	Born, Died Date
 	DaysAlive  int
 	Pageviews  int
+
+	Updated time.Time
 }
 
 func (f *Figure) YDAge() string {
@@ -144,5 +146,29 @@ func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Fi
 
 	log.Printf("replaced figures, %d before deduping, %d after; %d in db before, %d after", beforeDeduping, afterDeduping, before, after)
 
+	return nil
+}
+
+const stale = 30 * 24 * time.Hour
+
+func ExpireFigures(ctx context.Context, client *datastore.Client) error {
+	q := datastore.NewQuery("Figure")
+	q = q.Filter("Updated <", time.Now().Add(stale)).KeysOnly()
+	keys, err := client.GetAll(ctx, q, nil)
+	if err != nil {
+		return errors.Wrap(err, "getting stale figures")
+	}
+	for len(keys) > 0 {
+		var nextKeys []*datastore.Key
+
+		if len(keys) > multiLimit {
+			keys, nextKeys = keys[:multiLimit], keys[multiLimit:]
+		}
+		err = client.DeleteMulti(ctx, keys)
+		if err != nil {
+			return errors.Wrap(err, "expiring figures")
+		}
+		keys = nextKeys
+	}
 	return nil
 }
