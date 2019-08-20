@@ -7,24 +7,33 @@ import (
 	"log"
 	"net/http"
 
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
 	"github.com/pkg/errors"
 )
 
-func NewServer(addr, smtpAddr, contentDir string, dsClient *datastore.Client) *Server {
-	return &Server{
+func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) *Server {
+	s := &Server{
 		addr:       addr,
 		smtpAddr:   smtpAddr,
 		contentDir: contentDir,
+		projectID:  projectID,
+		locationID: locationID,
 		dsClient:   dsClient,
+		ctClient:   ctClient,
 	}
+	go s.scrape(ctx)
+	return s
 }
 
 type Server struct {
 	addr       string
 	smtpAddr   string
 	contentDir string
+	projectID  string
+	locationID string
 	dsClient   *datastore.Client
+	ctClient   *cloudtasks.Client
 	sender     sender
 }
 
@@ -39,6 +48,8 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/logout", s.handleLogout)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
+	handle("/scrapeday", s.handleScrapeday)
+	handle("/scrapeperson", s.handleScrapeperson)
 	http.HandleFunc("/js/", s.handleStatic)
 	http.HandleFunc("/css/", s.handleStatic)
 

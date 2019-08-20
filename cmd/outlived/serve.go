@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"time"
 
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
@@ -22,6 +23,7 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		creds      = flagset.String("creds", "", "credentials file")
 		contentDir = flagset.String("dir", "site", "content dir (with html, js, and css subdirs)")
 		projectID  = flagset.String("project", "outlived-163105", "project ID")
+		locationID = flagset.String("location", "us-central", "location ID")
 		seed       = flagset.Int64("seed", time.Now().Unix(), "RNG seed")
 		test       = flagset.Bool("test", false, "run in test mode")
 	)
@@ -53,7 +55,15 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		return errors.Wrap(err, "creating datastore client")
 	}
 
-	s := site.NewServer(*addr, *smtpAddr, *contentDir, dsClient)
+	var ctClient *cloudtasks.Client
+	if !*test {
+		ctClient, err = cloudtasks.NewClient(ctx, options...)
+		if err != nil {
+			return errors.Wrap(err, "creating cloudtasks client")
+		}
+	}
+
+	s := site.NewServer(ctx, *addr, *smtpAddr, *contentDir, *projectID, *locationID, dsClient, ctClient)
 	s.Serve(ctx)
 
 	return nil
