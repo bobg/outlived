@@ -1,0 +1,7 @@
+cron:
+- description: "scrape launcher"
+  url: /scrape
+  schedule: every 24 hours
+- description: "figure expirer"
+  url: /expire
+  schedule: every 24 hours

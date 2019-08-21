@@ -13,7 +13,7 @@ import (
 )
 
 func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) *Server {
-	s := &Server{
+	return &Server{
 		addr:       addr,
 		smtpAddr:   smtpAddr,
 		contentDir: contentDir,
@@ -22,9 +22,6 @@ func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locat
 		dsClient:   dsClient,
 		ctClient:   ctClient,
 	}
-	go s.scrape(ctx)
-	go s.expire(ctx)
-	return s
 }
 
 type Server struct {
@@ -49,8 +46,10 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/logout", s.handleLogout)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
+	handle("/scrape", s.handleScrape)
 	handle("/scrapeday", s.handleScrapeday)
 	handle("/scrapeperson", s.handleScrapeperson)
+	handle("/expire", s.handleExpire)
 	http.HandleFunc("/js/", s.handleStatic)
 	http.HandleFunc("/css/", s.handleStatic)
 
@@ -81,7 +80,8 @@ type handlerFunc func(http.ResponseWriter, *http.Request) error
 
 func handlerCaller(f handlerFunc) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		err := f(w, req)
+		ww := &respWriter{w: w}
+		err := f(ww, req)
 		if err != nil {
 			code := http.StatusInternalServerError
 			if err, ok := err.(codeErrType); ok {
@@ -89,6 +89,10 @@ func handlerCaller(f handlerFunc) func(http.ResponseWriter, *http.Request) {
 			}
 			log.Printf("%s", err)
 			http.Error(w, err.Error(), code)
+			return
+		}
+		if !ww.writeCalled {
+			w.WriteHeader(http.StatusNoContent)
 		}
 	}
 }
@@ -121,4 +125,26 @@ func codeErr(err error, code int, args ...interface{}) error {
 		err = errors.Wrapf(err, f, args[1:]...)
 	}
 	return codeErrType{err: err, code: code}
+}
+
+// Function respWriter wraps an http.ResponseWriter,
+// delegating calls to it.
+// It tracks whether Write or WriteHeader is ever called.
+type respWriter struct {
+	w           http.ResponseWriter
+	writeCalled bool
+}
+
+func (w *respWriter) Header() http.Header {
+	return w.w.Header()
+}
+
+func (w *respWriter) Write(b []byte) (int, error) {
+	w.writeCalled = true
+	return w.w.Write(b)
+}
+
+func (w *respWriter) WriteHeader(code int) {
+	w.writeCalled = true
+	w.w.WriteHeader(code)
 }

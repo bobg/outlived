@@ -23,7 +23,7 @@ func (u *User) SetUser(au *aesite.User) {
 }
 
 func ForUserByAge(ctx context.Context, client *datastore.Client, f func(context.Context, *User) error) error {
-	q := aesite.UserQuery().Order("Born")
+	q := datastore.NewQuery("User").Order("Born")
 	it := client.Run(ctx, q)
 	for {
 		var u User

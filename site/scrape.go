@@ -52,6 +52,50 @@ func (s *Server) taskName(inp string) string {
 	return fmt.Sprintf("%s/tasks/%s", s.scrapeQueue(), string(converted))
 }
 
+// Function handleScrape launches a new scrape: one task for each day of the year.
+// (Each handled by handleScrapeday.)
+// A task is queued only if the scrape queue is empty.
+func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
+	// xxx auth
+
+	ctx := req.Context()
+
+	ltreq := &taskspb.ListTasksRequest{
+		Parent: s.scrapeQueue(),
+	}
+	iter := s.ctClient.ListTasks(ctx, ltreq)
+	_, err := iter.Next()
+	if err != nil && err != iterator.Done {
+		return errors.Wrap(err, "checking scrape queue for emptiness")
+	}
+	if err == nil {
+		log.Print("scrape queue is not empty")
+		return nil
+	}
+	// err == iterator.Done (i.e., the queue is empty)
+	for m := time.January; m <= time.December; m++ {
+		for d := 1; d <= daysInMonth[m]; d++ {
+			_, err = s.ctClient.CreateTask(ctx, &taskspb.CreateTaskRequest{
+				Parent: s.scrapeQueue(),
+				Task: &taskspb.Task{
+					Name: s.taskName(fmt.Sprintf("%d/%d", m, d)),
+					MessageType: &taskspb.Task_AppEngineHttpRequest{
+						AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
+							HttpMethod:  taskspb.HttpMethod_GET,
+							RelativeUri: fmt.Sprintf("/scrapeday?m=%d&d=%d", m, d),
+						},
+					},
+				},
+			})
+			if err != nil {
+				return errors.Wrapf(err, "queueing /scrapeday task for m=%d, d=%d", m, d)
+			}
+		}
+	}
+	log.Print("queued new scrapeday tasks")
+	return nil
+}
+
 func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error {
 	// xxx auth
 

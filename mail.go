@@ -49,4 +49,8 @@ func SendMail(ctx context.Context, client *datastore.Client) error {
 		lastBorn = user.Born
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+	return wrap()
 }
