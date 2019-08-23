@@ -11,7 +11,8 @@ import (
 
 type User struct {
 	aesite.User
-	Born Date
+	Born   Date
+	Active bool
 }
 
 func (u *User) GetUser() *aesite.User {
@@ -23,7 +24,7 @@ func (u *User) SetUser(au *aesite.User) {
 }
 
 func ForUserByAge(ctx context.Context, client *datastore.Client, f func(context.Context, *User) error) error {
-	q := datastore.NewQuery("User").Order("Born")
+	q := datastore.NewQuery("User").Filter("Verified =", true).Filter("Active =", true).Order("Born")
 	it := client.Run(ctx, q)
 	for {
 		var u User

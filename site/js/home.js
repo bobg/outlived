@@ -67,6 +67,25 @@ $(document).ready(function() {
     $('#signup-button-2').hide();
     $('#cancel-button').hide();
   });
+
+  $('#active').click(function() {
+    var wasChecked = $('#active').attr('checked');
+    $('#active').attr('disabled', true);
+    $.ajax({
+      url: '/setactive',
+      method: 'POST',
+      data: {active: !wasChecked},
+      success: () => {
+        $('#active').attr('checked', !wasChecked);
+      },
+      error: () => {
+        $('#active').attr('checked', wasChecked);
+      },
+      complete: () => {
+        $('#active').attr('disabled', false);
+      },
+    });
+  })
 });
 
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.

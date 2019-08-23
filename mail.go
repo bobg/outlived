@@ -8,6 +8,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/pkg/errors"
+	"golang.org/x/text/message"
 )
 
 const maxRecipients = 20
@@ -36,6 +37,12 @@ func SendMail(ctx context.Context, client *datastore.Client) error {
 		if len(figures) == 0 {
 			return nil
 		}
+
+		p := message.NewPrinter(message.MatchLanguage("en"))
+		numprinter := func(n int) string {
+			return p.Sprintf("%v", n)
+		}
+
 		for len(users) > 0 {
 			var nextUsers []*User
 			if len(users) > maxRecipients {
@@ -43,9 +50,10 @@ func SendMail(ctx context.Context, client *datastore.Client) error {
 			}
 
 			dict := map[string]interface{}{
-				"birthdate": birthdate,
-				"alivedays": since,
-				"figures":   figures,
+				"birthdate":  birthdate,
+				"alivedays":  since,
+				"figures":    figures,
+				"numprinter": numprinter,
 			}
 
 			ttmpl, err := ttemplate.New("").Parse(mailTextTemplate)
@@ -110,7 +118,7 @@ func SendMail(ctx context.Context, client *datastore.Client) error {
 }
 
 const mailTextTemplate = `
-You were born on {{ .birthdate }}, which was {{ .alivedays }} days ago.
+You were born on {{ .birthdate }}, which was {{ call .numprinter .alivedays }} days ago.
 
 You have now outlived:
 
@@ -120,7 +128,7 @@ You have now outlived:
 `
 
 const mailHTMLTemplate = `
-<p>You were born on {{ .birthdate }}, which was {{ .alivedays }} days ago.</p>
+<p>You were born on {{ .birthdate }}, which was {{ call .numprinter .alivedays }} days ago.</p>
 
 <p>You have now outlived:</p>
 

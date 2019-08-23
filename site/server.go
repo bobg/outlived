@@ -44,6 +44,7 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/load", s.handleLoad)
 	handle("/login", s.handleLogin)
 	handle("/logout", s.handleLogout)
+	handle("/setactive", s.handleSetActive)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
 	handle("/scrape", s.handleScrape)

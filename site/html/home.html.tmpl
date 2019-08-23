@@ -39,6 +39,11 @@
         {{ end }}
       </div>
 
+      <div id="settings">
+        <label for="active">Receive outlived e-mail?</label>
+        <input type="checkbox" id="active" name="active" {{ if .user.Active }} checked {{ end }}>
+      </div>
+
     {{ else }}
 
       <div>

@@ -29,7 +29,8 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 		return codeErr(err, http.StatusBadRequest, "parsing birthdate")
 	}
 	u := &outlived.User{
-		Born: born,
+		Born:   born,
+		Active: true,
 	}
 	err = aesite.NewUser(ctx, s.dsClient, email, password, u)
 	if err != nil {
