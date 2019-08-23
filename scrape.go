@@ -329,7 +329,7 @@ func findInfoBox(node *html.Node) *html.Node {
 func toPlainText(w io.Writer, node *html.Node) {
 	switch node.Type {
 	case html.TextNode:
-		w.Write([]byte(node.Data))
+		w.Write([]byte(html.UnescapeString(node.Data)))
 
 	case html.ElementNode:
 		if node.DataAtom == atom.Br {
