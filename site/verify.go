@@ -1,6 +1,7 @@
 package site
 
 import (
+	"log"
 	"net/http"
 
 	"cloud.google.com/go/datastore"
@@ -30,6 +31,8 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return codeErr(err, http.StatusBadRequest, "verifying token")
 	}
+
+	log.Printf("verified user %s", user.Email)
 
 	sess, err := aesite.NewSession(ctx, s.dsClient, user.Key())
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	htemplate "html/template"
+	"log"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -37,6 +38,7 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 		return errors.Wrap(err, "creating new user")
 	}
 
+	// xxx
 	ttmpl, err := ttemplate.ParseFiles(filepath.Join(s.contentDir, "html/verify.mail.tmpl"))
 	if err != nil {
 		return errors.Wrap(err, "parsing verification-mail template")
@@ -57,6 +59,8 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "sending verification mail")
 	}
+
+	log.Printf("signed up new user %s", u.Email)
 
 	htmpl, err := htemplate.ParseFiles("content/postsignup.html.tmpl")
 	if err != nil {

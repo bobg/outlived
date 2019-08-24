@@ -21,7 +21,11 @@
       </div>
 
       <div id="alive">
-        <p>You were born {{ call .numprinter .alive }} days ago.</p>
+        <p>
+          Today is {{ .todaystr }}.
+          You were born on {{ .user.Born }}, 
+          which was {{ call .numprinter .alive }} days ago.
+        </p>
 
         {{ if .figures }}
           <p>You have recently outlived:</p>

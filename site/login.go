@@ -1,6 +1,7 @@
 package site
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/bobg/aesite"
@@ -28,6 +29,9 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 	if !ok {
 		return codeErr(errors.New("email/password invalid"), http.StatusUnauthorized)
 	}
+
+	log.Printf("logging in user %s", email)
+
 	sess, err := aesite.NewSession(ctx, s.dsClient, u.Key())
 	if err != nil {
 		return errors.Wrapf(err, "creating session for user %s", email)

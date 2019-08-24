@@ -72,6 +72,9 @@ func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
 		log.Print("scrape queue is not empty")
 		return nil
 	}
+
+	log.Print("starting new scrape")
+
 	// err == iterator.Done (i.e., the queue is empty)
 	for m := time.January; m <= time.December; m++ {
 		for d := 1; d <= daysInMonth[m]; d++ {
@@ -115,6 +118,8 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 		return errors.Wrapf(err, "month %d, day %d is out of range", m, d)
 	}
 
+	log.Printf("scraping day %s %d", time.Month(m), d)
+
 	ctx := req.Context()
 	return outlived.ScrapeDay(ctx, time.Month(m), d, func(ctx context.Context, href, title, desc string) error {
 		u, _ := url.Parse("/scrapeperson")
@@ -150,6 +155,8 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 		desc  = req.FormValue("desc")
 	)
 
+	log.Printf("scraping person %s (%s)", title, href)
+
 	ctx := req.Context()
 	return outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
 		fig := &outlived.Figure{
@@ -164,57 +171,4 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 		}
 		return outlived.ReplaceFigures(ctx, s.dsClient, []*outlived.Figure{fig})
 	})
-}
-
-// Runs as a goroutine.
-// Once a day, it checks to see if the "scrape" cloudtasks queue is empty.
-// If it is, it kicks off a new scrape.
-func (s *Server) scrape(ctx context.Context) {
-	if s.ctClient == nil {
-		return
-	}
-
-	defer log.Print("exiting scrape goroutine")
-
-	ticker := time.NewTicker(24 * time.Hour)
-	for {
-		select {
-		case <-ctx.Done():
-			return
-
-		case <-ticker.C:
-			req := &taskspb.ListTasksRequest{
-				Parent: s.scrapeQueue(),
-			}
-			iter := s.ctClient.ListTasks(ctx, req)
-			_, err := iter.Next()
-			if err != nil && err != iterator.Done {
-				log.Printf("scrape goroutine: error listing queue tasks: %s", err)
-				continue
-			}
-			if err == nil {
-				continue
-			}
-			// err == iterator.Done (i.e., the queue is empty)
-			for m := time.January; m <= time.December; m++ {
-				for d := 1; d <= daysInMonth[m]; d++ {
-					_, err = s.ctClient.CreateTask(ctx, &taskspb.CreateTaskRequest{
-						Parent: s.scrapeQueue(),
-						Task: &taskspb.Task{
-							Name: s.taskName(fmt.Sprintf("%d/%d", m, d)),
-							MessageType: &taskspb.Task_AppEngineHttpRequest{
-								AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
-									HttpMethod:  taskspb.HttpMethod_GET,
-									RelativeUri: fmt.Sprintf("/scrapeday?m=%d&d=%d", m, d),
-								},
-							},
-						},
-					})
-					if err != nil {
-						log.Printf("error queueing /scrapeday task for m=%d, d=%d: %s", m, d, err)
-					}
-				}
-			}
-		}
-	}
 }

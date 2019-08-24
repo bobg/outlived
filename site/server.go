@@ -51,6 +51,7 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/scrapeday", s.handleScrapeday)
 	handle("/scrapeperson", s.handleScrapeperson)
 	handle("/expire", s.handleExpire)
+
 	http.HandleFunc("/js/", s.handleStatic)
 	http.HandleFunc("/css/", s.handleStatic)
 
@@ -81,6 +82,8 @@ type handlerFunc func(http.ResponseWriter, *http.Request) error
 
 func handlerCaller(f handlerFunc) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
+		log.Printf("%s %s", req.Method, req.URL.String())
+
 		ww := &respWriter{w: w}
 		err := f(ww, req)
 		if err != nil {
