@@ -13,15 +13,20 @@ import (
 )
 
 func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) *Server {
-	return &Server{
+	s := &Server{
 		addr:       addr,
 		smtpAddr:   smtpAddr,
 		contentDir: contentDir,
 		projectID:  projectID,
 		locationID: locationID,
 		dsClient:   dsClient,
-		ctClient:   ctClient,
 	}
+	if ctClient == nil {
+		s.tasks = newLocalTasks(ctx, addr)
+	} else {
+		s.tasks = (*gCloudTasks)(ctClient)
+	}
+	return s
 }
 
 type Server struct {
@@ -31,7 +36,7 @@ type Server struct {
 	projectID  string
 	locationID string
 	dsClient   *datastore.Client
-	ctClient   *cloudtasks.Client
+	tasks      taskService
 	sender     sender
 }
 

@@ -10,9 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"google.golang.org/api/iterator"
-	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
-
 	"github.com/bobg/basexx"
 	"github.com/pkg/errors"
 
@@ -39,6 +36,10 @@ func (s *Server) scrapeQueue() string {
 	return fmt.Sprintf("projects/%s/locations/%s/queues/scrape", s.projectID, s.locationID)
 }
 
+func (s *Server) scrapePersonQueue() string { // xxx
+	return fmt.Sprintf("projects/%s/locations/%s/queues/scrapeperson", s.projectID, s.locationID)
+}
+
 func (s *Server) taskName(inp string) string {
 	h := sha256.Sum256([]byte(inp))
 	src := basexx.NewBuffer(h[:], basexx.Binary)
@@ -59,16 +60,11 @@ func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
 	// xxx auth
 
 	ctx := req.Context()
-
-	ltreq := &taskspb.ListTasksRequest{
-		Parent: s.scrapeQueue(),
-	}
-	iter := s.ctClient.ListTasks(ctx, ltreq)
-	_, err := iter.Next()
-	if err != nil && err != iterator.Done {
+	empty, err := s.tasks.queueEmpty(ctx, s.scrapeQueue())
+	if err != nil {
 		return errors.Wrap(err, "checking scrape queue for emptiness")
 	}
-	if err == nil {
+	if !empty {
 		log.Print("scrape queue is not empty")
 		return nil
 	}
@@ -78,18 +74,12 @@ func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
 	// err == iterator.Done (i.e., the queue is empty)
 	for m := time.January; m <= time.December; m++ {
 		for d := 1; d <= daysInMonth[m]; d++ {
-			_, err = s.ctClient.CreateTask(ctx, &taskspb.CreateTaskRequest{
-				Parent: s.scrapeQueue(),
-				Task: &taskspb.Task{
-					Name: s.taskName(fmt.Sprintf("%d/%d", m, d)),
-					MessageType: &taskspb.Task_AppEngineHttpRequest{
-						AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
-							HttpMethod:  taskspb.HttpMethod_GET,
-							RelativeUri: fmt.Sprintf("/scrapeday?m=%d&d=%d", m, d),
-						},
-					},
-				},
-			})
+			err = s.tasks.enqueueTask(
+				ctx,
+				s.scrapeQueue(),
+				s.taskName(fmt.Sprintf("%d/%d", m, d)),
+				fmt.Sprintf("/scrapeday?m=%d&d=%d", m, d),
+			)
 			if err != nil {
 				return errors.Wrapf(err, "queueing /scrapeday task for m=%d, d=%d", m, d)
 			}
@@ -130,18 +120,12 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 		v.Set("desc", desc)
 		u.RawQuery = v.Encode()
 
-		_, err := s.ctClient.CreateTask(ctx, &taskspb.CreateTaskRequest{
-			Parent: s.scrapeQueue(),
-			Task: &taskspb.Task{
-				Name: s.taskName(href),
-				MessageType: &taskspb.Task_AppEngineHttpRequest{
-					AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
-						HttpMethod:  taskspb.HttpMethod_GET,
-						RelativeUri: u.String(),
-					},
-				},
-			},
-		})
+		err := s.tasks.enqueueTask(
+			ctx,
+			s.scrapePersonQueue(),
+			s.taskName(href),
+			u.String(),
+		)
 		return err
 	})
 }

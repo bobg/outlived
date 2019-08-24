@@ -112,12 +112,11 @@ func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Fi
 
 	afterDeduping := len(figures)
 
-	allQ := datastore.NewQuery("Figure")
-
-	before, err := client.Count(ctx, allQ)
-	if err != nil {
-		return errors.Wrap(err, "counting figures before replace")
-	}
+	// TODO(bobg): At least in testing mode, this call to Count (apparently) never returns.
+	// before, err := client.Count(ctx, allQ)
+	// if err != nil {
+	// 	return errors.Wrap(err, "counting figures before replace")
+	// }
 
 	keys := make([]*datastore.Key, len(figures))
 	for i, fig := range figures {
@@ -139,12 +138,12 @@ func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Fi
 		keys, figures = nextKeys, nextFigs
 	}
 
-	after, err := client.Count(ctx, allQ)
-	if err != nil {
-		return errors.Wrap(err, "counting figures after replace")
-	}
+	// after, err := client.Count(ctx, allQ)
+	// if err != nil {
+	// 	return errors.Wrap(err, "counting figures after replace")
+	// }
 
-	log.Printf("replaced figures, %d before deduping, %d after; %d in db before, %d after", beforeDeduping, afterDeduping, before, after)
+	log.Printf("replaced figures, %d before deduping, %d after", beforeDeduping, afterDeduping)
 
 	return nil
 }
