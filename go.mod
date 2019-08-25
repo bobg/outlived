@@ -13,12 +13,14 @@ require (
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/go-kit/kit v0.9.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
+	github.com/gobuffalo/envy v1.7.0 // indirect
 	github.com/gogo/protobuf v1.2.2-0.20190730201129-28a6bbf47e48 // indirect
 	github.com/google/pprof v0.0.0-20190723021845-34ac40c74b70 // indirect
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/jcmturner/gofork v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kr/pty v1.1.8 // indirect
+	github.com/mailgun/mailgun-go v2.0.0+incompatible
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect

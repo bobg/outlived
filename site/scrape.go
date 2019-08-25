@@ -36,10 +36,6 @@ func (s *Server) scrapeQueue() string {
 	return fmt.Sprintf("projects/%s/locations/%s/queues/scrape", s.projectID, s.locationID)
 }
 
-func (s *Server) scrapePersonQueue() string { // xxx
-	return fmt.Sprintf("projects/%s/locations/%s/queues/scrapeperson", s.projectID, s.locationID)
-}
-
 func (s *Server) taskName(inp string) string {
 	h := sha256.Sum256([]byte(inp))
 	src := basexx.NewBuffer(h[:], basexx.Binary)
@@ -122,7 +118,7 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 
 		err := s.tasks.enqueueTask(
 			ctx,
-			s.scrapePersonQueue(),
+			s.scrapeQueue(),
 			s.taskName(href),
 			u.String(),
 		)

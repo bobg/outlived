@@ -3,7 +3,6 @@ package site
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 
@@ -38,10 +37,6 @@ type Server struct {
 	dsClient   *datastore.Client
 	tasks      taskService
 	sender     sender
-}
-
-type sender interface {
-	send(ctx context.Context, from string, to []string, subject string, body io.Reader) error
 }
 
 func (s *Server) Serve(ctx context.Context) {
