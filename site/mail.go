@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const from = "Outlived <bobg+outlived@emphatic.com>" // xxx
+
 type sender interface {
 	send(
 		ctx context.Context,

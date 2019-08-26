@@ -47,13 +47,18 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/setactive", s.handleSetActive)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
+
+	http.Handle("/js/", http.FileServer(http.Dir(s.contentDir)))
+	http.Handle("/css/", http.FileServer(http.Dir(s.contentDir)))
+
+	// cron-initiated
 	handle("/scrape", s.handleScrape)
+	handle("/expire", s.handleExpire)
+	handle("/send", s.handleSend)
+
+	// task-queue-initiated
 	handle("/scrapeday", s.handleScrapeday)
 	handle("/scrapeperson", s.handleScrapeperson)
-	handle("/expire", s.handleExpire)
-
-	http.HandleFunc("/js/", s.handleStatic)
-	http.HandleFunc("/css/", s.handleStatic)
 
 	log.Printf("listening for requests on %s", s.addr)
 

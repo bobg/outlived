@@ -1,4 +1,7 @@
 $(document).ready(function() {
+  var now = new Date();
+  $('#tzoffset').val(-60 * now.getTimezoneOffset());
+
   var setSignupButton2Sensitivity = function(validPassword) {
     var validDate = validateDate($('#datepicker').val());
     $('#signup-button-2').attr('disabled', !validPassword || !validDate);

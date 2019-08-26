@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strconv"
 	ttemplate "text/template"
 
 	"github.com/bobg/aesite"
@@ -16,22 +17,28 @@ import (
 	"github.com/bobg/outlived"
 )
 
-const from = "Outlived <bobg+outlived@emphatic.com>" // xxx
-
 func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 	var (
-		ctx      = req.Context()
-		email    = req.FormValue("email")
-		password = req.FormValue("password")
-		bornStr  = req.FormValue("born")
+		ctx         = req.Context()
+		email       = req.FormValue("email")
+		password    = req.FormValue("password")
+		bornStr     = req.FormValue("born")
+		tzoffsetStr = req.FormValue("tzoffset")
 	)
 	born, err := outlived.ParseDate(bornStr)
 	if err != nil {
 		return codeErr(err, http.StatusBadRequest, "parsing birthdate")
 	}
+
+	tzoffset, err := strconv.Atoi(tzoffsetStr)
+	if err != nil {
+		return codeErr(err, http.StatusBadRequest, "parsing tzoffset %s", tzoffsetStr)
+	}
+
 	u := &outlived.User{
-		Born:   born,
-		Active: true,
+		Born:     born,
+		Active:   true,
+		TZOffset: tzoffset,
 	}
 	err = aesite.NewUser(ctx, s.dsClient, email, password, u)
 	if err != nil {

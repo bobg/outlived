@@ -11,8 +11,9 @@ import (
 
 type User struct {
 	aesite.User
-	Born   Date
-	Active bool
+	Born     Date
+	Active   bool
+	TZOffset int // seconds east of GMT
 }
 
 func (u *User) GetUser() *aesite.User {

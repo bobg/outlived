@@ -5,3 +5,19 @@ cron:
 - description: "figure expirer"
   url: /expire
   schedule: every 24 hours
+- description: "Pacific/Honolulu mailing [-12:00 .. -10:00)"
+  url: /send?tzoffset=-36000
+  schedule: every day 08:00
+  timezone: Pacific/Honolulu
+- description: "America/Los_Angeles mailing [-10:00 .. -08:00)"
+  url: /send?tzoffset=-28800
+  schedule: every day 08:00
+  timezone: America/Los_Angeles
+- description: "America/Chicago mailing [-08:00 .. -06:00)"
+  url: /send?tzoffset=-21600
+  schedule: every day 08:00
+  timezone: America/Chicago
+- description: "America/Puerto_Rico mailing [-06:00 .. -04:00]"
+  url: /send?tzoffset=-14400
+  schedule: every day 08:00
+  timezone: America/Puerto_Rico
