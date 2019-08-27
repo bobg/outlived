@@ -17,7 +17,43 @@ cron:
   url: /send?tzoffset=-21600
   schedule: every day 08:00
   timezone: America/Chicago
-- description: "America/Puerto_Rico mailing [-06:00 .. -04:00]"
+- description: "America/Puerto_Rico mailing [-06:00 .. -04:00)"
   url: /send?tzoffset=-14400
   schedule: every day 08:00
   timezone: America/Puerto_Rico
+- description: "Atlantic/South_Georgia mailing [-04:00 .. -02:00)"
+  url: /send?tzoffset=-7200
+  schedule: every day 08:00
+  timezone: Atlantic/South_Georgia
+- description: "UTC mailing [-02:00 .. 00:00)"
+  url: /send?tzoffset=0
+  schedule: every day 08:00
+  timezone: UTC
+- description: "Africa/Cairo mailing [00:00 .. +02:00)"
+  url: /send?tzoffset=7200
+  schedule: every day 08:00
+  timezone: Africa/Cairo
+- description: "Europe/Samara mailing [+02:00 .. +04:00)"
+  url: /send?tzoffset=14400
+  schedule: every day 08:00
+  timezone: Europe/Samara
+- description: "Asia/Dhaka mailing [+04:00 .. +06:00)"
+  url: /send?tzoffset=21600
+  schedule: every day 08:00
+  timezone: Asia/Dhaka
+- description: "Asia/Hong_Kong mailing [+06:00 .. +08:00)"
+  url: /send?tzoffset=28800
+  schedule: every day 08:00
+  timezone: Asia/Hong_Kong
+- description: "Australia/Sydney mailing [+08:00 .. +10:00)"
+  url: /send?tzoffset=36000
+  schedule: every day 08:00
+  timezone: Australia/Sydney
+- description: "Pacific/Fiji mailing [+10:00 .. +12:00)"
+  url: /send?tzoffset=43200
+  schedule: every day 08:00
+  timezone: Pacific/Fiji
+- description: "Pacific/Kiritimati mailing [+12:00 .. +14:00)"
+  url: /send?tzoffset=50400
+  schedule: every day 08:00
+  timezone: Pacific/Kiritimati
