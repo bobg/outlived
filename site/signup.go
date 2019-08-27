@@ -69,7 +69,7 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 
 	log.Printf("signed up new user %s", u.Email)
 
-	htmpl, err := htemplate.ParseFiles("content/postsignup.html.tmpl")
+	htmpl, err := htemplate.ParseFiles(filepath.Join(s.contentDir, "html/postsignup.html.tmpl"))
 	if err != nil {
 		return errors.Wrap(err, "parsing post-signup page template")
 	}

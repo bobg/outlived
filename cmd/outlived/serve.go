@@ -21,7 +21,7 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		addr       = flagset.String("addr", ":80", "web server listen address")
 		smtpAddr   = flagset.String("smtp", "localhost:587", "smtp submission address")
 		creds      = flagset.String("creds", "", "credentials file")
-		contentDir = flagset.String("dir", "site", "content dir (with html, js, and css subdirs)")
+		contentDir = flagset.String("dir", "static", "content dir (with html, js, and css subdirs)")
 		projectID  = flagset.String("project", "outlived-163105", "project ID")
 		locationID = flagset.String("location", "us-central", "location ID")
 		seed       = flagset.Int64("seed", time.Now().Unix(), "RNG seed")

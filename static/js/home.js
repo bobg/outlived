@@ -93,7 +93,7 @@ $(document).ready(function() {
 
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
 function validateEmail(mail) {
-  return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail);
+  return /^\w+([\.+-]\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail);
 }
 
 function validatePassword(pw) {

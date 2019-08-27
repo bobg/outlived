@@ -19,6 +19,7 @@ func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locat
 		projectID:  projectID,
 		locationID: locationID,
 		dsClient:   dsClient,
+		sender:     new(testSender),
 	}
 	if ctClient == nil {
 		s.tasks = newLocalTasks(ctx, addr)
@@ -48,8 +49,7 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
 
-	http.Handle("/js/", http.FileServer(http.Dir(s.contentDir)))
-	http.Handle("/css/", http.FileServer(http.Dir(s.contentDir)))
+	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(s.contentDir))))
 
 	// cron-initiated
 	handle("/scrape", s.handleScrape)
