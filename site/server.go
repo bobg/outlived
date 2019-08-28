@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
@@ -157,4 +158,24 @@ func (w *respWriter) Write(b []byte) (int, error) {
 func (w *respWriter) WriteHeader(code int) {
 	w.writeCalled = true
 	w.w.WriteHeader(code)
+}
+
+// See
+// https://cloud.google.com/appengine/docs/standard/go112/scheduling-jobs-with-cron-yaml#validating_cron_requests.
+func checkCron(req *http.Request) error {
+	h := strings.TrimSpace(req.Header.Get("X-Appengine-Cron"))
+	if h != "true" {
+		return codeErrType{code: http.StatusUnauthorized}
+	}
+	return nil
+}
+
+// See
+// https://cloud.google.com/tasks/docs/creating-appengine-handlers#reading_request_headers.
+func checkTaskQueue(req *http.Request, queue string) error {
+	h := strings.TrimSpace(req.Header.Get("X-AppEngine-QueueName"))
+	if h != queue {
+		return codeErrType{code: http.StatusUnauthorized}
+	}
+	return nil
 }

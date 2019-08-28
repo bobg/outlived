@@ -9,7 +9,11 @@ import (
 
 // Function handleExpire expires stale figures.
 func (s *Server) handleExpire(w http.ResponseWriter, req *http.Request) error {
-	// xxx auth
+	err := checkCron(req)
+	if err != nil {
+		return err
+	}
+
 	log.Print("expiring stale figures")
 	return outlived.ExpireFigures(req.Context(), s.dsClient)
 }
