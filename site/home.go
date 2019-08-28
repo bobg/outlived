@@ -60,6 +60,13 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) error {
 		"todaystr":   time.Now().Format("Monday, 2 January 2006"),
 		"numprinter": numprinter,
 	}
+	if sess != nil {
+		dict["csrf"], err = sess.CSRFToken()
+		if err != nil {
+			return errors.Wrap(err, "setting CSRF token")
+		}
+	}
+
 	err = tmpl.Execute(w, dict)
 	return errors.Wrap(err, "executing HTML template")
 }

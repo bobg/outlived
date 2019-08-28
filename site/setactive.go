@@ -11,8 +11,9 @@ import (
 
 func (s *Server) handleSetActive(w http.ResponseWriter, req *http.Request) error {
 	var (
-		ctx    = req.Context()
-		active = req.FormValue("active") == "true"
+		ctx       = req.Context()
+		active    = req.FormValue("active") == "true"
+		csrfToken = req.FormValue("csrf")
 	)
 	sess, err := aesite.GetSession(ctx, s.dsClient, req)
 	if err != nil {
@@ -20,6 +21,10 @@ func (s *Server) handleSetActive(w http.ResponseWriter, req *http.Request) error
 	}
 	if sess == nil {
 		return codeErrType{code: http.StatusUnauthorized}
+	}
+	err = sess.CSRFCheck(csrfToken)
+	if err != nil {
+		return errors.Wrap(err, "checking CSRF token")
 	}
 	var u outlived.User
 	err = sess.GetUser(ctx, s.dsClient, &u)

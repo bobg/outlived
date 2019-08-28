@@ -15,9 +15,11 @@
     {{ if .user }}
 
       <div id="account-div">
-        Signed in as {{ .user.Email }}
-        <a href="/settings">Settings</a>
-        <a href="/logout">Logout</a>
+        <form method="POST" action="/logout">
+          Signed in as {{ .user.Email }}
+          <button type="submit">Logout</button>
+          <input type="hidden" name="csrf" value="{{ .csrf }}"></input>
+        </form>
       </div>
 
       <div id="alive">
@@ -46,12 +48,14 @@
       <div id="settings">
         <label for="active">Receive outlived e-mail?</label>
         <input type="checkbox" id="active" name="active" {{ if .user.Active }} checked {{ end }}>
+        <input type="hidden" id="csrf" name="csrf" value="{{ .csrf }}"></input>
       </div>
 
     {{ else }}
 
       <div>
         <form id="login-signup-form" method="POST">
+          <input type="hidden" name="csrf" value="{{ .csrf }}"></input>
           <input type="hidden" id="tzoffset" name="tzoffset"></input>
           <label for="email">E-mail address</label>
           <input type="email" id="email" name="email"></input>

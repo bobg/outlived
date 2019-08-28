@@ -1,6 +1,7 @@
 package site
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -11,6 +12,10 @@ import (
 )
 
 func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
+	if req.Method != "POST" {
+		return fmt.Errorf("method %s not allowed", req.Method)
+	}
+
 	var (
 		u        outlived.User
 		email    = req.FormValue("email")

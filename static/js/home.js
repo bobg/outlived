@@ -77,7 +77,10 @@ $(document).ready(function() {
     $.ajax({
       url: '/setactive',
       method: 'POST',
-      data: {active: !wasChecked},
+      data: {
+        active: !wasChecked,
+        csrf: $('#csrf').val(),
+      },
       success: () => {
         $('#active').attr('checked', !wasChecked);
       },
