@@ -2,20 +2,16 @@ package site
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"log"
 	"net/http"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
-	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
 )
 
-func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
-	const adminKeyKey = "admin-key"
-
+func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) *Server {
 	s := &Server{
 		addr:       addr,
 		smtpAddr:   smtpAddr,
@@ -26,31 +22,12 @@ func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locat
 		sender:     new(testSender),
 	}
 
-	var buf [32]byte
-	_, err := rand.Read(buf[:])
-	if err != nil {
-		return nil, errors.Wrap(err, "generating random admin key")
-	}
-
-	aesite.NewSetting(ctx, dsClient, adminKeyKey, buf[:])
-	// TODO: We're ignoring the error result from this function,
-	// assuming it means "entity already exists."
-	// But it could be a network error or a context timeout or something.
-	// The datastore library gives no way to distinguish "entity exists" errors.
-	// When it does, distinguish them.
-	// See https://github.com/googleapis/google-cloud-go/issues/1561.
-
-	s.adminKey, err = aesite.GetSetting(ctx, dsClient, adminKeyKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "getting admin key")
-	}
-
 	if ctClient == nil {
 		s.tasks = newLocalTasks(ctx, addr)
 	} else {
 		s.tasks = (*gCloudTasks)(ctClient)
 	}
-	return s, nil
+	return s
 }
 
 type Server struct {
@@ -59,7 +36,6 @@ type Server struct {
 	contentDir string
 	projectID  string
 	locationID string
-	adminKey   []byte
 	dsClient   *datastore.Client
 	tasks      taskService
 	sender     sender

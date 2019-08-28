@@ -63,10 +63,7 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		}
 	}
 
-	s, err := site.NewServer(ctx, *addr, *smtpAddr, *contentDir, *projectID, *locationID, dsClient, ctClient)
-	if err != nil {
-		return errors.Wrap(err, "creating outlived server")
-	}
+	s := site.NewServer(ctx, *addr, *smtpAddr, *contentDir, *projectID, *locationID, dsClient, ctClient)
 	s.Serve(ctx)
 
 	return nil
