@@ -52,13 +52,13 @@ func (s *Server) Serve(ctx context.Context) {
 	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(s.contentDir))))
 
 	// cron-initiated
-	handle("/scrape", s.handleScrape)
-	handle("/expire", s.handleExpire)
-	handle("/send", s.handleSend)
+	handle("/task/scrape", s.handleScrape)
+	handle("/task/expire", s.handleExpire)
+	handle("/task/send", s.handleSend)
 
 	// task-queue-initiated
-	handle("/scrapeday", s.handleScrapeday)
-	handle("/scrapeperson", s.handleScrapeperson)
+	handle("/task/scrapeday", s.handleScrapeday)
+	handle("/task/scrapeperson", s.handleScrapeperson)
 
 	log.Printf("listening for requests on %s", s.addr)
 

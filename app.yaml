@@ -3,5 +3,10 @@ runtime: go112
 handlers:
 - url: /static
   static_dir: static
+  upload: static/.*
+- url: /task
+  script: auto
+  secure: always
 - url: /.*
   script: auto
+  secure: always

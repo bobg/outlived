@@ -74,7 +74,7 @@ func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
 				ctx,
 				s.scrapeQueue(),
 				s.taskName(fmt.Sprintf("%d/%d", m, d)),
-				fmt.Sprintf("/scrapeday?m=%d&d=%d", m, d),
+				fmt.Sprintf("/task/scrapeday?m=%d&d=%d", m, d),
 			)
 			if err != nil {
 				return errors.Wrapf(err, "queueing /scrapeday task for m=%d, d=%d", m, d)
@@ -108,7 +108,7 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 
 	ctx := req.Context()
 	return outlived.ScrapeDay(ctx, time.Month(m), d, func(ctx context.Context, href, title, desc string) error {
-		u, _ := url.Parse("/scrapeperson")
+		u, _ := url.Parse("/task/scrapeperson")
 
 		v := url.Values{}
 		v.Set("href", href)
