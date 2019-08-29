@@ -2,6 +2,7 @@ package site
 
 import (
 	"bytes"
+	"fmt"
 	htemplate "html/template"
 	"net/http"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
 	"golang.org/x/text/message"
 	"google.golang.org/api/iterator"
@@ -40,6 +42,12 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 	loc := time.FixedZone(tzname, tzoffset)
 	now := time.Now().In(loc)
 	today := outlived.Date{Y: now.Year(), M: now.Month(), D: now.Day()}
+
+	idemKey := fmt.Sprintf("send-%s-%s", today, tzoffsetStr)
+	err = aesite.Idempotent(ctx, s.dsClient, idemKey)
+	if err != nil {
+		return errors.Wrap(err, "checking idempotency")
+	}
 
 	q := datastore.NewQuery("User")
 	q = q.Filter("Verified =", true).Filter("Active =", true)
