@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	htemplate "html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -76,6 +77,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			return errors.Wrapf(err, "looking up figures alive for %d days", since-1)
 		}
 		if len(figures) == 0 {
+			log.Printf("%d users west of %s born %d days ago, but no figures alive for %d days", len(users), loc, since, since-1)
 			return nil
 		}
 
@@ -119,7 +121,13 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 		}
 
 		err = s.sender.send(ctx, from, to, subject, strings.NewReader(textPart), strings.NewReader(htmlPart))
-		return errors.Wrap(err, "sending message")
+		if err != nil {
+			return errors.Wrap(err, "sending message")
+		}
+
+		log.Printf("sent message to %d users west of %s born %d days ago about %d figure(s) alive for %d days", len(users), loc, since, len(figures), since-1)
+
+		return nil
 	}
 
 	for {
@@ -129,12 +137,12 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			break
 		}
 		if err != nil {
-			// xxx
+			return errors.Wrap(err, "iterating over users")
 		}
 		if u.Born != lastBorn {
 			err = wrap()
 			if err != nil {
-				// xxx
+				return err
 			}
 		}
 		users = append(users, &u)

@@ -28,6 +28,12 @@ type mailgunSender struct {
 	mg *mailgun.MailgunImpl
 }
 
+func newMailgunSender(domain, apiKey string) *mailgunSender {
+	return &mailgunSender{
+		mg: mailgun.NewMailgun(domain, apiKey),
+	}
+}
+
 func (mg *mailgunSender) send(ctx context.Context, from string, to []string, subject string, textR io.Reader, htmlR io.Reader) error {
 	textBody, err := ioutil.ReadAll(textR)
 	if err != nil {

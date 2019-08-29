@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -37,12 +37,12 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 
 	if *test {
 		if *creds != "" {
-			log.Fatal("cannot supply both -test and -creds")
+			return fmt.Errorf("cannot supply both -test and -creds")
 		}
 
 		err := aesite.DSTest(ctx, *projectID)
 		if err != nil {
-			log.Fatal(err)
+			return errors.Wrap(err, "starting test datastore service")
 		}
 	}
 
@@ -63,7 +63,10 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		}
 	}
 
-	s := site.NewServer(ctx, *addr, *smtpAddr, *contentDir, *projectID, *locationID, dsClient, ctClient)
+	s, err := site.NewServer(ctx, *addr, *smtpAddr, *contentDir, *projectID, *locationID, dsClient, ctClient)
+	if err != nil {
+		return errors.Wrap(err, "creating server")
+	}
 	s.Serve(ctx)
 
 	return nil

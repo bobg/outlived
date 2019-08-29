@@ -9,10 +9,11 @@ import (
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
+	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
 )
 
-func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) *Server {
+func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
 	s := &Server{
 		addr:       addr,
 		smtpAddr:   smtpAddr,
@@ -20,15 +21,26 @@ func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locat
 		projectID:  projectID,
 		locationID: locationID,
 		dsClient:   dsClient,
-		sender:     new(testSender),
 	}
 
-	if ctClient == nil {
+	if ctClient == nil { // test mode
 		s.tasks = newLocalTasks(ctx, addr)
+		s.sender = new(testSender)
 	} else {
 		s.tasks = (*gCloudTasks)(ctClient)
+
+		domain, err := aesite.GetSetting(ctx, dsClient, "mailgun_domain")
+		if err != nil {
+			return nil, errors.Wrap(err, "getting setting for mailgun_domain")
+		}
+		apiKey, err := aesite.GetSetting(ctx, dsClient, "mailgun_api_key")
+		if err != nil {
+			return nil, errors.Wrap(err, "getting setting for mailgun_api_key")
+		}
+
+		s.sender = newMailgunSender(string(domain), string(apiKey))
 	}
-	return s
+	return s, nil
 }
 
 type Server struct {
