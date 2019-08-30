@@ -53,7 +53,7 @@ func (s *Server) taskName(inp string) string {
 // (Each handled by handleScrapeday.)
 // A task is queued only if the scrape queue is empty.
 func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
-	err := checkCron(req)
+	err := s.checkCron(req)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
 }
 
 func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error {
-	err := checkTaskQueue(req, s.scrapeQueue())
+	err := s.checkTaskQueue(req, s.scrapeQueue())
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 }
 
 func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) error {
-	err := checkTaskQueue(req, s.scrapeQueue())
+	err := s.checkTaskQueue(req, s.scrapeQueue())
 	if err != nil {
 		return err
 	}

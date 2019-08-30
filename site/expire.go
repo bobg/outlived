@@ -9,7 +9,7 @@ import (
 
 // Function handleExpire expires stale figures.
 func (s *Server) handleExpire(w http.ResponseWriter, req *http.Request) error {
-	err := checkCron(req)
+	err := s.checkCron(req)
 	if err != nil {
 		return err
 	}

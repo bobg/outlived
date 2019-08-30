@@ -23,7 +23,7 @@ import (
 const subject = "You have outlived!"
 
 func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
-	err := checkCron(req)
+	err := s.checkCron(req)
 	if err != nil {
 		return err
 	}

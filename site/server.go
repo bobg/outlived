@@ -14,6 +14,8 @@ import (
 )
 
 func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
+	testMode := ctClient == nil
+
 	s := &Server{
 		addr:       addr,
 		smtpAddr:   smtpAddr,
@@ -21,9 +23,10 @@ func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locat
 		projectID:  projectID,
 		locationID: locationID,
 		dsClient:   dsClient,
+		testMode:   testMode,
 	}
 
-	if ctClient == nil { // test mode
+	if testMode { // test mode
 		s.tasks = newLocalTasks(ctx, addr)
 		s.sender = new(testSender)
 	} else {
@@ -52,6 +55,7 @@ type Server struct {
 	dsClient   *datastore.Client
 	tasks      taskService
 	sender     sender
+	testMode   bool
 }
 
 func (s *Server) Serve(ctx context.Context) {
@@ -174,7 +178,11 @@ func (w *respWriter) WriteHeader(code int) {
 
 // See
 // https://cloud.google.com/appengine/docs/standard/go112/scheduling-jobs-with-cron-yaml#validating_cron_requests.
-func checkCron(req *http.Request) error {
+func (s *Server) checkCron(req *http.Request) error {
+	if s.testMode {
+		return nil
+	}
+
 	h := strings.TrimSpace(req.Header.Get("X-Appengine-Cron"))
 	if h != "true" {
 		return codeErrType{code: http.StatusUnauthorized}
@@ -184,7 +192,11 @@ func checkCron(req *http.Request) error {
 
 // See
 // https://cloud.google.com/tasks/docs/creating-appengine-handlers#reading_request_headers.
-func checkTaskQueue(req *http.Request, queue string) error {
+func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
+	if s.testMode {
+		return nil
+	}
+
 	h := strings.TrimSpace(req.Header.Get("X-AppEngine-QueueName"))
 	if h != queue {
 		return codeErrType{code: http.StatusUnauthorized}
