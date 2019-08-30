@@ -53,7 +53,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 	q := datastore.NewQuery("User")
 	q = q.Filter("Verified =", true).Filter("Active =", true)
 	q = q.Filter("TZSector =", outlived.TZSector(tzoffset))
-	q = q.Order("Born")
+	q = q.Order("Born.Y").Order("Born.M").Order("Born.D")
 	it := s.dsClient.Run(ctx, q)
 
 	var (
@@ -65,7 +65,6 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 		if len(users) == 0 {
 			return nil
 		}
-
 		defer func() {
 			users = nil
 		}()
