@@ -52,7 +52,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 
 	q := datastore.NewQuery("User")
 	q = q.Filter("Verified =", true).Filter("Active =", true)
-	q = q.Filter("TZOffset >=", tzoffset).Filter("TZOffset <", tzoffset+7200)
+	q = q.Filter("TZSector =", outlived.TZSector(tzoffset))
 	q = q.Order("Born")
 	it := s.dsClient.Run(ctx, q)
 

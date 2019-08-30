@@ -20,6 +20,7 @@ func cliAdmin(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		creds     = flagset.String("creds", "", "credentials file")
 		projectID = flagset.String("project", "outlived-163105", "project ID")
 		test      = flagset.Bool("test", false, "run in test mode")
+		verify    = flagset.Bool("verify", false, "set verified on all users?")
 	)
 
 	err := flagset.Parse(args)
@@ -51,13 +52,33 @@ func cliAdmin(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 	it := dsClient.Run(ctx, q)
 	for {
 		var u outlived.User
-		_, err = it.Next(&u)
+		key, err := it.Next(&u)
 		if err == iterator.Done {
 			return nil
 		}
 		if err != nil {
 			return errors.Wrap(err, "iterating over users")
 		}
+
+		var store bool
+		if *verify && !u.Verified {
+			u.Verified = true
+			store = true
+		}
+
+		tzsector := outlived.TZSector(u.TZOffset)
+		if tzsector != u.TZSector {
+			u.TZSector = tzsector
+			store = true
+		}
+
+		if store {
+			_, err = dsClient.Put(ctx, key, &u)
+			if err != nil {
+				return errors.Wrapf(err, "updating user %s", u.Email)
+			}
+		}
+
 		fmt.Printf("%+v\n", u)
 	}
 }

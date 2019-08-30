@@ -39,6 +39,7 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 		Born:     born,
 		Active:   true,
 		TZOffset: tzoffset,
+		TZSector: outlived.TZSector(tzoffset),
 	}
 	err = aesite.NewUser(ctx, s.dsClient, email, password, u)
 	if err != nil {
