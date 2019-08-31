@@ -39,6 +39,22 @@
         </form>
       </div>
 
+      <div id="settings">
+        <label for="active">Receive outlived e-mail?</label>
+        <input type="checkbox"
+               id="active" 
+               name="active" 
+               {{ if .user.Active }} checked {{ end }} 
+               {{ if not .user.Verified }} disabled {{ end }}>
+        {{ if not .user.Verified }}
+          <span>
+            You have not yet confirmed your e-mail address.
+            <button>xxx</button>
+          </span>
+        {{ end }}
+        <input type="hidden" id="csrf" name="csrf" value="{{ .csrf }}"></input>
+      </div>
+
       <div id="alive">
         <p>
           Today is {{ .todaystr }}.
@@ -67,12 +83,6 @@
             {{ end }}
           </ul>
         {{ end }}
-      </div>
-
-      <div id="settings">
-        <label for="active">Receive outlived e-mail?</label>
-        <input type="checkbox" id="active" name="active" {{ if .user.Active }} checked {{ end }}>
-        <input type="hidden" id="csrf" name="csrf" value="{{ .csrf }}"></input>
       </div>
 
     {{ else }}
