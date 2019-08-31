@@ -13,12 +13,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
+func NewServer(ctx context.Context, addr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
 	testMode := ctClient == nil
 
 	s := &Server{
 		addr:       addr,
-		smtpAddr:   smtpAddr,
 		contentDir: contentDir,
 		projectID:  projectID,
 		locationID: locationID,
@@ -48,7 +47,6 @@ func NewServer(ctx context.Context, addr, smtpAddr, contentDir, projectID, locat
 
 type Server struct {
 	addr       string
-	smtpAddr   string
 	contentDir string
 	projectID  string
 	locationID string

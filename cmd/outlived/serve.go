@@ -4,8 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"math/rand"
-	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
@@ -19,12 +17,10 @@ import (
 func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 	var (
 		addr       = flagset.String("addr", ":80", "web server listen address")
-		smtpAddr   = flagset.String("smtp", "localhost:587", "smtp submission address")
 		creds      = flagset.String("creds", "", "credentials file")
 		contentDir = flagset.String("dir", "static", "content dir (with html, js, and css subdirs)")
 		projectID  = flagset.String("project", "outlived-163105", "project ID")
 		locationID = flagset.String("location", "us-central", "location ID")
-		seed       = flagset.Int64("seed", time.Now().Unix(), "RNG seed")
 		test       = flagset.Bool("test", false, "run in test mode")
 	)
 
@@ -32,8 +28,6 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	rand.Seed(*seed)
 
 	if *test {
 		if *creds != "" {
@@ -63,7 +57,7 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		}
 	}
 
-	s, err := site.NewServer(ctx, *addr, *smtpAddr, *contentDir, *projectID, *locationID, dsClient, ctClient)
+	s, err := site.NewServer(ctx, *addr, *contentDir, *projectID, *locationID, dsClient, ctClient)
 	if err != nil {
 		return errors.Wrap(err, "creating server")
 	}

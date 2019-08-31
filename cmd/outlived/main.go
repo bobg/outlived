@@ -15,20 +15,27 @@ var commands = map[string]func(context.Context, *flag.FlagSet, []string) error{
 }
 
 func main() {
+	ctx := context.Background()
+
 	flag.Parse()
 
+	flagset := flag.NewFlagSet("", flag.ContinueOnError)
+
 	if flag.NArg() == 0 {
-		log.Fatal("usage: subcommand [args]")
+		log.Print("running server in default mode")
+		err := cliServe(ctx, flagset, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
 
 	cmd := flag.Arg(0)
-	flagset := flag.NewFlagSet("", flag.ContinueOnError)
 	fn, ok := commands[cmd]
 	if !ok {
 		log.Fatalf("unknown command %s", cmd)
 	}
 
-	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
