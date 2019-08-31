@@ -80,11 +80,11 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 				if err != nil {
 					return errors.Wrapf(err, "waiting to scrape person %s (%s)", title, href)
 				}
-				return outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
+				return outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, imgAlt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
 					bornStr := fmt.Sprintf("%d-%02d-%02d", bornY, bornM, bornD)
 					diedStr := fmt.Sprintf("%d-%02d-%02d", diedY, diedM, diedD)
 
-					return w.Write([]string{title, desc, bornStr, diedStr, strconv.Itoa(aliveDays), href, strconv.Itoa(pageviews)})
+					return w.Write([]string{title, desc, bornStr, diedStr, strconv.Itoa(aliveDays), href, imgSrc, imgAlt, strconv.Itoa(pageviews)})
 				})
 			})
 			if err != nil {

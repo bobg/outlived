@@ -147,11 +147,13 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 	log.Printf("scraping person %s (%s)", title, href)
 
 	ctx := req.Context()
-	return outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
+	return outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, alt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
 		fig := &outlived.Figure{
 			Name:      title,
 			Desc:      desc,
 			Link:      href,
+			ImgSrc:    imgSrc,
+			ImgAlt:    alt,
 			Born:      outlived.Date{Y: bornY, M: time.Month(bornM), D: bornD},
 			Died:      outlived.Date{Y: diedY, M: time.Month(diedM), D: diedD},
 			DaysAlive: aliveDays,

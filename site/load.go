@@ -27,7 +27,7 @@ func (s *Server) handleLoad(w http.ResponseWriter, req *http.Request) error {
 		if err == io.EOF {
 			break
 		}
-		if len(fields) != 7 {
+		if len(fields) != 9 {
 			return fmt.Errorf("cannot parse: %v", fields)
 		}
 		if err != nil {
@@ -42,14 +42,16 @@ func (s *Server) handleLoad(w http.ResponseWriter, req *http.Request) error {
 			return codeErr(err, http.StatusBadRequest, "parsing %s: %s", fields[3])
 		}
 		daysAlive := died.Since(born)
-		pageViews, err := strconv.Atoi(fields[6])
+		pageViews, err := strconv.Atoi(fields[8])
 		if err != nil {
-			return codeErr(err, http.StatusBadRequest, "parsing pageviews count %s: %s", fields[6])
+			return codeErr(err, http.StatusBadRequest, "parsing pageviews count %s: %s", fields[8])
 		}
 		f := &outlived.Figure{
 			Name:      fields[0],
 			Desc:      fields[1],
 			Link:      fields[5],
+			ImgSrc:    fields[6],
+			ImgAlt:    fields[7],
 			Born:      born,
 			Died:      died,
 			DaysAlive: daysAlive,

@@ -113,7 +113,7 @@ func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx conte
 	return nil
 }
 
-func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(ctx context.Context, title, desc, href string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error) error {
+func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(ctx context.Context, title, desc, href, imgSrc, imgAlt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error) error {
 	link := "https://en.wikipedia.org" + href
 	log.Printf("getting %s", link)
 	resp, err := http.Get(link)
@@ -131,6 +131,8 @@ func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(c
 	if infobox == nil {
 		return fmt.Errorf("no infobox in %s", link)
 	}
+
+	imgSrc, imgAlt := findImg(infobox)
 
 	bornY, bornM, bornD, err := findDateRow(infobox, "Born")
 	if err != nil {
@@ -159,7 +161,7 @@ func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(c
 		return errors.Wrap(err, "getting pageviews")
 	}
 
-	return onPerson(ctx, title, desc, href, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews)
+	return onPerson(ctx, title, desc, href, imgSrc, imgAlt, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews)
 }
 
 var nameRegex = regexp.MustCompile(`[^/]+$`)
@@ -311,19 +313,35 @@ func findDeathsUL(node *html.Node) *html.Node {
 	return nil
 }
 
-func findInfoBox(node *html.Node) *html.Node {
-	if node.Type == html.ElementNode && node.DataAtom == atom.Table && elClassContains(node, "infobox") {
+func findNode(node *html.Node, pred func(*html.Node) bool) *html.Node {
+	if pred(node) {
 		return node
 	}
 	if node.Type == html.TextNode {
 		return nil
 	}
 	for child := node.FirstChild; child != nil; child = child.NextSibling {
-		if result := findInfoBox(child); result != nil {
-			return result
+		if found := findNode(child, pred); found != nil {
+			return found
 		}
 	}
 	return nil
+}
+
+func findInfoBox(node *html.Node) *html.Node {
+	return findNode(node, func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.DataAtom == atom.Table && elClassContains(n, "infobox")
+	})
+}
+
+func findImg(node *html.Node) (src, alt string) {
+	found := findNode(node, func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.DataAtom == atom.Img
+	})
+	if found != nil {
+		return elAttr(found, "src"), elAttr(found, "alt")
+	}
+	return "", ""
 }
 
 func toPlainText(w io.Writer, node *html.Node) {

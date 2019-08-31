@@ -18,10 +18,11 @@ type Figure struct {
 	// This also serves as the figure's unique datastore key.
 	Link string
 
-	Name, Desc string
-	Born, Died Date
-	DaysAlive  int
-	Pageviews  int
+	Name, Desc     string
+	Born, Died     Date
+	DaysAlive      int
+	Pageviews      int
+	ImgSrc, ImgAlt string
 
 	Updated time.Time
 }
