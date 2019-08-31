@@ -1,0 +1,42 @@
+# Required by the aesite package.
+- kind: IdemKey
+  properties:
+  - name: Exp
+
+# FiguresAliveFor
+- kind: Figure
+  properties:
+  - name: DaysAlive
+  - name: Pageviews
+    direction: desc
+
+# FiguresAliveForAtMost
+- kind: Figure
+  properties:
+  - name: DaysAlive
+    direction: desc
+  - name: Pageviews
+    direction: desc
+
+# FiguresDiedOn
+- kind: Figure
+  properties:
+  - name: Died.M
+  - name: Died.D
+  - name: Pageviews
+    direction: desc
+
+# ExpireFigures
+- kind: Figure
+  properties:
+  - name: Updated
+
+# handleSend
+- kind: User
+  properties:
+  - name: Verified
+  - name: Active
+  - name: TZSector
+  - name: Born.Y
+  - name: Born.M
+  - name: Born.D
