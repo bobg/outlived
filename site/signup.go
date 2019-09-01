@@ -57,7 +57,7 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "constructing verification link")
 	}
-	link = req.URL.ResolveReference(link)
+	link = requrl(req, link)
 
 	buf := new(bytes.Buffer)
 	err = ttmpl.Execute(buf, map[string]interface{}{"link": link})

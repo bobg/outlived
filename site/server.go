@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -118,7 +119,7 @@ type handlerFunc func(http.ResponseWriter, *http.Request) error
 
 func handlerCaller(f handlerFunc) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		log.Printf("%s %s", req.Method, req.URL.String())
+		log.Printf("%s %s", req.Method, req.URL)
 
 		ww := &respWriter{w: w}
 		err := f(ww, req)
@@ -215,4 +216,18 @@ func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
 		return codeErrType{code: http.StatusUnauthorized}
 	}
 	return nil
+}
+
+func requrl(req *http.Request, ref *url.URL) *url.URL {
+	result := *req.URL
+	if ref != nil {
+		result = *(result.ResolveReference(ref))
+	}
+	if result.Host == "" {
+		result.Host = req.Host
+	}
+	if result.Scheme == "" {
+		result.Scheme = "https"
+	}
+	return &result
 }
