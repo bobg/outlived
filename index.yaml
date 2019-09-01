@@ -1,7 +1,4 @@
-# Required by the aesite package.
-- kind: IdemKey
-  properties:
-  - name: Exp
+indexes:
 
 # FiguresAliveFor
 - kind: Figure
@@ -25,11 +22,6 @@
   - name: Died.D
   - name: Pageviews
     direction: desc
-
-# ExpireFigures
-- kind: Figure
-  properties:
-  - name: Updated
 
 # handleSend
 - kind: User

@@ -16,7 +16,6 @@ import (
 
 func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 	var (
-		addr       = flagset.String("addr", ":80", "web server listen address")
 		creds      = flagset.String("creds", "", "credentials file")
 		contentDir = flagset.String("dir", "static", "content dir (with html, js, and css subdirs)")
 		projectID  = flagset.String("project", "outlived-163105", "project ID")
@@ -57,7 +56,7 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 		}
 	}
 
-	s, err := site.NewServer(ctx, *addr, *contentDir, *projectID, *locationID, dsClient, ctClient)
+	s, err := site.NewServer(ctx, *contentDir, *projectID, *locationID, dsClient, ctClient)
 	if err != nil {
 		return errors.Wrap(err, "creating server")
 	}

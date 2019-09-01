@@ -19,34 +19,8 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "getting session")
 	}
-	var (
-		u       *outlived.User
-		figures []*outlived.Figure
-		alive   int
-	)
-	today := outlived.Today()
-	if sess != nil {
-		u = new(outlived.User)
-		err = s.dsClient.Get(ctx, sess.UserKey, u)
-		if err != nil {
-			return errors.Wrap(err, "getting user")
-		}
 
-		alive = today.Since(u.Born)
-		figures, err = outlived.FiguresAliveForAtMost(ctx, s.dsClient, alive-1, 20)
-		if err != nil {
-			return errors.Wrap(err, "getting figures")
-		}
-	} else {
-		figures, err = outlived.FiguresDiedOn(ctx, s.dsClient, today.M, today.D, 20)
-		if err != nil {
-			return errors.Wrap(err, "getting figures")
-		}
-	}
-	tmpl, err := template.ParseFiles(filepath.Join(s.contentDir, "html/home.html.tmpl"))
-	if err != nil {
-		return errors.Wrap(err, "parsing HTML template")
-	}
+	today := outlived.Today()
 
 	p := message.NewPrinter(message.MatchLanguage("en"))
 	numprinter := func(n int) string {
@@ -54,12 +28,40 @@ func (s *Server) handleHome(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	dict := map[string]interface{}{
-		"user":       u,
-		"figures":    figures,
-		"alive":      alive,
 		"todaystr":   time.Now().Format("Monday, 2 January 2006"),
 		"numprinter": numprinter,
 	}
+
+	if sess != nil {
+		u := new(outlived.User)
+		err = s.dsClient.Get(ctx, sess.UserKey, u)
+		if err != nil {
+			return errors.Wrap(err, "getting user")
+		}
+
+		alive := today.Since(u.Born)
+		figures, err := outlived.FiguresAliveForAtMost(ctx, s.dsClient, alive-1, 20)
+		if err != nil {
+			return errors.Wrap(err, "getting figures")
+		}
+
+		dict["user"] = u
+		dict["figures"] = figures
+		dict["alive"] = alive
+	} else {
+		figures, err := outlived.FiguresDiedOn(ctx, s.dsClient, today.M, today.D, 20)
+		if err != nil {
+			return errors.Wrap(err, "getting figures")
+		}
+
+		dict["figures"] = figures
+	}
+
+	tmpl, err := template.ParseFiles(filepath.Join(s.contentDir, "html/home.html.tmpl"))
+	if err != nil {
+		return errors.Wrap(err, "parsing HTML template")
+	}
+
 	if sess != nil {
 		dict["csrf"], err = sess.CSRFToken()
 		if err != nil {

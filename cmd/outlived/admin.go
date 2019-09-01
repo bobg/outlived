@@ -15,12 +15,37 @@ import (
 	"github.com/bobg/outlived"
 )
 
+var adminCommands = map[string]func(context.Context, *flag.FlagSet, []string) error{
+	"list": cliAdminList,
+	"get":  cliAdminGet,
+	"set":  cliAdminSet,
+}
+
 func cliAdmin(ctx context.Context, flagset *flag.FlagSet, args []string) error {
+	err := flagset.Parse(args)
+	if err != nil {
+		return err
+	}
+
+	if flagset.NArg() == 0 {
+		return errors.New("usage: outlived admin <subcommand> [args]")
+	}
+
+	cmd := flagset.Arg(0)
+	fn, ok := adminCommands[cmd]
+	if !ok {
+		return fmt.Errorf("unknown admin subcommand %s", cmd)
+	}
+
+	args = flagset.Args()
+	return fn(ctx, flag.NewFlagSet("", flag.ContinueOnError), args[1:])
+}
+
+func cliAdminList(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 	var (
 		creds     = flagset.String("creds", "", "credentials file")
 		projectID = flagset.String("project", "outlived-163105", "project ID")
 		test      = flagset.Bool("test", false, "run in test mode")
-		verify    = flagset.Bool("verify", false, "set verified on all users?")
 	)
 
 	err := flagset.Parse(args)
@@ -52,7 +77,7 @@ func cliAdmin(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 	it := dsClient.Run(ctx, q)
 	for {
 		var u outlived.User
-		key, err := it.Next(&u)
+		_, err := it.Next(&u)
 		if err == iterator.Done {
 			return nil
 		}
@@ -60,25 +85,90 @@ func cliAdmin(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 			return errors.Wrap(err, "iterating over users")
 		}
 
-		var store bool
-		if *verify && !u.Verified {
-			u.Verified = true
-			store = true
-		}
-
-		tzsector := outlived.TZSector(u.TZOffset)
-		if tzsector != u.TZSector {
-			u.TZSector = tzsector
-			store = true
-		}
-
-		if store {
-			_, err = dsClient.Put(ctx, key, &u)
-			if err != nil {
-				return errors.Wrapf(err, "updating user %s", u.Email)
-			}
-		}
-
 		fmt.Printf("%+v\n", u)
 	}
+}
+
+func cliAdminGet(ctx context.Context, flagset *flag.FlagSet, args []string) error {
+	var (
+		creds     = flagset.String("creds", "", "credentials file")
+		projectID = flagset.String("project", "outlived-163105", "project ID")
+		test      = flagset.Bool("test", false, "run in test mode")
+	)
+
+	err := flagset.Parse(args)
+	if err != nil {
+		return err
+	}
+
+	if flagset.NArg() != 1 {
+		return errors.New("usage: outlived admin get VAR")
+	}
+
+	if *test {
+		if *creds != "" {
+			log.Fatal("cannot supply both -test and -creds")
+		}
+
+		err := aesite.DSTest(ctx, *projectID)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	var options []option.ClientOption
+	if *creds != "" {
+		options = append(options, option.WithCredentialsFile(*creds))
+	}
+	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
+	if err != nil {
+		return errors.Wrap(err, "creating datastore client")
+	}
+
+	val, err := aesite.GetSetting(ctx, dsClient, flagset.Arg(0))
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(val))
+	return nil
+}
+
+func cliAdminSet(ctx context.Context, flagset *flag.FlagSet, args []string) error {
+	var (
+		creds     = flagset.String("creds", "", "credentials file")
+		projectID = flagset.String("project", "outlived-163105", "project ID")
+		test      = flagset.Bool("test", false, "run in test mode")
+	)
+
+	err := flagset.Parse(args)
+	if err != nil {
+		return err
+	}
+
+	if flagset.NArg() != 2 {
+		return errors.New("usage: outlived admin set VAR VALUE")
+	}
+
+	if *test {
+		if *creds != "" {
+			log.Fatal("cannot supply both -test and -creds")
+		}
+
+		err := aesite.DSTest(ctx, *projectID)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	var options []option.ClientOption
+	if *creds != "" {
+		options = append(options, option.WithCredentialsFile(*creds))
+	}
+	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
+	if err != nil {
+		return errors.Wrap(err, "creating datastore client")
+	}
+
+	return aesite.SetSetting(ctx, dsClient, flagset.Arg(0), []byte(flagset.Arg(1)))
 }

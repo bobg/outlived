@@ -5,16 +5,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
+	"google.golang.org/appengine"
 )
 
-func NewServer(ctx context.Context, addr, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
+func NewServer(ctx context.Context, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
 	testMode := ctClient == nil
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := ":" + port
 
 	s := &Server{
 		addr:       addr,
@@ -79,10 +87,17 @@ func (s *Server) Serve(ctx context.Context) {
 	log.Printf("listening for requests on %s", s.addr)
 
 	srv := &http.Server{Addr: s.addr}
-	go srv.ListenAndServe()
 
-	<-ctx.Done()
-	srv.Shutdown(ctx)
+	if appengine.IsAppEngine() {
+		err := srv.ListenAndServe()
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		go srv.ListenAndServe()
+		<-ctx.Done()
+		srv.Shutdown(ctx)
+	}
 }
 
 func httpErr(w http.ResponseWriter, code int, format string, args ...interface{}) {
