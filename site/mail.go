@@ -59,7 +59,7 @@ func (mg *mailgunSender) send(ctx context.Context, from string, to []string, sub
 		}
 
 		for _, recip := range to {
-			msg.AddBCC(recip)
+			msg.AddRecipientAndVariables(recip, map[string]interface{}{})
 		}
 		_, _, err = mg.mg.Send(msg)
 		if err != nil {

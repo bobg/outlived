@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strconv"
+	"strings"
 	ttemplate "text/template"
 
 	"github.com/bobg/aesite"
@@ -63,7 +64,12 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "executing verification-mail template")
 	}
-	err = s.sender.send(ctx, from, []string{u.Email}, "Verify your Outlived account", bytes.NewReader(buf.Bytes()), nil)
+
+	textPart := buf.String()
+
+	const subject = "Verify your Outlived e-mail address"
+
+	err = s.sender.send(ctx, from, []string{u.Email}, subject, strings.NewReader(textPart), nil)
 	if err != nil {
 		return errors.Wrap(err, "sending verification mail")
 	}

@@ -156,7 +156,7 @@ You were born on {{ .born }}, which was {{ call .numprinter .alivedays }} days a
 You have now outlived:
 
 {{ range .figures }}
-- {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }} - {{ .Died }}. https://en.wikipedia.org{{ .Link }}
+- {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. https://en.wikipedia.org{{ .Link }}
 {{ end }}
 `
 
