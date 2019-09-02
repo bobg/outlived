@@ -4,7 +4,6 @@ import (
 	htemplate "html/template"
 	"log"
 	"net/http"
-	"path/filepath"
 	"time"
 
 	"github.com/bobg/aesite"
@@ -53,10 +52,29 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 
 	log.Printf("signed up new user %s", u.Email)
 
-	htmpl, err := htemplate.ParseFiles(filepath.Join(s.contentDir, "html/postsignup.html.tmpl"))
+	htmpl, err := htemplate.New("").Parse(postSignupTmpl)
 	if err != nil {
 		return errors.Wrap(err, "parsing post-signup page template")
 	}
 	err = htmpl.Execute(w, nil)
 	return errors.Wrap(err, "rendering post-signup page")
 }
+
+const postSignupTmpl = `
+<html>
+  <head>
+    <title>
+      Outlived
+    </title>
+  </head>
+  <body>
+    <h1>Check e-mail</h1>
+
+    <p>
+      Activate your Outlived account by following the verification link
+      in the e-mail we just sent you.
+    </p>
+
+  </body>
+</html>
+`
