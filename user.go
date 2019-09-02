@@ -1,15 +1,14 @@
 package outlived
 
-import (
-	"github.com/bobg/aesite"
-)
+import "github.com/bobg/aesite"
 
 type User struct {
 	aesite.User
 	Born     Date
 	Active   bool
-	TZOffset int // seconds east of GMT
-	TZSector int
+	TZName   string
+	TZOffset int // deprecated
+	TZSector int // see function TZSector
 }
 
 func (u *User) GetUser() *aesite.User {
