@@ -74,6 +74,7 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/setactive", s.handleSetActive)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
+	handle("/reverify", s.handleReverify)
 
 	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(s.contentDir))))
 

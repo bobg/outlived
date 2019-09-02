@@ -1,15 +1,10 @@
 package site
 
 import (
-	"bytes"
-	"fmt"
 	htemplate "html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"path/filepath"
-	"strings"
-	ttemplate "text/template"
 	"time"
 
 	"github.com/bobg/aesite"
@@ -51,34 +46,7 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 		return errors.Wrap(err, "creating new user")
 	}
 
-	// xxx
-	ttmpl, err := ttemplate.ParseFiles(filepath.Join(s.contentDir, "html/verify.mail.tmpl"))
-	if err != nil {
-		return errors.Wrap(err, "parsing verification-mail template")
-	}
-
-	expSecs, nonce, vtoken, err := aesite.VerificationToken(u)
-	if err != nil {
-		return errors.Wrap(err, "generating verification token")
-	}
-
-	link, err := url.Parse(fmt.Sprintf("/verify?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
-	if err != nil {
-		return errors.Wrap(err, "constructing verification link")
-	}
-	link = requrl(req, link)
-
-	buf := new(bytes.Buffer)
-	err = ttmpl.Execute(buf, map[string]interface{}{"link": link})
-	if err != nil {
-		return errors.Wrap(err, "executing verification-mail template")
-	}
-
-	textPart := buf.String()
-
-	const subject = "Verify your Outlived e-mail address"
-
-	err = s.sender.send(ctx, from, []string{u.Email}, subject, strings.NewReader(textPart), nil)
+	err = s.sendVerificationMail(ctx, u, req)
 	if err != nil {
 		return errors.Wrap(err, "sending verification mail")
 	}

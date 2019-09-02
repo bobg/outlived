@@ -8,7 +8,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4 // indirect
 	github.com/apache/thrift v0.12.0 // indirect
-	github.com/bobg/aesite v0.0.0-20190902171155-b17ccd5be21b
+	github.com/bobg/aesite v0.0.0-20190902191409-12cc6a802155
 	github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/go-kit/kit v0.9.0 // indirect

@@ -1,9 +1,15 @@
 package site
 
 import (
+	"bytes"
+	"context"
+	"fmt"
+	htemplate "html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
+	ttemplate "text/template"
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
@@ -54,3 +60,82 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 
 	return nil
 }
+
+func (s *Server) handleReverify(w http.ResponseWriter, req *http.Request) error {
+	var (
+		ctx  = req.Context()
+		csrf = req.FormValue("csrf")
+	)
+	sess, err := aesite.GetSession(ctx, s.dsClient, req)
+	if err != nil {
+		return errors.Wrap(err, "getting session")
+	}
+	if sess == nil {
+		return codeErrType{code: http.StatusUnauthorized}
+	}
+	err = sess.CSRFCheck(csrf)
+	if err != nil {
+		return errors.Wrap(err, "checking CSRF token")
+	}
+	var u outlived.User
+	err = sess.GetUser(ctx, s.dsClient, &u)
+	if err != nil {
+		return errors.Wrapf(err, "getting user for session %d", sess.ID)
+	}
+	err = s.sendVerificationMail(ctx, &u, req)
+	return errors.Wrap(err, "sending verification mail")
+}
+
+func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req *http.Request) error {
+	expSecs, nonce, vtoken, err := aesite.VerificationToken(u)
+	if err != nil {
+		return errors.Wrap(err, "generating verification token")
+	}
+
+	link, err := url.Parse(fmt.Sprintf("/verify?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
+	if err != nil {
+		return errors.Wrap(err, "constructing verification link")
+	}
+	link = requrl(req, link)
+
+	dict := map[string]interface{}{
+		"link": link,
+	}
+
+	ttmpl, err := ttemplate.New("").Parse(vmailText)
+	if err != nil {
+		return errors.Wrap(err, "parsing plain-text template")
+	}
+	textBuf := new(bytes.Buffer)
+	err = ttmpl.Execute(textBuf, dict)
+	if err != nil {
+		return errors.Wrap(err, "executing plain-text template")
+	}
+
+	htmpl, err := htemplate.New("").Parse(vmailHTML)
+	if err != nil {
+		return errors.Wrap(err, "parsing HTML template")
+	}
+	htmlBuf := new(bytes.Buffer)
+	err = htmpl.Execute(htmlBuf, dict)
+	if err != nil {
+		return errors.Wrap(err, "executing HTML template")
+	}
+
+	const subject = "Verify your Outlived e-mail address"
+	err = s.sender.send(ctx, from, []string{u.Email}, subject, textBuf, htmlBuf)
+	return errors.Wrap(err, "sending verification mail")
+}
+
+const vmailText = `Follow this link to verify your Outlived account:
+
+  {{ .link }}
+
+This link expires in one hour.
+`
+
+const vmailHTML = `
+<p>Follow <a href="{{ .link }}">this link</a> to verify your Outlived account:</p>
+<p><a href="{{ .link }}">{{ .link }}</a></p>
+<p>This link expires in one hour.</p>
+`

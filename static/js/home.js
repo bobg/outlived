@@ -93,6 +93,20 @@ $(document).ready(function() {
     });
   })
 
+  $('#resend-button').click(function() {
+    $.ajax({
+      url: '/reverify',
+      method: 'POST',
+      data: {
+        csrf: $('#csrf').val(),
+      },
+      success: () => {
+        $('#unconfirmed').hide();
+        $('#reverified').show();
+      },
+    })
+  })
+
   $.ajax({
     url: '/figures',
     method: 'POST',

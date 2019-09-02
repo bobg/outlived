@@ -83,9 +83,12 @@
                {{ if .user.Active }} checked {{ end }} 
                {{ if not .user.Verified }} disabled {{ end }}>
         {{ if not .user.Verified }}
-          <span>
+          <span id="unconfirmed">
             You have not yet confirmed your e-mail address.
-            <button>xxx</button>
+            <button id="resend-button">Resend verification</button>
+          </span>
+          <span id="reverified" style="display: none">
+            Check your e-mail for a verification message from Outlived.
           </span>
         {{ end }}
         <input type="hidden" id="csrf" name="csrf" value="{{ .csrf }}"></input>

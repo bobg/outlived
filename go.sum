@@ -36,6 +36,8 @@ github.com/bobg/aesite v0.0.0-20190830141839-4cb99838cefd h1:A8iSpc4CdCNqDJ4jIxG
 github.com/bobg/aesite v0.0.0-20190830141839-4cb99838cefd/go.mod h1:3OQmmMju2TngZJAYkbz5u31b+xf+1TVUK4N9JQzr43s=
 github.com/bobg/aesite v0.0.0-20190902171155-b17ccd5be21b h1:1eDVpGYPjynDoRju0OhagfVv3jjraLoQh/pUyoPbT4s=
 github.com/bobg/aesite v0.0.0-20190902171155-b17ccd5be21b/go.mod h1:3OQmmMju2TngZJAYkbz5u31b+xf+1TVUK4N9JQzr43s=
+github.com/bobg/aesite v0.0.0-20190902191409-12cc6a802155 h1:NxZg9eArpFrR9iSMto8gGly9n4MjwNbggyxKIbFA30Y=
+github.com/bobg/aesite v0.0.0-20190902191409-12cc6a802155/go.mod h1:3OQmmMju2TngZJAYkbz5u31b+xf+1TVUK4N9JQzr43s=
 github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670 h1:XtSWfSk6kHNQvCSMj7frxDiaBoZR9nCci7OOoSeYH9E=
 github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670/go.mod h1:TUZ3/ZfQrnD0AMpTd+1qeiJ8ogd4fo5wbs4d3lwJUD0=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
