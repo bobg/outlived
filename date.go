@@ -48,9 +48,13 @@ func ParseDate(s string) (Date, error) {
 	return Date{Y: y, M: time.Month(mon), D: d}, nil
 }
 
-func Today() Date {
-	now := time.Now()
-	return Date{Y: now.Year(), M: now.Month(), D: now.Day()}
+func Today(loc *time.Location) Date {
+	now := time.Now().In(loc)
+	return TimeDate(now)
+}
+
+func TimeDate(t time.Time) Date {
+	return Date{Y: t.Year(), M: t.Month(), D: t.Day()}
 }
 
 func (d Date) Since(other Date) int {

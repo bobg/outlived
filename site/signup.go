@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"strconv"
 	"strings"
 	ttemplate "text/template"
+	"time"
 
 	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
@@ -20,26 +20,30 @@ import (
 
 func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 	var (
-		ctx         = req.Context()
-		email       = req.FormValue("email")
-		password    = req.FormValue("password")
-		bornStr     = req.FormValue("born")
-		tzoffsetStr = req.FormValue("tzoffset")
+		ctx      = req.Context()
+		email    = req.FormValue("email")
+		password = req.FormValue("password")
+		bornStr  = req.FormValue("born")
+		tzname   = req.FormValue("tzname")
 	)
 	born, err := outlived.ParseDate(bornStr)
 	if err != nil {
 		return codeErr(err, http.StatusBadRequest, "parsing birthdate")
 	}
 
-	tzoffset, err := strconv.Atoi(tzoffsetStr)
+	loc, err := time.LoadLocation(tzname)
 	if err != nil {
-		return codeErr(err, http.StatusBadRequest, "parsing tzoffset %s", tzoffsetStr)
+		log.Printf("error loading timezone %s, falling back to UTC: %s", tzname, err)
+		loc = time.UTC
 	}
+
+	now := time.Now().In(loc)
+	_, tzoffset := now.Zone()
 
 	u := &outlived.User{
 		Born:     born,
 		Active:   true,
-		TZOffset: tzoffset,
+		TZName:   tzname,
 		TZSector: outlived.TZSector(tzoffset),
 	}
 	err = aesite.NewUser(ctx, s.dsClient, email, password, u)

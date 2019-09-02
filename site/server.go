@@ -67,6 +67,7 @@ type Server struct {
 
 func (s *Server) Serve(ctx context.Context) {
 	handle("/", s.handleHome)
+	handle("/figures", s.handleFigures)
 	handle("/load", s.handleLoad)
 	handle("/login", s.handleLogin)
 	handle("/logout", s.handleLogout)

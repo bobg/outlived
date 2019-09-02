@@ -1,6 +1,6 @@
 $(document).ready(function() {
-  var now = new Date();
-  $('#tzoffset').val(-60 * now.getTimezoneOffset());
+  var tzname = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  $('#tzname').val(tzname);
 
   var setSignupButton2Sensitivity = function(validPassword) {
     var validDate = validateDate($('#datepicker').val());
@@ -92,6 +92,61 @@ $(document).ready(function() {
       },
     });
   })
+
+  $.ajax({
+    url: '/figures',
+    method: 'POST',
+    data: {
+      csrf: $('#csrf').val(),
+      tzname,
+    },
+    dataType: 'json',
+    success: resp => {
+      $('#todaystr').text(resp.Today);
+
+      if (resp.Email) {
+        $('#userborn').text(resp.Born);
+        $('#daysalive').text(resp.Alive);
+      }
+
+      var ulEl = $('#figures');
+
+      resp.Figures.forEach(figure => {
+        var liEl = $('<li></li>');
+        var aEl = $('<a target="_blank"></a>').attr('href', 'https://en.wikipedia.org' + figure.Link);
+        if (figure.ImgSrc) {
+          aEl.append($('<img class="img64">').attr('src', 'https:' + figure.ImgSrc).attr('alt', figure.ImgAlt));
+          aEl.append($('<br>'));
+        }
+        aEl.append(figure.Name);
+
+        liEl.append(aEl);
+        liEl.append($('<br>'));
+
+        if (figure.Desc) {
+          liEl.append(figure.Desc);
+          liEl.append($('<br>'));
+        }
+
+        liEl.append(figure.Born);
+        liEl.append('&mdash;');
+        liEl.append(figure.Died);
+        liEl.append($('<br>'));
+        liEl.append('(');
+        if (resp.Email) {
+          liEl.append(figure.DaysAlive);
+          liEl.append(' days');
+        } else {
+          liEl.append(figure.YDAlive);
+        }
+        liEl.append(')');
+
+        ulEl.append(liEl);
+      });
+
+      $('#figures-div').show();
+    },
+  });
 });
 
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
