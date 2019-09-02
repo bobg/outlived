@@ -24,7 +24,7 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 		email       = req.FormValue("email")
 		password    = req.FormValue("password")
 		bornStr     = req.FormValue("born")
-		tzoffsetStr = req.FormValue("tzoffset")
+		tzoffsetStr = req.FormValue("tzoffset") // xxx tzname
 	)
 	born, err := outlived.ParseDate(bornStr)
 	if err != nil {

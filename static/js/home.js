@@ -1,6 +1,6 @@
 $(document).ready(function() {
-  var now = new Date();
-  $('#tzoffset').val(-60 * now.getTimezoneOffset());
+  var tzname = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  $('#tzname').val(tzname);
 
   var setSignupButton2Sensitivity = function(validPassword) {
     var validDate = validateDate($('#datepicker').val());
@@ -95,8 +95,20 @@ $(document).ready(function() {
 
   $.ajax({
     url: '/figures',
+    method: 'POST',
+    data: {
+      csrf: $('#csrf').val(),
+      tzname,
+    },
     dataType: 'json',
     success: resp => {
+      $('#todaystr').text(resp.Today);
+
+      if (resp.Email) {
+        $('#userborn').text(resp.Born);
+        $('#daysalive').text(resp.Alive);
+      }
+
       var ulEl = $('#figures');
 
       resp.Figures.forEach(figure => {
@@ -113,7 +125,6 @@ $(document).ready(function() {
 
         if (figure.Desc) {
           liEl.append(figure.Desc);
-          liEl.append('.');
           liEl.append($('<br>'));
         }
 
@@ -122,8 +133,13 @@ $(document).ready(function() {
         liEl.append(figure.Died);
         liEl.append($('<br>'));
         liEl.append('(');
-        liEl.append(figure.DaysAlive);
-        liEl.append(' days)');
+        if (resp.Email) {
+          liEl.append(figure.DaysAlive);
+          liEl.append(' days');
+        } else {
+          liEl.append(figure.YDAlive);
+        }
+        liEl.append(')');
 
         ulEl.append(liEl);
       });
