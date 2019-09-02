@@ -57,7 +57,12 @@ func (s *Server) handleSignup(w http.ResponseWriter, req *http.Request) error {
 		return errors.Wrap(err, "parsing verification-mail template")
 	}
 
-	link, err := url.Parse(fmt.Sprintf("/verify?u=%s&v=%s", u.Key().Encode(), u.VToken))
+	expSecs, nonce, vtoken, err := aesite.VerificationToken(u)
+	if err != nil {
+		return errors.Wrap(err, "generating verification token")
+	}
+
+	link, err := url.Parse(fmt.Sprintf("/verify?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
 	if err != nil {
 		return errors.Wrap(err, "constructing verification link")
 	}

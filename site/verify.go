@@ -3,6 +3,7 @@ package site
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
@@ -14,7 +15,18 @@ import (
 func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 
-	userKeyStr := req.FormValue("u")
+	var (
+		expSecsStr = req.FormValue("e")
+		nonce      = req.FormValue("n")
+		vtoken     = req.FormValue("t")
+		userKeyStr = req.FormValue("u")
+	)
+
+	expSecs, err := strconv.ParseInt(expSecsStr, 10, 64)
+	if err != nil {
+		return errors.Wrapf(err, "parsing expSecs parameter %s", expSecsStr)
+	}
+
 	userKey, err := datastore.DecodeKey(userKeyStr)
 	if err != nil {
 		return codeErr(err, http.StatusBadRequest, "decoding user key")
@@ -26,8 +38,7 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 		return errors.Wrap(err, "getting user record")
 	}
 
-	vtoken := req.FormValue("v")
-	err = aesite.VerifyUser(ctx, s.dsClient, &user, vtoken)
+	err = aesite.VerifyUser(ctx, s.dsClient, &user, expSecs, nonce, vtoken)
 	if err != nil {
 		return codeErr(err, http.StatusBadRequest, "verifying token")
 	}

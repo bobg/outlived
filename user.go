@@ -20,7 +20,7 @@ func (u *User) SetUser(au *aesite.User) {
 }
 
 // TZSector reduces a timezone offset (in seconds east of UTC)
-// to an index in the range [0 .. 12]
+// to an index in the range [0 .. 12].
 func TZSector(tzoffset int) int {
 	return (tzoffset + 36000) / 7200
 }
