@@ -92,6 +92,45 @@ $(document).ready(function() {
       },
     });
   })
+
+  $.ajax({
+    url: '/figures',
+    dataType: 'json',
+    success: resp => {
+      var ulEl = $('#figures');
+
+      resp.Figures.forEach(figure => {
+        var liEl = $('<li></li>');
+        var aEl = $('<a target="_blank"></a>').attr('href', 'https://en.wikipedia.org' + figure.Link);
+        if (figure.ImgSrc) {
+          aEl.append($('<img class="img64">').attr('src', 'https:' + figure.ImgSrc).attr('alt', figure.ImgAlt));
+          aEl.append($('<br>'));
+        }
+        aEl.append(figure.Name);
+
+        liEl.append(aEl);
+        liEl.append($('<br>'));
+
+        if (figure.Desc) {
+          liEl.append(figure.Desc);
+          liEl.append('.');
+          liEl.append($('<br>'));
+        }
+
+        liEl.append(figure.Born);
+        liEl.append('&mdash;');
+        liEl.append(figure.Died);
+        liEl.append($('<br>'));
+        liEl.append('(');
+        liEl.append(figure.DaysAlive);
+        liEl.append(' days)');
+
+        ulEl.append(liEl);
+      });
+
+      $('#figures-div').show();
+    },
+  });
 });
 
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.

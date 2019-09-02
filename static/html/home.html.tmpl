@@ -91,34 +91,15 @@
         <input type="hidden" id="csrf" name="csrf" value="{{ .csrf }}"></input>
       </div>
 
-      <div id="alive">
+      <div id="figures-div" style="display: none">
         <p>
-          Today is {{ .todaystr }}.
-          You were born on {{ .user.Born }}, 
-          which was {{ call .numprinter .alive }} days ago.
+          Today is <span id="todaystr"></span>.
+          You were born on <span id="userborn"></span>,
+          which was <span id="daysalive"></span> days ago.
         </p>
 
-        {{ if .figures }}
-          <p>You have recently outlived:</p>
-          <ul class="grid">
-            {{ $numprinter := .numprinter }}
-            {{ range .figures }}
-              <li>
-                <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">
-                  {{ if .ImgSrc }}
-                    <img class="img64" src="https:{{ .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
-                  {{ end }}
-                  {{ .Name }}<br>
-                </a>
-                {{ if .Desc }}
-                  {{ .Desc }}<br>
-                {{ end }}
-                {{ .Born }}&mdash;{{ .Died }}<br>
-                ({{ call $numprinter .DaysAlive }} days).
-              </li>
-            {{ end }}
-          </ul>
-        {{ end }}
+        <p>You have recently outlived:</p>
+        <ul id="figures" class="grid"></ul>
       </div>
 
     {{ else }}
@@ -146,28 +127,10 @@
         </form>
       </div>
 
-      {{ if .figures }}
-
+      <div id="figures-div" style="display: none">
         <p>Today is {{ .todaystr }}. Died on this date:</p>
-        <ul class="grid">
-          {{ range .figures }}
-            <li>
-              <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">
-                {{ if .ImgSrc }}
-                  <img class="img64" src="https:{{ .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
-                {{ end }}
-                {{ .Name }}<br>
-              </a>
-              {{ if .Desc }}
-                {{ .Desc }}<br>
-              {{ end }}
-              {{ .Born }}&mdash;{{ .Died }}<br>
-              (age {{ .YDAge }}).
-            </li>
-          {{ end }}
-        </ul>
-
-      {{ end }}
+        <ul id="figures" class="grid"></ul>
+      </div>
 
     {{ end }}
 
