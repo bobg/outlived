@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const from = "Outlived <no-reply@outlived.net>"
+const from = "Outlived <no-reply@mail.outlived.net>"
 
 type sender interface {
 	send(
