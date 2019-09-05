@@ -45,7 +45,6 @@ var (
 
 func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx context.Context, href, title, desc string) error) error {
 	link := fmt.Sprintf("https://en.wikipedia.org/wiki/%s_%d", monthName[m], d)
-	log.Printf("getting %s", link)
 	resp, err := http.Get(link)
 	if err != nil {
 		return errors.Wrapf(err, "getting %s", link)
@@ -106,8 +105,6 @@ func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx conte
 		}
 		desc = strings.TrimSpace(desc)
 
-		// log.Printf("parsed %s [%s] %s", title, href, desc)
-
 		err = onPerson(ctx, href, title, desc)
 		if err != nil {
 			log.Printf("on person %s: %s", title, err)
@@ -119,7 +116,6 @@ func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx conte
 
 func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(ctx context.Context, title, desc, href, imgSrc, imgAlt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error) error {
 	link := "https://en.wikipedia.org" + href
-	log.Printf("getting %s", link)
 	resp, err := http.Get(link)
 	if err != nil {
 		return errors.Wrapf(err, "getting %s", link)

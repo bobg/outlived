@@ -14,6 +14,7 @@ func (s *Server) handleExpire(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	log.Print("expiring stale figures")
-	return outlived.ExpireFigures(req.Context(), s.dsClient)
+	count, err := outlived.ExpireFigures(req.Context(), s.dsClient)
+	log.Printf("expired %d stale figure(s)", count)
+	return err
 }

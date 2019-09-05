@@ -151,13 +151,16 @@ func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Fi
 
 const stale = 30 * 24 * time.Hour
 
-func ExpireFigures(ctx context.Context, client *datastore.Client) error {
+func ExpireFigures(ctx context.Context, client *datastore.Client) (int, error) {
 	q := datastore.NewQuery("Figure")
 	q = q.Filter("Updated <", time.Now().Add(-stale)).KeysOnly()
 	keys, err := client.GetAll(ctx, q, nil)
 	if err != nil {
-		return errors.Wrap(err, "getting stale figures")
+		return 0, errors.Wrap(err, "getting stale figures")
 	}
+
+	count := 0
+
 	for len(keys) > 0 {
 		var nextKeys []*datastore.Key
 
@@ -166,9 +169,10 @@ func ExpireFigures(ctx context.Context, client *datastore.Client) error {
 		}
 		err = client.DeleteMulti(ctx, keys)
 		if err != nil {
-			return errors.Wrap(err, "expiring figures")
+			return count, errors.Wrap(err, "expiring figures")
 		}
+		count += len(keys)
 		keys = nextKeys
 	}
-	return nil
+	return count, nil
 }
