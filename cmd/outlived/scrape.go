@@ -70,7 +70,11 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 
 	limiter := rate.NewLimiter(rate.Every(*limit), 1)
 	for m := time.Month(*startM); m <= time.December; m++ {
-		for d := *startD; d <= daysInMonth[m]; d++ {
+		for d := 1; d <= daysInMonth[m]; d++ {
+			if int(m) == *startM && d == 1 {
+				d = *startD
+			}
+
 			err = limiter.Wait(ctx)
 			if err != nil {
 				return errors.Wrapf(err, "waiting to scrape day %d-%d", m, d)
@@ -81,6 +85,8 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 					return errors.Wrapf(err, "waiting to scrape person %s (%s)", title, href)
 				}
 				return outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, imgAlt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
+					defer w.Flush()
+
 					bornStr := fmt.Sprintf("%d-%02d-%02d", bornY, bornM, bornD)
 					diedStr := fmt.Sprintf("%d-%02d-%02d", diedY, diedM, diedD)
 

@@ -35,10 +35,12 @@ var (
 		"December",
 	}
 
-	dateRegex1 = regexp.MustCompile(`(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d+),\s+(\d+)(\s+BC)?`)
-	dateRegex2 = regexp.MustCompile(`(\d+)\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d+)(\s+BC)?`)
+	dateRegex1 = regexp.MustCompile(`(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d+),\s+(\d+)(.*BC)?`)
+	dateRegex2 = regexp.MustCompile(`(\d+)\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d+)(.*BC)?`)
 
 	bRegex = regexp.MustCompile(`\(b\.\s*\d+\)$`)
+
+	paren = regexp.MustCompile(`^(.*\S)\s*\([^()]*\)$`)
 )
 
 func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx context.Context, href, title, desc string) error) error {
@@ -85,6 +87,8 @@ func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx conte
 
 		href := elAttr(aNode, "href")
 		title := elAttr(aNode, "title")
+
+		title = paren.ReplaceAllString(title, "$1")
 
 		b := new(bytes.Buffer)
 
