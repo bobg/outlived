@@ -153,7 +153,7 @@ const stale = 30 * 24 * time.Hour
 
 func ExpireFigures(ctx context.Context, client *datastore.Client) error {
 	q := datastore.NewQuery("Figure")
-	q = q.Filter("Updated <", time.Now().Add(stale)).KeysOnly()
+	q = q.Filter("Updated <", time.Now().Add(-stale)).KeysOnly()
 	keys, err := client.GetAll(ctx, q, nil)
 	if err != nil {
 		return errors.Wrap(err, "getting stale figures")
