@@ -161,34 +161,16 @@ You have now outlived:
 `
 
 const mailHTMLTemplate = `
-<style>
-	img.img64 {
-			max-width: 64px;
-			height: auto;
-	}
-	ul.grid {
-			margin: 0 auto;
-			text-align: center;
-			display: grid;
-			grid-template-columns: repeat(auto-fill, 20em);
-	}
-	ul.grid li {
-			display: inline-block;
-			vertical-align: top;
-			margin: 1em 2em;
-	}
-</style>
-
 <p>You were born on {{ .born }}, which was {{ call .numprinter .alivedays }} days ago.</p>
 
 <p>You have now outlived:</p>
 
-<ul class="grid">
+<ul style="margin: 0 auto; text-align: center; display: grid; grid-template-columns: repeat(auto-fill, 20em);">
   {{ range .figures }}
-    <li>
+    <li style="display: inline-block; vertical-align: top; margin: 1em 2em;">
       <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">
         {{ if .ImgSrc }}
-          <img class="img64" src="https:{{ .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
+          <img style="max-width: 64px; height: auto;" src="https:{{ .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
         {{ end }}
         {{ .Name }}<br>
       </a>
