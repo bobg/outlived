@@ -94,8 +94,6 @@ func FiguresDiedOn(ctx context.Context, client *datastore.Client, mon time.Month
 const multiLimit = 500
 
 func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Figure) error {
-	beforeDeduping := len(figures)
-
 	// Remove duplicates from figures.
 	var (
 		seen    = make(map[string]struct{})
@@ -109,8 +107,6 @@ func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Fi
 		deduped = append(deduped, fig)
 	}
 	figures = deduped
-
-	afterDeduping := len(figures)
 
 	// TODO(bobg): At least in testing mode, this call to Count (apparently) never returns.
 	// before, err := client.Count(ctx, allQ)
