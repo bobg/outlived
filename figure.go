@@ -3,7 +3,6 @@ package outlived
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
@@ -138,13 +137,6 @@ func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Fi
 		}
 		keys, figures = nextKeys, nextFigs
 	}
-
-	// after, err := client.Count(ctx, allQ)
-	// if err != nil {
-	// 	return errors.Wrap(err, "counting figures after replace")
-	// }
-
-	log.Printf("replaced figures, %d before deduping, %d after", beforeDeduping, afterDeduping)
 
 	return nil
 }
