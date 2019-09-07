@@ -96,7 +96,7 @@ func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req
 	if err != nil {
 		return errors.Wrap(err, "constructing verification link")
 	}
-	link = s.resolve(link)
+	link = homeURL.ResolveReference(link)
 
 	dict := map[string]interface{}{"link": link}
 

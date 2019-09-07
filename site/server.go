@@ -43,19 +43,9 @@ func NewServer(ctx context.Context, contentDir, projectID, locationID string, ds
 			return nil, errors.Wrap(err, "getting setting for mailgun_api_key")
 		}
 		s.sender = newMailgunSender(string(domain), string(apiKey))
-		s.home = &url.URL{
-			Scheme: "https",
-			Host:   "outlived.net",
-			Path:   "/",
-		}
 	} else {
 		s.tasks = newLocalTasks(ctx, addr)
 		s.sender = new(testSender)
-		s.home = &url.URL{
-			Scheme: "http",
-			Host:   "localhost" + addr,
-			Path:   "/",
-		}
 	}
 
 	return s, nil
@@ -233,20 +223,24 @@ func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
 	return nil
 }
 
-func (s *Server) resolve(ref *url.URL) *url.URL {
-	return s.home.ResolveReference(ref)
-}
+var homeURL *url.URL
 
-func requrl(req *http.Request, ref *url.URL) *url.URL {
-	result := *req.URL
-	if ref != nil {
-		result = *(result.ResolveReference(ref))
+func init() {
+	if appengine.IsAppEngine() {
+		homeURL = &url.URL{
+			Scheme: "https",
+			Host:   "outlived.net",
+			Path:   "/",
+		}
+	} else {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		homeURL = &url.URL{
+			Scheme: "http",
+			Host:   "localhost:" + port,
+			Path:   "/",
+		}
 	}
-	if result.Host == "" {
-		result.Host = req.Host
-	}
-	if result.Scheme == "" {
-		result.Scheme = "https"
-	}
-	return &result
 }

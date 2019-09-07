@@ -86,5 +86,5 @@ func rlink(req *http.Request, target string) (*url.URL, error) {
 	}
 
 	r.RawQuery = v.Encode()
-	return requrl(req, r), nil
+	return homeURL.ResolveReference(r), nil
 }

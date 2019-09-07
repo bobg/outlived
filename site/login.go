@@ -43,7 +43,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 		if err != nil {
 			return errors.Wrap(err, "constructing forgot-password link")
 		}
-		link = s.resolve(link)
+		link = homeURL.ResolveReference(link)
 
 		dict := map[string]interface{}{"link": link}
 
