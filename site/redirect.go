@@ -37,7 +37,7 @@ func (s *Server) handleRedirect(w http.ResponseWriter, req *http.Request) error 
 	}
 
 	if w := req.FormValue("w"); w != "" {
-		redirect("https://https://en.wikipedia.org/wiki/%s", w)
+		redirect("https://en.wikipedia.org/wiki/%s", w)
 		return nil
 	}
 
