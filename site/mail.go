@@ -2,9 +2,11 @@ package site
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"strings"
 
 	"github.com/mailgun/mailgun-go"
@@ -16,6 +18,7 @@ const from = "Outlived <no-reply@mail.outlived.net>"
 type sender interface {
 	send(
 		ctx context.Context,
+		unsub *url.URL,
 		from string,
 		to []string,
 		subject string,
@@ -34,7 +37,7 @@ func newMailgunSender(domain, apiKey string) *mailgunSender {
 	}
 }
 
-func (mg *mailgunSender) send(ctx context.Context, from string, to []string, subject string, textR io.Reader, htmlR io.Reader) error {
+func (mg *mailgunSender) send(ctx context.Context, unsub *url.URL, from string, to []string, subject string, textR io.Reader, htmlR io.Reader) error {
 	textBody, err := ioutil.ReadAll(textR)
 	if err != nil {
 		return errors.Wrap(err, "reading text body")
@@ -54,6 +57,8 @@ func (mg *mailgunSender) send(ctx context.Context, from string, to []string, sub
 		}
 
 		msg := mg.mg.NewMessage(from, subject, string(textBody))
+		msg.AddHeader("List-Unsubscribe", fmt.Sprintf("<%s>", unsub))
+
 		if htmlBody != nil {
 			msg.SetHtml(string(htmlBody))
 		}
@@ -74,7 +79,7 @@ func (mg *mailgunSender) send(ctx context.Context, from string, to []string, sub
 
 type testSender struct{}
 
-func (ts *testSender) send(ctx context.Context, from string, to []string, subject string, textR io.Reader, htmlR io.Reader) error {
+func (ts *testSender) send(ctx context.Context, unsub *url.URL, from string, to []string, subject string, textR io.Reader, htmlR io.Reader) error {
 	log.Printf("sending e-mail from %s, subject %s, to %s", from, subject, strings.Join(to, ", "))
 	if textR != nil {
 		textBody, err := ioutil.ReadAll(textR)

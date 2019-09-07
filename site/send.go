@@ -6,6 +6,7 @@ import (
 	htemplate "html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	ttemplate "text/template"
@@ -61,6 +62,17 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 		lastBorn outlived.Date
 	)
 
+	p := message.NewPrinter(message.MatchLanguage("en"))
+	numprinter := func(n int) string {
+		return p.Sprintf("%v", n)
+	}
+
+	redir := func(inp string) string {
+		return mkredirect(req, inp).String()
+	}
+
+	home := requrl(req, &url.URL{Path: "/"})
+
 	wrap := func() error {
 		if len(users) == 0 {
 			return nil
@@ -71,7 +83,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 
 		born := users[0].Born
 		since := today.Since(born)
-		figures, err := outlived.FiguresAliveFor(ctx, s.dsClient, since-1, 20)
+		figures, err := outlived.FiguresAliveFor(ctx, s.dsClient, since-1, 24)
 		if err != nil {
 			return errors.Wrapf(err, "looking up figures alive for %d days", since-1)
 		}
@@ -80,16 +92,13 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			return nil
 		}
 
-		p := message.NewPrinter(message.MatchLanguage("en"))
-		numprinter := func(n int) string {
-			return p.Sprintf("%v", n)
-		}
-
 		dict := map[string]interface{}{
 			"born":       born,
 			"alivedays":  since,
 			"figures":    figures,
+			"home":       home.String(),
 			"numprinter": numprinter,
+			"redir":      redir,
 		}
 
 		ttmpl, err := ttemplate.New("").Parse(mailTextTemplate)
@@ -119,7 +128,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			to = append(to, u.Email)
 		}
 
-		err = s.sender.send(ctx, from, to, subject, strings.NewReader(textPart), strings.NewReader(htmlPart))
+		err = s.sender.send(ctx, home, from, to, subject, strings.NewReader(textPart), strings.NewReader(htmlPart))
 		if err != nil {
 			return errors.Wrap(err, "sending message")
 		}
@@ -155,9 +164,12 @@ You were born on {{ .born }}, which was {{ call .numprinter .alivedays }} days a
 
 You have now outlived:
 
+{{ $redir := .redir }}
 {{ range .figures }}
-- {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. https://en.wikipedia.org{{ .Link }}
+- {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. {{ call $redir .Link }}
 {{ end }}
+
+Visit {{ .home }} to change your mail-delivery preference.
 `
 
 const mailHTMLTemplate = `
@@ -166,11 +178,12 @@ const mailHTMLTemplate = `
 <p>You have now outlived:</p>
 
 <ul style="margin: 0 auto; text-align: center; display: grid; grid-template-columns: repeat(auto-fill, 20em);">
+  {{ $redir := .redir }}
   {{ range .figures }}
     <li style="display: inline-block; vertical-align: top; margin: 1em 2em;">
-      <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">
+      <a href="{{ call $redir .Link }}" target="_blank">
         {{ if .ImgSrc }}
-          <img style="max-width: 64px; height: auto;" src="https:{{ .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
+          <img style="max-width: 64px; height: auto;" src="{{ call $redir .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
         {{ end }}
         {{ .Name }}<br>
       </a>
@@ -181,4 +194,6 @@ const mailHTMLTemplate = `
     </li>
   {{ end }}
 </ul>
+
+<p style="font-size: smaller;">Visit <a href="{{ .home }}">Outlived</a> to change your mail-delivery preference.</p>
 `

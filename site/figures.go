@@ -83,12 +83,12 @@ func (s *Server) handleFigures(w http.ResponseWriter, req *http.Request) error {
 		resp.Born = u.Born.String()
 		resp.Alive = numprinter(alive)
 
-		figures, err = outlived.FiguresAliveForAtMost(ctx, s.dsClient, alive-1, 20)
+		figures, err = outlived.FiguresAliveForAtMost(ctx, s.dsClient, alive-1, 24)
 		if err != nil {
 			return errors.Wrap(err, "getting figures")
 		}
 	} else {
-		figures, err = outlived.FiguresDiedOn(ctx, s.dsClient, today.M, today.D, 20)
+		figures, err = outlived.FiguresDiedOn(ctx, s.dsClient, today.M, today.D, 24)
 		if err != nil {
 			return errors.Wrap(err, "getting figures")
 		}
