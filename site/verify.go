@@ -96,7 +96,7 @@ func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req
 	if err != nil {
 		return errors.Wrap(err, "constructing verification link")
 	}
-	link = requrl(req, link)
+	link = s.resolve(link)
 
 	dict := map[string]interface{}{"link": link}
 
@@ -121,7 +121,7 @@ func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req
 	}
 
 	const subject = "Verify your Outlived e-mail address"
-	err = s.sender.send(ctx, requrl(req, &url.URL{Path: "/"}), from, []string{u.Email}, subject, textBuf, htmlBuf)
+	err = s.sender.send(ctx, s.home, from, []string{u.Email}, subject, textBuf, htmlBuf)
 	return errors.Wrap(err, "sending verification mail")
 }
 

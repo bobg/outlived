@@ -6,7 +6,6 @@ import (
 	htemplate "html/template"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	ttemplate "text/template"
@@ -71,8 +70,6 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 		return mkredirect(req, inp).String()
 	}
 
-	home := requrl(req, &url.URL{Path: "/"})
-
 	wrap := func() error {
 		if len(users) == 0 {
 			return nil
@@ -96,7 +93,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			"born":       born,
 			"alivedays":  since,
 			"figures":    figures,
-			"home":       home.String(),
+			"home":       s.home.String(),
 			"numprinter": numprinter,
 			"redir":      redir,
 		}
@@ -128,7 +125,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			to = append(to, u.Email)
 		}
 
-		err = s.sender.send(ctx, home, from, to, subject, strings.NewReader(textPart), strings.NewReader(htmlPart))
+		err = s.sender.send(ctx, s.home, from, to, subject, strings.NewReader(textPart), strings.NewReader(htmlPart))
 		if err != nil {
 			return errors.Wrap(err, "sending message")
 		}
