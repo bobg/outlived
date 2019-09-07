@@ -46,30 +46,20 @@ func (s *Server) handleForgot(w http.ResponseWriter, req *http.Request) error {
 		return errors.Wrap(err, "checking verification token")
 	}
 
-	v1 := vtoken
-
-	// Make an idempotency token out of the (first) vtoken
+	// Make a secure idempotency token out of the vtoken
 	// to make sure it can be used only once for password reset.
-	// It is registered/checked when the user submits the /reset form
-	idem, err := user.SecureToken(strings.NewReader(v1))
+	// It works only for the intended user.
+	// It is registered/checked when the user submits the /reset form.
+	idem, err := user.SecureToken(strings.NewReader(vtoken))
 	if err != nil {
 		return errors.Wrap(err, "generating idempotency key")
 	}
 
 	// TODO: check for/cancel existing session?
 
-	// Generate a new verification token for the reset step.
-	expSecs, nonce, vtoken, err = aesite.VerificationToken(&user)
-	if err != nil {
-		return errors.Wrap(err, "generating verification token")
-	}
-
 	dict := map[string]interface{}{
-		"e":    strconv.FormatInt(expSecs, 10),
-		"n":    nonce,
-		"t":    vtoken,
 		"u":    userKeyStr,
-		"v1":   v1,
+		"t":    vtoken,
 		"idem": idem,
 	}
 
@@ -90,19 +80,11 @@ func (s *Server) handleReset(w http.ResponseWriter, req *http.Request) error {
 	ctx := req.Context()
 
 	var (
-		expSecsStr = req.FormValue("e")
-		nonce      = req.FormValue("n")
-		vtoken     = req.FormValue("t")
 		userKeyStr = req.FormValue("u")
-		v1         = req.FormValue("v1")
+		vtoken     = req.FormValue("t")
 		idem       = req.FormValue("idem")
 		newPW      = req.FormValue("p")
 	)
-
-	expSecs, err := strconv.ParseInt(expSecsStr, 10, 64)
-	if err != nil {
-		return errors.Wrapf(err, "parsing expSecs parameter %s", expSecsStr)
-	}
 
 	userKey, err := datastore.DecodeKey(userKeyStr)
 	if err != nil {
@@ -115,12 +97,9 @@ func (s *Server) handleReset(w http.ResponseWriter, req *http.Request) error {
 		return errors.Wrap(err, "getting user record")
 	}
 
-	err = aesite.CheckVerificationToken(&user, expSecs, nonce, vtoken)
-	if err != nil {
-		return errors.Wrap(err, "checking verification token")
-	}
+	// Check that idem is both valid for this user and not yet used.
 
-	err = user.CheckToken(strings.NewReader(v1), idem)
+	err = user.CheckToken(strings.NewReader(vtoken), idem)
 	if err != nil {
 		return errors.Wrap(err, "checking idempotency key")
 	}
@@ -159,11 +138,8 @@ const forgotTmpl = `
     <h1>Outlived</h1>
 
     <form method="POST" action="/reset">
-      <input type="hidden" name="e" value="{{ .e }}"></input>
-      <input type="hidden" name="n" value="{{ .n }}"></input>
-      <input type="hidden" name="t" value="{{ .t }}"></input>
       <input type="hidden" name="u" value="{{ .u }}"></input>
-      <input type="hidden" name="v1" value="{{ .v1 }}"></input>
+      <input type="hidden" name="t" value="{{ .t }}"></input>
       <input type="hidden" name="idem" value="{{ .idem }}"></input>
       <label for="newpw">New password</label>
       <input type="password" name="p"></input>
