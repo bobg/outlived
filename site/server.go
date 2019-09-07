@@ -73,18 +73,18 @@ type Server struct {
 }
 
 func (s *Server) Serve(ctx context.Context) {
-	handle("/", s.handleHome)
+	handle("/", s.handleHome) // TODO: this handles every /foo that's not handled elsewhere, but shouldn't.
 	handle("/figures", s.handleFigures)
 	handle("/forgot", s.handleForgot)
 	handle("/load", s.handleLoad)
 	handle("/login", s.handleLogin)
 	handle("/logout", s.handleLogout)
+	handle("/r", s.handleRedirect)
 	handle("/reset", s.handleReset)
+	handle("/reverify", s.handleReverify)
 	handle("/setactive", s.handleSetActive)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
-	handle("/reverify", s.handleReverify)
-	handle("/r", s.handleRedirect)
 
 	http.Handle("/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
 

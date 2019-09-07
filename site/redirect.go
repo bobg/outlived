@@ -41,15 +41,10 @@ func (s *Server) handleRedirect(w http.ResponseWriter, req *http.Request) error 
 		return nil
 	}
 
-	if u := req.FormValue("u"); u != "" {
-		redirect(u)
-		return nil
-	}
-
 	return codeErrType{code: http.StatusBadRequest}
 }
 
-func mkredirect(req *http.Request, target string) *url.URL {
+func rlink(req *http.Request, target string) (*url.URL, error) {
 	r := &url.URL{
 		Path: "/r",
 	}
@@ -87,9 +82,9 @@ func mkredirect(req *http.Request, target string) *url.URL {
 	} else if rest := strings.TrimPrefix(target, "/wiki/"); rest != target && rest != "" {
 		v.Set("w", rest)
 	} else {
-		v.Set("u", target)
+		return url.Parse(target)
 	}
 
 	r.RawQuery = v.Encode()
-	return requrl(req, r)
+	return requrl(req, r), nil
 }

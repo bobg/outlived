@@ -67,7 +67,8 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	redir := func(inp string) string {
-		return mkredirect(req, inp).String()
+		r, _ := rlink(req, inp)
+		return r.String()
 	}
 
 	wrap := func() error {
