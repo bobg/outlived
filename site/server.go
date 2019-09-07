@@ -86,6 +86,9 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/reverify", s.handleReverify)
 	handle("/r", s.handleRedirect)
 
+	http.Handle("/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
+
+	// This is for testing. In production, /static/ is routed by app.yaml.
 	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(s.contentDir))))
 
 	// cron-initiated

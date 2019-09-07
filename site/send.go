@@ -93,7 +93,6 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			"born":       born,
 			"alivedays":  since,
 			"figures":    figures,
-			"home":       s.home.String(),
 			"numprinter": numprinter,
 			"redir":      redir,
 		}
@@ -125,7 +124,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			to = append(to, u.Email)
 		}
 
-		err = s.sender.send(ctx, s.home, from, to, subject, strings.NewReader(textPart), strings.NewReader(htmlPart))
+		err = s.sender.send(ctx, from, to, subject, strings.NewReader(textPart), strings.NewReader(htmlPart))
 		if err != nil {
 			return errors.Wrap(err, "sending message")
 		}
@@ -166,7 +165,7 @@ You have now outlived:
 - {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. {{ call $redir .Link }}
 {{ end }}
 
-Visit {{ .home }} to change your mail-delivery preference.
+Visit https://outlived.net/unsubscribe to change your mail-delivery preference.
 `
 
 const mailHTMLTemplate = `
@@ -192,5 +191,5 @@ const mailHTMLTemplate = `
   {{ end }}
 </ul>
 
-<p style="font-size: smaller;">Visit <a href="{{ .home }}">Outlived</a> to change your mail-delivery preference.</p>
+<p style="font-size: smaller;">Visit <a href="https://outlived.net/unsubscribe">Outlived</a> to change your mail-delivery preference.</p>
 `

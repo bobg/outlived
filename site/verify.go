@@ -121,7 +121,7 @@ func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req
 	}
 
 	const subject = "Verify your Outlived e-mail address"
-	err = s.sender.send(ctx, s.home, from, []string{u.Email}, subject, textBuf, htmlBuf)
+	err = s.sender.send(ctx, from, []string{u.Email}, subject, textBuf, htmlBuf)
 	return errors.Wrap(err, "sending verification mail")
 }
 

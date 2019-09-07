@@ -68,7 +68,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 		}
 
 		const subject = "Reset your Outlived password"
-		err = s.sender.send(ctx, s.home, from, []string{u.Email}, subject, textBuf, htmlBuf)
+		err = s.sender.send(ctx, from, []string{u.Email}, subject, textBuf, htmlBuf)
 		if err != nil {
 			return errors.Wrap(err, "sending forgot-password mail")
 		}
