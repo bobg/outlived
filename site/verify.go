@@ -98,9 +98,7 @@ func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req
 	}
 	link = requrl(req, link)
 
-	dict := map[string]interface{}{
-		"link": link,
-	}
+	dict := map[string]interface{}{"link": link}
 
 	ttmpl, err := ttemplate.New("").Parse(vmailText)
 	if err != nil {

@@ -72,7 +72,7 @@ const postSignupTmpl = `
 
     <p>
       Activate your Outlived account by following the verification link
-      in the e-mail we just sent you.
+      in the e-mail we just sent you. The link expires in one hour.
     </p>
 
   </body>
