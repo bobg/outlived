@@ -168,7 +168,8 @@ const homeTmpl = `
             <label for="password">Password</label>
             <input type="password" id="password" name="password"></input>
           </div>
-          <button id="login-button-2" type="submit" style="display: none" disabled>Log in</button>
+          <button id="login-button-2" type="submit" style="display: none" name="login" value="login" disabled>Log in</button>
+          <button id="forgot-button" type="submit" style="display: none" name="forgot" value="forgot">Forgot password</button>
           <div id="datepicker-div" style="display: none">
             <label for="datepicker">Birthdate</label>
             <input type="text" id="datepicker" name="born" placeholder="yyyy-mm-dd"></input>

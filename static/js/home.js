@@ -55,6 +55,7 @@ $(document).ready(function() {
   $('#login-button-1').click(function() {
     loggingInSigningUp();
     $('#login-button-2').show();
+    $('#forgot-button').show();
     $('#login-signup-form').attr('action', '/login')
   });
 
@@ -66,6 +67,7 @@ $(document).ready(function() {
     $('#login-button-1').show();
     $('#password-div').hide();
     $('#login-button-2').hide();
+    $('#forgot-button').hide();
     $('#datepicker-div').hide();
     $('#signup-button-2').hide();
     $('#cancel-button').hide();

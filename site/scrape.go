@@ -89,7 +89,7 @@ func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
 }
 
 func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error {
-	err := s.checkTaskQueue(req, s.scrapeQueue())
+	err := s.checkTaskQueue(req, "scrape")
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 }
 
 func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) error {
-	err := s.checkTaskQueue(req, s.scrapeQueue())
+	err := s.checkTaskQueue(req, "scrape")
 	if err != nil {
 		return err
 	}

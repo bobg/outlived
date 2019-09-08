@@ -96,11 +96,9 @@ func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req
 	if err != nil {
 		return errors.Wrap(err, "constructing verification link")
 	}
-	link = requrl(req, link)
+	link = homeURL.ResolveReference(link)
 
-	dict := map[string]interface{}{
-		"link": link,
-	}
+	dict := map[string]interface{}{"link": link}
 
 	ttmpl, err := ttemplate.New("").Parse(vmailText)
 	if err != nil {

@@ -61,6 +61,16 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 		lastBorn outlived.Date
 	)
 
+	p := message.NewPrinter(message.MatchLanguage("en"))
+	numprinter := func(n int) string {
+		return p.Sprintf("%v", n)
+	}
+
+	redir := func(inp string) string {
+		r, _ := rlink(req, inp)
+		return r.String()
+	}
+
 	wrap := func() error {
 		if len(users) == 0 {
 			return nil
@@ -71,7 +81,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 
 		born := users[0].Born
 		since := today.Since(born)
-		figures, err := outlived.FiguresAliveFor(ctx, s.dsClient, since-1, 20)
+		figures, err := outlived.FiguresAliveFor(ctx, s.dsClient, since-1, 24)
 		if err != nil {
 			return errors.Wrapf(err, "looking up figures alive for %d days", since-1)
 		}
@@ -80,16 +90,12 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 			return nil
 		}
 
-		p := message.NewPrinter(message.MatchLanguage("en"))
-		numprinter := func(n int) string {
-			return p.Sprintf("%v", n)
-		}
-
 		dict := map[string]interface{}{
 			"born":       born,
 			"alivedays":  since,
 			"figures":    figures,
 			"numprinter": numprinter,
+			"redir":      redir,
 		}
 
 		ttmpl, err := ttemplate.New("").Parse(mailTextTemplate)
@@ -155,40 +161,26 @@ You were born on {{ .born }}, which was {{ call .numprinter .alivedays }} days a
 
 You have now outlived:
 
+{{ $redir := .redir }}
 {{ range .figures }}
-- {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. https://en.wikipedia.org{{ .Link }}
+- {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. {{ call $redir .Link }}
 {{ end }}
+
+Visit https://outlived.net/unsubscribe to change your mail-delivery preference.
 `
 
 const mailHTMLTemplate = `
-<style>
-	img.img64 {
-			max-width: 64px;
-			height: auto;
-	}
-	ul.grid {
-			margin: 0 auto;
-			text-align: center;
-			display: grid;
-			grid-template-columns: repeat(auto-fill, 20em);
-	}
-	ul.grid li {
-			display: inline-block;
-			vertical-align: top;
-			margin: 1em 2em;
-	}
-</style>
-
 <p>You were born on {{ .born }}, which was {{ call .numprinter .alivedays }} days ago.</p>
 
 <p>You have now outlived:</p>
 
-<ul class="grid">
+<ul style="margin: 0 auto; text-align: center; display: grid; grid-template-columns: repeat(auto-fill, 20em);">
+  {{ $redir := .redir }}
   {{ range .figures }}
-    <li>
-      <a href="https://en.wikipedia.org{{ .Link }}" target="_blank">
+    <li style="display: inline-block; vertical-align: top; margin: 1em 2em;">
+      <a href="{{ call $redir .Link }}" target="_blank">
         {{ if .ImgSrc }}
-          <img class="img64" src="https:{{ .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
+          <img style="max-width: 64px; height: auto;" src="{{ call $redir .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
         {{ end }}
         {{ .Name }}<br>
       </a>
@@ -199,4 +191,6 @@ const mailHTMLTemplate = `
     </li>
   {{ end }}
 </ul>
+
+<p style="font-size: smaller;">Visit <a href="https://outlived.net/unsubscribe">Outlived</a> to change your mail-delivery preference.</p>
 `

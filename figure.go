@@ -3,7 +3,6 @@ package outlived
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
@@ -95,8 +94,6 @@ func FiguresDiedOn(ctx context.Context, client *datastore.Client, mon time.Month
 const multiLimit = 500
 
 func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Figure) error {
-	beforeDeduping := len(figures)
-
 	// Remove duplicates from figures.
 	var (
 		seen    = make(map[string]struct{})
@@ -110,8 +107,6 @@ func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Fi
 		deduped = append(deduped, fig)
 	}
 	figures = deduped
-
-	afterDeduping := len(figures)
 
 	// TODO(bobg): At least in testing mode, this call to Count (apparently) never returns.
 	// before, err := client.Count(ctx, allQ)
@@ -139,25 +134,21 @@ func ReplaceFigures(ctx context.Context, client *datastore.Client, figures []*Fi
 		keys, figures = nextKeys, nextFigs
 	}
 
-	// after, err := client.Count(ctx, allQ)
-	// if err != nil {
-	// 	return errors.Wrap(err, "counting figures after replace")
-	// }
-
-	log.Printf("replaced figures, %d before deduping, %d after", beforeDeduping, afterDeduping)
-
 	return nil
 }
 
 const stale = 30 * 24 * time.Hour
 
-func ExpireFigures(ctx context.Context, client *datastore.Client) error {
+func ExpireFigures(ctx context.Context, client *datastore.Client) (int, error) {
 	q := datastore.NewQuery("Figure")
-	q = q.Filter("Updated <", time.Now().Add(stale)).KeysOnly()
+	q = q.Filter("Updated <", time.Now().Add(-stale)).KeysOnly()
 	keys, err := client.GetAll(ctx, q, nil)
 	if err != nil {
-		return errors.Wrap(err, "getting stale figures")
+		return 0, errors.Wrap(err, "getting stale figures")
 	}
+
+	count := 0
+
 	for len(keys) > 0 {
 		var nextKeys []*datastore.Key
 
@@ -166,9 +157,10 @@ func ExpireFigures(ctx context.Context, client *datastore.Client) error {
 		}
 		err = client.DeleteMulti(ctx, keys)
 		if err != nil {
-			return errors.Wrap(err, "expiring figures")
+			return count, errors.Wrap(err, "expiring figures")
 		}
+		count += len(keys)
 		keys = nextKeys
 	}
-	return nil
+	return count, nil
 }

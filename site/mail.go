@@ -54,6 +54,8 @@ func (mg *mailgunSender) send(ctx context.Context, from string, to []string, sub
 		}
 
 		msg := mg.mg.NewMessage(from, subject, string(textBody))
+		msg.AddHeader("List-Unsubscribe", "https://outlived.net/unsubscribe")
+
 		if htmlBody != nil {
 			msg.SetHtml(string(htmlBody))
 		}

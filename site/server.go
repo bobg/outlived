@@ -17,8 +17,6 @@ import (
 )
 
 func NewServer(ctx context.Context, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
-	testMode := ctClient == nil
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -31,13 +29,9 @@ func NewServer(ctx context.Context, contentDir, projectID, locationID string, ds
 		projectID:  projectID,
 		locationID: locationID,
 		dsClient:   dsClient,
-		testMode:   testMode,
 	}
 
-	if testMode { // test mode
-		s.tasks = newLocalTasks(ctx, addr)
-		s.sender = new(testSender)
-	} else {
+	if appengine.IsAppEngine() {
 		s.tasks = (*gCloudTasks)(ctClient)
 
 		domain, err := aesite.GetSetting(ctx, dsClient, "mailgun_domain")
@@ -48,9 +42,12 @@ func NewServer(ctx context.Context, contentDir, projectID, locationID string, ds
 		if err != nil {
 			return nil, errors.Wrap(err, "getting setting for mailgun_api_key")
 		}
-
 		s.sender = newMailgunSender(string(domain), string(apiKey))
+	} else {
+		s.tasks = newLocalTasks(ctx, addr)
+		s.sender = new(testSender)
 	}
+
 	return s, nil
 }
 
@@ -62,20 +59,26 @@ type Server struct {
 	dsClient   *datastore.Client
 	tasks      taskService
 	sender     sender
-	testMode   bool
+	home       *url.URL
 }
 
 func (s *Server) Serve(ctx context.Context) {
-	handle("/", s.handleHome)
+	handle("/", s.handleHome) // TODO: this handles every /foo that's not handled elsewhere, but shouldn't.
 	handle("/figures", s.handleFigures)
+	handle("/forgot", s.handleForgot)
 	handle("/load", s.handleLoad)
 	handle("/login", s.handleLogin)
 	handle("/logout", s.handleLogout)
+	handle("/r", s.handleRedirect)
+	handle("/reset", s.handleReset)
+	handle("/reverify", s.handleReverify)
 	handle("/setactive", s.handleSetActive)
 	handle("/signup", s.handleSignup)
 	handle("/verify", s.handleVerify)
-	handle("/reverify", s.handleReverify)
 
+	http.Handle("/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
+
+	// This is for testing. In production, /static/ is routed by app.yaml.
 	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(s.contentDir))))
 
 	// cron-initiated
@@ -195,7 +198,7 @@ func (w *respWriter) WriteHeader(code int) {
 // See
 // https://cloud.google.com/appengine/docs/standard/go112/scheduling-jobs-with-cron-yaml#validating_cron_requests.
 func (s *Server) checkCron(req *http.Request) error {
-	if s.testMode {
+	if !appengine.IsAppEngine() {
 		return nil
 	}
 
@@ -209,7 +212,7 @@ func (s *Server) checkCron(req *http.Request) error {
 // See
 // https://cloud.google.com/tasks/docs/creating-appengine-handlers#reading_request_headers.
 func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
-	if s.testMode {
+	if !appengine.IsAppEngine() {
 		return nil
 	}
 
@@ -220,16 +223,24 @@ func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
 	return nil
 }
 
-func requrl(req *http.Request, ref *url.URL) *url.URL {
-	result := *req.URL
-	if ref != nil {
-		result = *(result.ResolveReference(ref))
+var homeURL *url.URL
+
+func init() {
+	if appengine.IsAppEngine() {
+		homeURL = &url.URL{
+			Scheme: "https",
+			Host:   "outlived.net",
+			Path:   "/",
+		}
+	} else {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8080"
+		}
+		homeURL = &url.URL{
+			Scheme: "http",
+			Host:   "localhost:" + port,
+			Path:   "/",
+		}
 	}
-	if result.Host == "" {
-		result.Host = req.Host
-	}
-	if result.Scheme == "" {
-		result.Scheme = "https"
-	}
-	return &result
 }
