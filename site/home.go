@@ -190,6 +190,8 @@ const homeTmpl = `
 
     {{ end }}
 
+    <p>Data supplied by <a href="https://en.wikipedia.org/">Wikipedia</a>.</p>
+
   </body>
 </html>
 `

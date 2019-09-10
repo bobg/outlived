@@ -157,7 +157,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 }
 
 const mailTextTemplate = `
-This is an update from Outlived <https://outlived.net>!
+This is an update from Outlived! <https://outlived.net>
 
 You were born on {{ .born }}, which was {{ call .numprinter .alivedays }} days ago.
 
@@ -167,6 +167,8 @@ You have now outlived:
 {{ range .figures }}
 - {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. {{ call $redir .Link }}
 {{ end }}
+
+Data supplied by Wikipedia. <https://en.wikipedia.org/>
 
 To stop receiving these updates, visit https://outlived.net/unsubscribe.
 `
@@ -195,6 +197,8 @@ const mailHTMLTemplate = `
     </div>
   {{ end }}
 </div>
+
+<p>Data supplied by <a href="https://en.wikipedia.org/">Wikipedia</a>.</p>
 
 <p style="font-size: smaller;">To stop receiving these updates, visit <a href="https://outlived.net/unsubscribe">Outlived</a>.</p>
 `

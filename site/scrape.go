@@ -37,8 +37,11 @@ func (s *Server) scrapeQueue() string {
 }
 
 func (s *Server) taskName(inp string) string {
-	h := sha256.Sum256([]byte(inp))
-	src := basexx.NewBuffer(h[:], basexx.Binary)
+	hasher := sha256.New()
+	hasher.Write([]byte{1}) // version of this hash
+	hasher.Write([]byte(inp))
+	h := hasher.Sum(nil)
+	src := basexx.NewBuffer(h, basexx.Binary)
 	buf := make([]byte, basexx.Length(256, 50, len(h)))
 	dest := basexx.NewBuffer(buf[:], basexx.Base50)
 	_, err := basexx.Convert(dest, src) // discard error
@@ -122,13 +125,12 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 		v.Set("desc", desc)
 		u.RawQuery = v.Encode()
 
-		err := s.tasks.enqueueTask(
+		return s.tasks.enqueueTask(
 			ctx,
 			s.scrapeQueue(),
 			s.taskName(href),
 			u.String(),
 		)
-		return err
 	})
 }
 

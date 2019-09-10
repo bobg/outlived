@@ -1,7 +1,7 @@
 cron:
 - description: "scrape launcher"
   url: /task/scrape
-  schedule: every 24 hours
+  schedule: 5,20 of month 01:00
 - description: "figure expirer"
   url: /task/expire
   schedule: every 24 hours
