@@ -124,7 +124,9 @@ const homeTmpl = `
       </div>
 
       <div id="settings">
-        <label for="active">Receive outlived e-mail?</label>
+        <label for="active">
+          Receive e-mail each day that you’ve outlived new notable figures?
+        </label>
         <input type="checkbox"
                id="active" 
                name="active" 
@@ -163,7 +165,9 @@ const homeTmpl = `
           <input type="email" id="email" name="email"></input>
           <span id="email-value" style="display: none"></span>
           <button id="login-button-1" disabled type="button">Log in</button>
+          or
           <button id="signup-button-1" disabled type="button">Sign up</button>
+          to find out which notable figures’ lifespans you’ve recently exceeded.
           <div id="password-div" style="display: none">
             <label for="password">Password</label>
             <input type="password" id="password" name="password"></input>
