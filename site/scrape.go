@@ -158,6 +158,7 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 			Pageviews: pageviews,
 			Updated:   time.Now(),
 		}
+		log.Printf("replacing %s (%s)", title, href)
 		return outlived.ReplaceFigures(ctx, s.dsClient, []*outlived.Figure{fig})
 	})
 	if err != nil {
