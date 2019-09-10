@@ -132,6 +132,13 @@ func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(c
 		return fmt.Errorf("no infobox in %s", link)
 	}
 
+	if fullname := findFullName(infobox); fullname != "" {
+		if fullname != title {
+			log.Printf("updating %s -> %s", title, fullname)
+		}
+		title = fullname
+	}
+
 	imgSrc, imgAlt := findImg(infobox)
 
 	bornY, bornM, bornD, err := findDateRow(infobox, "Born")
@@ -214,6 +221,18 @@ func scrapePageviews(ctx context.Context, href string) (int, error) {
 }
 
 var errNotFound = errors.New("not found")
+
+func findFullName(node *html.Node) string {
+	fnNode := findNode(node, func(n *html.Node) bool {
+		return elClassContains(n, "fn")
+	})
+	if fnNode == nil {
+		return ""
+	}
+	buf := new(bytes.Buffer)
+	toPlainText(buf, fnNode)
+	return strings.TrimSpace(buf.String())
+}
 
 func findDateRow(node *html.Node, label string) (year, mon, day int, err error) {
 	if node.Type == html.ElementNode && node.DataAtom == atom.Th {
