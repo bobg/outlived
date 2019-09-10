@@ -124,9 +124,7 @@ type handlerFunc func(http.ResponseWriter, *http.Request) error
 
 func handlerCaller(f handlerFunc) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		if !appengine.IsAppEngine() {
-			log.Printf("%s %s", req.Method, req.URL)
-		}
+		log.Printf("%s %s", req.Method, req.URL)
 
 		ww := &respWriter{w: w}
 		err := f(ww, req)

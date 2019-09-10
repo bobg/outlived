@@ -107,7 +107,7 @@ func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx conte
 
 		err = onPerson(ctx, href, title, desc)
 		if err != nil {
-			log.Printf("on person %s: %s", title, err)
+			return errors.Wrapf(err, "on person %s (%s)", title, href)
 		}
 	}
 
