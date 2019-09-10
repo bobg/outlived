@@ -137,6 +137,8 @@ func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(c
 			log.Printf("updating %s -> %s", title, fullname)
 		}
 		title = fullname
+	} else {
+		log.Printf("no fullname for %s in %s", title, href)
 	}
 
 	imgSrc, imgAlt := findImg(infobox)
