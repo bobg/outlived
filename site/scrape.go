@@ -125,12 +125,17 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 		v.Set("desc", desc)
 		u.RawQuery = v.Encode()
 
-		return s.tasks.enqueueTask(
+		err := s.tasks.enqueueTask(
 			ctx,
 			s.scrapeQueue(),
 			s.taskName(href),
 			u.String(),
 		)
+		if err != nil {
+			log.Printf("enqueueing scrapeperson task for %s (%s): %s", title, href, err)
+			// otherwise ignore error
+		}
+		return nil
 	})
 }
 
