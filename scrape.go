@@ -43,22 +43,22 @@ var (
 	paren = regexp.MustCompile(`^(.*\S)\s*\([^()]*\)$`)
 )
 
-func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx context.Context, href, title, desc string) error) error {
-	link := fmt.Sprintf("https://en.wikipedia.org/wiki/%s_%d", monthName[m], d)
-	resp, err := http.Get(link)
+func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, onPerson func(ctx context.Context, href, title, desc string) error) error {
+	pageName := fmt.Sprintf("%s_%d", monthName[m], d)
+	resp, err := getWikiHTML(ctx, client, pageName)
 	if err != nil {
-		return errors.Wrapf(err, "getting %s", link)
+		return errors.Wrapf(err, "getting %s", pageName)
 	}
 	defer resp.Body.Close()
 
 	tree, err := html.Parse(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "parsing %s", link)
+		return errors.Wrapf(err, "parsing %s", pageName)
 	}
 
 	deaths := findDeathsUL(tree)
 	if deaths == nil {
-		return fmt.Errorf("no Deaths node in %s", link)
+		return fmt.Errorf("no Deaths node in %s", pageName)
 	}
 
 	for li := deaths.FirstChild; li != nil; li = li.NextSibling {
@@ -66,27 +66,43 @@ func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx conte
 			return err
 		}
 
-		// Find the <a> node past a plain text node containing "–" (that's a dash, not a hyphen).
+		if li.Type != html.ElementNode || li.DataAtom != atom.Li {
+			continue
+		}
+
+		// Find the <span> containing just a "–" (that's a dash [0x2013], not a hyphen).
+		dashNode := findNode(li, func(n *html.Node) bool {
+			if n.Type != html.ElementNode || n.DataAtom != atom.Span {
+				return false
+			}
+			b := new(bytes.Buffer)
+			toPlainText(b, n)
+			return b.String() == "–"
+		})
+		if dashNode == nil {
+			continue
+		}
+
+		// Find the first sibling of dashNode that's an <a>.
 		var aNode *html.Node
-		for node := li.FirstChild; node != nil; node = node.NextSibling {
-			if node.Type != html.TextNode {
+		for sib := dashNode.NextSibling; sib != nil; sib = sib.NextSibling {
+			if sib.Type != html.ElementNode {
 				continue
 			}
-			if !strings.Contains(node.Data, "–") {
+			if sib.DataAtom != atom.A {
 				continue
 			}
-			if next := node.NextSibling; next != nil && next.Type == html.ElementNode && next.DataAtom == atom.A {
-				aNode = next
-				break
-			}
+			aNode = sib
+			break
 		}
 		if aNode == nil {
-			continue // xxx log a warning?
+			continue
 		}
 
 		href := elAttr(aNode, "href")
-		title := elAttr(aNode, "title")
+		href = strings.TrimPrefix(href, "./")
 
+		title := elAttr(aNode, "title")
 		title = paren.ReplaceAllString(title, "$1")
 
 		b := new(bytes.Buffer)
@@ -114,22 +130,30 @@ func ScrapeDay(ctx context.Context, m time.Month, d int, onPerson func(ctx conte
 	return nil
 }
 
-func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(ctx context.Context, title, desc, href, imgSrc, imgAlt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error) error {
-	link := "https://en.wikipedia.org" + href
-	resp, err := http.Get(link)
+func ScrapePerson(
+	ctx context.Context,
+	client *http.Client,
+	href, title, desc string,
+	onPerson func(
+		ctx context.Context,
+		title, desc, href, imgSrc, imgAlt string,
+		bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int,
+	) error,
+) error {
+	resp, err := getWikiHTML(ctx, client, href)
 	if err != nil {
-		return errors.Wrapf(err, "getting %s", link)
+		return errors.Wrapf(err, "getting %s", href)
 	}
 	defer resp.Body.Close()
 
 	tree, err := html.Parse(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "parsing %s", link)
+		return errors.Wrapf(err, "parsing %s", href)
 	}
 
 	infobox := findInfoBox(tree)
 	if infobox == nil {
-		return fmt.Errorf("no infobox in %s", link)
+		return fmt.Errorf("no infobox in %s", href)
 	}
 
 	if fullname := findFullName(infobox); fullname != "" {
@@ -140,6 +164,13 @@ func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(c
 	} else {
 		log.Printf("no fullname for %s in %s", title, href)
 	}
+
+	if ind := strings.Index(title, "\n"); ind > 0 {
+		title = title[:ind]
+		log.Printf("truncating to %s", title)
+	}
+
+	title = strings.TrimSpace(title)
 
 	imgSrc, imgAlt := findImg(infobox)
 
@@ -165,7 +196,7 @@ func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(c
 	aliveDur := died.Sub(born)
 	aliveDays := int(aliveDur / (24 * time.Hour))
 
-	pageviews, err := scrapePageviews(ctx, href)
+	pageviews, err := scrapePageviews(ctx, client, href)
 	if err != nil {
 		return errors.Wrap(err, "getting pageviews")
 	}
@@ -175,7 +206,7 @@ func ScrapePerson(ctx context.Context, href, title, desc string, onPerson func(c
 
 var nameRegex = regexp.MustCompile(`[^/]+$`)
 
-func scrapePageviews(ctx context.Context, href string) (int, error) {
+func scrapePageviews(ctx context.Context, client *http.Client, href string) (int, error) {
 	m := nameRegex.FindString(href)
 	if m == "" {
 		return 0, fmt.Errorf("could not construct pageviews link from href %s", href)
@@ -187,11 +218,9 @@ func scrapePageviews(ctx context.Context, href string) (int, error) {
 		start     = yesterday.Add(-90 * 24 * time.Hour) // 90 days before yesterday
 	)
 
-	// The endpoint accessed via xhr by e.g.
-	// https://tools.wmflabs.org/pageviews?project=en.wikipedia.org&pages=Carl_Sagan&range=latest-90.
-	u := fmt.Sprintf("https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia/all-access/user/%s/daily/%d%02d%02d00/%d%02d%02d00", m, start.Year(), start.Month(), start.Day(), yesterday.Year(), yesterday.Month(), yesterday.Day())
-
-	resp, err := http.Get(u)
+	// C.f. https://wikimedia.org/api/rest_v1/
+	u := fmt.Sprintf("https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia.org/all-access/user/%s/daily/%d%02d%02d00/%d%02d%02d00", m, start.Year(), start.Month(), start.Day(), yesterday.Year(), yesterday.Month(), yesterday.Day())
+	resp, err := httpGetContext(ctx, client, u)
 	if err != nil {
 		return 0, errors.Wrapf(err, "fetching %s", u)
 	}
@@ -300,35 +329,15 @@ func parseDate2(yearStr, monStr, dayStr, bcStr string) (year, mon, day int, err 
 }
 
 func findDeathsUL(node *html.Node) *html.Node {
-	if node.Type == html.ElementNode && node.DataAtom == atom.H2 {
-		span := node.FirstChild
-		if span == nil {
-			return nil
-		}
-		if span.Type != html.ElementNode {
-			return nil
-		}
-		if span.DataAtom != atom.Span {
-			return nil
-		}
-		if id := elAttr(span, "id"); id != "Deaths" {
-			return nil
-		}
-
-		for sib := node.NextSibling; sib != nil; sib = sib.NextSibling {
-			if sib.Type == html.ElementNode && sib.DataAtom == atom.Ul {
-				return sib
-			}
-		}
-
+	h2El := findNode(node, func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.DataAtom == atom.H2 && elAttr(n, "id") == "Deaths"
+	})
+	if h2El == nil {
 		return nil
 	}
-	if node.Type == html.TextNode {
-		return nil
-	}
-	for child := node.FirstChild; child != nil; child = child.NextSibling {
-		if result := findDeathsUL(child); result != nil {
-			return result
+	for sib := h2El.NextSibling; sib != nil; sib = sib.NextSibling {
+		if sib.Type == html.ElementNode && sib.DataAtom == atom.Ul {
+			return sib
 		}
 	}
 	return nil
@@ -398,4 +407,17 @@ func elClassContains(node *html.Node, probe string) bool {
 		}
 	}
 	return false
+}
+
+func httpGetContext(ctx context.Context, client *http.Client, url string) (*http.Response, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	return client.Do(req)
+}
+
+func getWikiHTML(ctx context.Context, client *http.Client, name string) (*http.Response, error) {
+	return httpGetContext(ctx, client, fmt.Sprintf("https://en.wikipedia.org/api/rest_v1/page/html/%s?redirect=false", name))
 }

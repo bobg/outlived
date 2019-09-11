@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -67,6 +68,8 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 		return err
 	}
 
+	client := new(http.Client)
+
 	w := csv.NewWriter(os.Stdout)
 
 	limiter := rate.NewLimiter(rate.Every(*limit), 1)
@@ -80,12 +83,12 @@ func cliScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error 
 			if err != nil {
 				return errors.Wrapf(err, "waiting to scrape day %d-%d", m, d)
 			}
-			err = outlived.ScrapeDay(ctx, m, d, func(ctx context.Context, href, title, desc string) error {
+			err = outlived.ScrapeDay(ctx, client, m, d, func(ctx context.Context, href, title, desc string) error {
 				err := limiter.Wait(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "waiting to scrape person %s (%s)", title, href)
 				}
-				err = outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, imgAlt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
+				err = outlived.ScrapePerson(ctx, client, href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, imgAlt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
 					defer w.Flush()
 
 					bornStr := fmt.Sprintf("%d-%02d-%02d", bornY, bornM, bornD)

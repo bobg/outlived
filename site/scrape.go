@@ -116,7 +116,7 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 	log.Printf("scraping day %s %d", time.Month(m), d)
 
 	ctx := req.Context()
-	return outlived.ScrapeDay(ctx, time.Month(m), d, func(ctx context.Context, href, title, desc string) error {
+	return outlived.ScrapeDay(ctx, new(http.Client), time.Month(m), d, func(ctx context.Context, href, title, desc string) error {
 		u, _ := url.Parse("/task/scrapeperson")
 
 		v := url.Values{}
@@ -152,7 +152,7 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 	)
 
 	ctx := req.Context()
-	err = outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, alt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
+	err = outlived.ScrapePerson(ctx, new(http.Client), href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, alt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
 		fig := &outlived.Figure{
 			Name:      title,
 			Desc:      desc,
@@ -165,7 +165,6 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 			Pageviews: pageviews,
 			Updated:   time.Now(),
 		}
-		log.Printf("replacing %s (%s)", title, href)
 		return outlived.ReplaceFigures(ctx, s.dsClient, []*outlived.Figure{fig})
 	})
 	if err != nil {
