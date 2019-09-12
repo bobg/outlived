@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"regexp"
@@ -13,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bobg/htree"
 	"github.com/pkg/errors"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -73,11 +73,12 @@ func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, on
 		}
 
 		// Find the <span> containing just a "–" (that's a dash [0x2013], not a hyphen).
-		dashNode := findElNode(li, func(n *html.Node) bool {
+		dashNode := htree.FindEl(li, func(n *html.Node) bool {
 			if n.DataAtom != atom.Span {
 				return false
 			}
-			return plainTextOf(n) == "–" // dash, not hyphen
+			txt, _ := htree.Text(n)
+			return txt == "–" // dash, not hyphen
 		})
 		if dashNode == nil {
 			continue
@@ -99,10 +100,10 @@ func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, on
 			continue
 		}
 
-		href := elAttr(aNode, "href")
+		href := htree.ElAttr(aNode, "href")
 		href = strings.TrimPrefix(href, "./")
 
-		title := elAttr(aNode, "title")
+		title := htree.ElAttr(aNode, "title")
 		title = paren.ReplaceAllString(title, "$1")
 
 		b := new(bytes.Buffer)
@@ -111,7 +112,10 @@ func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, on
 			if node.Type == html.ElementNode && node.DataAtom == atom.Sup {
 				break
 			}
-			toPlainText(b, node)
+			err = htree.WriteText(b, node)
+			if err != nil {
+				return errors.Wrap(err, "converting description to plain text")
+			}
 		}
 
 		desc := b.String()
@@ -200,7 +204,11 @@ func parsePerson(ctx context.Context, tree *html.Node, href, title string) (
 		return parsePersonWithoutInfoBox(ctx, tree, href, title)
 	}
 
-	fullname = findFullName(infobox)
+	fullname, err = findFullName(infobox)
+	if err != nil {
+		err = errors.Wrap(err, "finding fullname in infobox")
+		return
+	}
 
 	imgSrc, imgAlt = findImg(infobox)
 
@@ -223,7 +231,7 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 	bornY, bornM, bornD, diedY, diedM, diedD int,
 	err error,
 ) {
-	secNode := findElNode(tree, func(n *html.Node) bool {
+	secNode := htree.FindEl(tree, func(n *html.Node) bool {
 		return n.DataAtom == atom.Section
 	})
 	if secNode == nil {
@@ -246,20 +254,28 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 
 		tries++
 
-		bNode := findElNode(pNode, func(n *html.Node) bool {
+		bNode := htree.FindEl(pNode, func(n *html.Node) bool {
 			return n.DataAtom == atom.B
 		})
 		if bNode == nil {
 			continue
 		}
-		fullname = plainTextOf(bNode)
+		fullname, err = htree.Text(bNode)
+		if err != nil {
+			err = errors.Wrap(err, "converting fullname to text")
+			return
+		}
 		if fullname != title {
 			continue
 		}
 
 		buf := new(bytes.Buffer)
 		for tNode := bNode.NextSibling; tNode != nil; tNode = tNode.NextSibling {
-			toPlainText(buf, tNode)
+			err = htree.WriteText(buf, tNode)
+			if err != nil {
+				err = errors.Wrap(err, "converting intro text to plain text")
+				return
+			}
 		}
 		tNodeText := buf.String()
 		m := maybeBornDied.FindStringSubmatch(tNodeText)
@@ -288,7 +304,7 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 
 	// Look for the first <figure> under secNode.
 	// Look for an <img> inside that, and perhaps also a <figcaption> (for the imgAlt).
-	figNode := findElNode(secNode, func(n *html.Node) bool {
+	figNode := htree.FindEl(secNode, func(n *html.Node) bool {
 		return n.DataAtom == atom.Figure
 	})
 	if figNode == nil {
@@ -298,13 +314,13 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 	if imgSrc == "" {
 		return
 	}
-	captionEl := findNode(figNode, func(n *html.Node) bool {
+	captionEl := htree.FindEl(figNode, func(n *html.Node) bool {
 		return n.DataAtom == atom.Figcaption
 	})
 	if captionEl == nil {
 		return
 	}
-	imgAlt = plainTextOf(captionEl)
+	imgAlt, _ = htree.Text(captionEl)
 	return
 }
 
@@ -357,26 +373,41 @@ func scrapePageviews(ctx context.Context, client *http.Client, href string) (int
 
 var errNotFound = errors.New("not found")
 
-func findFullName(node *html.Node) string {
-	fnNode := findElNode(node, func(n *html.Node) bool {
-		return elClassContains(n, "fn")
+func findFullName(node *html.Node) (string, error) {
+	fnNode := htree.FindEl(node, func(n *html.Node) bool {
+		return htree.ElClassContains(n, "fn")
 	})
 	if fnNode == nil {
-		return ""
+		return "", nil
 	}
-	return strings.TrimSpace(plainTextOf(fnNode))
+	txt, err := htree.Text(fnNode)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(txt), nil
 }
 
 func findDateRow(node *html.Node, label string) (year, mon, day int, err error) {
 	if node.Type == html.ElementNode && node.DataAtom == atom.Th {
-		if plainTextOf(node) != label {
+		var txt string
+		txt, err = htree.Text(node)
+		if err != nil {
+			err = errors.Wrap(err, "converting to text")
+			return
+		}
+		if txt != label {
 			return 0, 0, 0, errNotFound
 		}
 		td := node.NextSibling
 		if td == nil || td.Type != html.ElementNode || td.DataAtom != atom.Td {
 			return 0, 0, 0, errNotFound
 		}
-		return parseDate(plainTextOf(td))
+		txt, err = htree.Text(td)
+		if err != nil {
+			err = errors.Wrap(err, "converting to text")
+			return
+		}
+		return parseDate(txt)
 	}
 	if node.Type == html.TextNode {
 		return 0, 0, 0, errNotFound
@@ -427,8 +458,8 @@ func parseDate2(yearStr, monStr, dayStr, bcStr string) (year, mon, day int, err 
 }
 
 func findDeathsUL(node *html.Node) *html.Node {
-	h2El := findElNode(node, func(n *html.Node) bool {
-		return n.DataAtom == atom.H2 && elAttr(n, "id") == "Deaths"
+	h2El := htree.FindEl(node, func(n *html.Node) bool {
+		return n.DataAtom == atom.H2 && htree.ElAttr(n, "id") == "Deaths"
 	})
 	if h2El == nil {
 		return nil
@@ -441,82 +472,20 @@ func findDeathsUL(node *html.Node) *html.Node {
 	return nil
 }
 
-func findElNode(node *html.Node, pred func(*html.Node) bool) *html.Node {
-	return findNode(node, func(n *html.Node) bool {
-		return n.Type == html.ElementNode && pred(n)
-	})
-}
-
-func findNode(node *html.Node, pred func(*html.Node) bool) *html.Node {
-	if pred(node) {
-		return node
-	}
-	if node.Type == html.TextNode {
-		return nil
-	}
-	for child := node.FirstChild; child != nil; child = child.NextSibling {
-		if found := findNode(child, pred); found != nil {
-			return found
-		}
-	}
-	return nil
-}
-
 func findInfoBox(node *html.Node) *html.Node {
-	return findElNode(node, func(n *html.Node) bool {
-		return n.DataAtom == atom.Table && elClassContains(n, "infobox")
+	return htree.FindEl(node, func(n *html.Node) bool {
+		return n.DataAtom == atom.Table && htree.ElClassContains(n, "infobox")
 	})
 }
 
 func findImg(node *html.Node) (src, alt string) {
-	found := findElNode(node, func(n *html.Node) bool {
+	found := htree.FindEl(node, func(n *html.Node) bool {
 		return n.DataAtom == atom.Img
 	})
 	if found != nil {
-		return elAttr(found, "src"), elAttr(found, "alt")
+		return htree.ElAttr(found, "src"), htree.ElAttr(found, "alt")
 	}
 	return "", ""
-}
-
-func toPlainText(w io.Writer, node *html.Node) {
-	switch node.Type {
-	case html.TextNode:
-		w.Write([]byte(html.UnescapeString(node.Data)))
-
-	case html.ElementNode:
-		if node.DataAtom == atom.Br {
-			w.Write([]byte("\n"))
-			return
-		}
-		for subnode := node.FirstChild; subnode != nil; subnode = subnode.NextSibling {
-			toPlainText(w, subnode)
-		}
-	}
-}
-
-func plainTextOf(node *html.Node) string {
-	buf := new(bytes.Buffer)
-	toPlainText(buf, node)
-	return buf.String()
-}
-
-func elAttr(node *html.Node, key string) string {
-	for _, attr := range node.Attr {
-		if attr.Key == key {
-			return attr.Val
-		}
-	}
-	return ""
-}
-
-func elClassContains(node *html.Node, probe string) bool {
-	classes := strings.Fields(elAttr(node, "class"))
-	for _, c := range classes {
-		if c == probe {
-			return true
-		}
-	}
-	return false
 }
 
 func httpGetContext(ctx context.Context, client *http.Client, url string) (*http.Response, error) {

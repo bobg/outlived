@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"strings"
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
@@ -17,10 +16,9 @@ import (
 )
 
 var adminCommands = map[string]func(context.Context, *flag.FlagSet, []string) error{
-	"list":     cliAdminList,
-	"get":      cliAdminGet,
-	"set":      cliAdminSet,
-	"updlinks": cliUpdLinks,
+	"list": cliAdminList,
+	"get":  cliAdminGet,
+	"set":  cliAdminSet,
 }
 
 func cliAdmin(ctx context.Context, flagset *flag.FlagSet, args []string) error {
@@ -173,58 +171,4 @@ func cliAdminSet(ctx context.Context, flagset *flag.FlagSet, args []string) erro
 	}
 
 	return aesite.SetSetting(ctx, dsClient, flagset.Arg(0), []byte(flagset.Arg(1)))
-}
-
-func cliUpdLinks(ctx context.Context, flagset *flag.FlagSet, args []string) error {
-	var (
-		creds     = flagset.String("creds", "", "credentials file")
-		projectID = flagset.String("project", "outlived-163105", "project ID")
-		test      = flagset.Bool("test", false, "run in test mode")
-	)
-
-	err := flagset.Parse(args)
-	if err != nil {
-		return err
-	}
-
-	if *test {
-		if *creds != "" {
-			log.Fatal("cannot supply both -test and -creds")
-		}
-
-		err := aesite.DSTest(ctx, *projectID)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	var options []option.ClientOption
-	if *creds != "" {
-		options = append(options, option.WithCredentialsFile(*creds))
-	}
-	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
-	if err != nil {
-		return errors.Wrap(err, "creating datastore client")
-	}
-
-	q := datastore.NewQuery("Figure")
-	it := dsClient.Run(ctx, q)
-	for {
-		var f outlived.Figure
-		k, err := it.Next(&f)
-		if err == iterator.Done {
-			return nil
-		}
-		if err != nil {
-			return errors.Wrap(err, "iterating over figures")
-		}
-		if upd := strings.TrimPrefix(f.Link, "/wiki/"); upd != f.Link {
-			f.Link = upd
-			_, err = dsClient.Put(ctx, k, &f)
-			if err != nil {
-				return errors.Wrapf(err, "updating %s", k)
-			}
-			log.Printf("updated %s", upd)
-		}
-	}
 }
