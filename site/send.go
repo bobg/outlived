@@ -168,7 +168,7 @@ You have now outlived:
 - {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. {{ call $redir .Link }}
 {{ end }}
 
-Data supplied by Wikipedia. <https://en.wikipedia.org/>
+Data supplied by Wikipedia, the free encyclopedia. <https://en.wikipedia.org/>
 
 To stop receiving these updates, visit https://outlived.net/unsubscribe.
 `
@@ -198,7 +198,7 @@ const mailHTMLTemplate = `
   {{ end }}
 </div>
 
-<p>Data supplied by <a href="https://en.wikipedia.org/">Wikipedia</a>.</p>
+<p>Data supplied by <a href="https://en.wikipedia.org/">Wikipedia</a>, the free encyclopedia.</p>
 
 <p style="font-size: smaller;">To stop receiving these updates, visit <a href="https://outlived.net/unsubscribe">Outlived</a>.</p>
 `

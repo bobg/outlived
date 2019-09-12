@@ -47,7 +47,7 @@ var (
 
 func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, onPerson func(ctx context.Context, href, title, desc string) error) error {
 	pageName := fmt.Sprintf("%s_%d", monthName[m], d)
-	resp, err := getWikiHTML(ctx, client, pageName)
+	resp, _, err := getWikiHTML(ctx, client, pageName)
 	if err != nil {
 		return errors.Wrapf(err, "getting %s", pageName)
 	}
@@ -140,11 +140,15 @@ func ScrapePerson(
 		bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int,
 	) error,
 ) error {
-	resp, err := getWikiHTML(ctx, client, href)
+	resp, updHref, err := getWikiHTML(ctx, client, href)
 	if err != nil {
 		return errors.Wrapf(err, "getting %s", href)
 	}
 	defer resp.Body.Close()
+	if updHref != href {
+		log.Printf("updating href %s -> %s", href, updHref)
+		href = updHref
+	}
 
 	tree, err := html.Parse(resp.Body)
 	if err != nil {
@@ -242,8 +246,10 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 
 		tries++
 
-		bNode := pNode.FirstChild
-		if bNode == nil || bNode.Type != html.ElementNode || bNode.DataAtom != atom.B {
+		bNode := findElNode(pNode, func(n *html.Node) bool {
+			return n.DataAtom == atom.B
+		})
+		if bNode == nil {
 			continue
 		}
 		fullname = plainTextOf(bNode)
@@ -519,9 +525,20 @@ func httpGetContext(ctx context.Context, client *http.Client, url string) (*http
 		return nil, err
 	}
 	req = req.WithContext(ctx)
+	req.Header.Set("User-Agent", "Outlived/1.0")
 	return client.Do(req)
 }
 
-func getWikiHTML(ctx context.Context, client *http.Client, name string) (*http.Response, error) {
-	return httpGetContext(ctx, client, fmt.Sprintf("https://en.wikipedia.org/api/rest_v1/page/html/%s?redirect=false", name))
+func getWikiHTML(ctx context.Context, client *http.Client, name string) (*http.Response, string, error) {
+	const prefix = "https://en.wikipedia.org/api/rest_v1/page/html/"
+
+	resp, err := httpGetContext(ctx, client, prefix+name)
+	if err != nil {
+		return nil, "", err
+	}
+	loc := resp.Header.Get("Content-Location")
+	if newName := strings.TrimPrefix(loc, prefix); newName != loc {
+		name = newName
+	}
+	return resp, name, nil
 }
