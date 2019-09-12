@@ -41,6 +41,8 @@ var (
 	bRegex = regexp.MustCompile(`\(b\.\s*\d+\)$`)
 
 	paren = regexp.MustCompile(`^(.*\S)\s*\([^()]*\)$`)
+
+	maybeBornDied = regexp.MustCompile(`^\s*\(([^()]+)–([^()]+)\)`)
 )
 
 func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, onPerson func(ctx context.Context, href, title, desc string) error) error {
@@ -71,13 +73,11 @@ func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, on
 		}
 
 		// Find the <span> containing just a "–" (that's a dash [0x2013], not a hyphen).
-		dashNode := findNode(li, func(n *html.Node) bool {
-			if n.Type != html.ElementNode || n.DataAtom != atom.Span {
+		dashNode := findElNode(li, func(n *html.Node) bool {
+			if n.DataAtom != atom.Span {
 				return false
 			}
-			b := new(bytes.Buffer)
-			toPlainText(b, n)
-			return b.String() == "–"
+			return plainTextOf(n) == "–" // dash, not hyphen
 		})
 		if dashNode == nil {
 			continue
@@ -148,39 +148,21 @@ func ScrapePerson(
 
 	tree, err := html.Parse(resp.Body)
 	if err != nil {
-		return errors.Wrapf(err, "parsing %s", href)
+		return errors.Wrapf(err, "parsing HTML of %s", href)
 	}
 
-	infobox := findInfoBox(tree)
-	if infobox == nil {
-		return fmt.Errorf("no infobox in %s", href)
+	fullname, imgSrc, imgAlt, bornY, bornM, bornD, diedY, diedM, diedD, err := parsePerson(ctx, tree, href, title)
+	if err != nil {
+		return errors.Wrapf(err, "parsing content of %s", href)
 	}
 
-	if fullname := findFullName(infobox); fullname != "" {
-		if fullname != title {
-			log.Printf("updating %s -> %s", title, fullname)
-		}
+	if fullname != "" && fullname != title {
+		log.Printf("updating %s -> %s", title, fullname)
 		title = fullname
-	} else {
-		log.Printf("no fullname for %s in %s", title, href)
-	}
-
-	if ind := strings.Index(title, "\n"); ind > 0 {
-		title = title[:ind]
-		log.Printf("truncating to %s", title)
-	}
-
-	title = strings.TrimSpace(title)
-
-	imgSrc, imgAlt := findImg(infobox)
-
-	bornY, bornM, bornD, err := findDateRow(infobox, "Born")
-	if err != nil {
-		return errors.Wrap(err, "finding Born row")
-	}
-	diedY, diedM, diedD, err := findDateRow(infobox, "Died")
-	if err != nil {
-		return errors.Wrap(err, "finding Died row")
+		if ind := strings.Index(title, "\n"); ind > 0 {
+			title = strings.TrimSpace(title[:ind])
+			log.Printf("truncating to %s", title)
+		}
 	}
 
 	by := bornY
@@ -202,6 +184,122 @@ func ScrapePerson(
 	}
 
 	return onPerson(ctx, title, desc, href, imgSrc, imgAlt, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews)
+}
+
+func parsePerson(ctx context.Context, tree *html.Node, href, title string) (
+	fullname, imgSrc, imgAlt string,
+	bornY, bornM, bornD, diedY, diedM, diedD int,
+	err error,
+) {
+	infobox := findInfoBox(tree)
+	if infobox == nil {
+		return parsePersonWithoutInfoBox(ctx, tree, href, title)
+	}
+
+	fullname = findFullName(infobox)
+
+	imgSrc, imgAlt = findImg(infobox)
+
+	bornY, bornM, bornD, err = findDateRow(infobox, "Born")
+	if err != nil {
+		err = errors.Wrap(err, "finding Born row")
+		return
+	}
+	diedY, diedM, diedD, err = findDateRow(infobox, "Died")
+	if err != nil {
+		err = errors.Wrap(err, "finding Died row")
+		return
+	}
+
+	return fullname, imgSrc, imgAlt, bornY, bornM, bornD, diedY, diedM, diedD, err
+}
+
+func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title string) (
+	fullname, imgSrc, imgAlt string,
+	bornY, bornM, bornD, diedY, diedM, diedD int,
+	err error,
+) {
+	secNode := findElNode(tree, func(n *html.Node) bool {
+		return n.DataAtom == atom.Section
+	})
+	if secNode == nil {
+		err = fmt.Errorf("no infobox and no section node in %s", href)
+		return
+	}
+
+	// Look for the first <p> under secNode.
+	// Check it for name and dates.
+	// If that's no good, look for the second <p> and check that.
+	var (
+		pNode *html.Node
+		tries int
+		found bool
+	)
+	for pNode = secNode.FirstChild; pNode != nil && tries <= 2; pNode = pNode.NextSibling {
+		if pNode.Type != html.ElementNode || pNode.DataAtom != atom.P {
+			continue
+		}
+
+		tries++
+
+		bNode := pNode.FirstChild
+		if bNode == nil || bNode.Type != html.ElementNode || bNode.DataAtom != atom.B {
+			continue
+		}
+		fullname = plainTextOf(bNode)
+		if fullname != title {
+			continue
+		}
+
+		buf := new(bytes.Buffer)
+		for tNode := bNode.NextSibling; tNode != nil; tNode = tNode.NextSibling {
+			toPlainText(buf, tNode)
+		}
+		tNodeText := buf.String()
+		m := maybeBornDied.FindStringSubmatch(tNodeText)
+		if m == nil {
+			continue
+		}
+
+		bornY, bornM, bornD, err = parseDate(m[1])
+		if err != nil {
+			continue
+		}
+
+		diedY, diedM, diedD, err = parseDate(m[2])
+		if err != nil {
+			continue
+		}
+
+		found = true
+		break
+	}
+
+	if !found {
+		err = fmt.Errorf("no infobox and no suitable intro text in %s", href)
+		return
+	}
+
+	// Look for the first <figure> under secNode.
+	// Look for an <img> inside that, and perhaps also a <figcaption> (for the imgAlt).
+	figNode := findElNode(secNode, func(n *html.Node) bool {
+		return n.DataAtom == atom.Figure
+	})
+	if figNode == nil {
+		return
+	}
+	imgSrc, imgAlt = findImg(figNode)
+	if imgSrc == "" {
+		return
+	}
+	captionEl := findNode(figNode, func(n *html.Node) bool {
+		return n.DataAtom == atom.Figcaption
+	})
+	if captionEl == nil {
+		return
+	}
+	imgAlt = plainTextOf(captionEl)
+	return
 }
 
 var nameRegex = regexp.MustCompile(`[^/]+$`)
@@ -254,31 +352,25 @@ func scrapePageviews(ctx context.Context, client *http.Client, href string) (int
 var errNotFound = errors.New("not found")
 
 func findFullName(node *html.Node) string {
-	fnNode := findNode(node, func(n *html.Node) bool {
+	fnNode := findElNode(node, func(n *html.Node) bool {
 		return elClassContains(n, "fn")
 	})
 	if fnNode == nil {
 		return ""
 	}
-	buf := new(bytes.Buffer)
-	toPlainText(buf, fnNode)
-	return strings.TrimSpace(buf.String())
+	return strings.TrimSpace(plainTextOf(fnNode))
 }
 
 func findDateRow(node *html.Node, label string) (year, mon, day int, err error) {
 	if node.Type == html.ElementNode && node.DataAtom == atom.Th {
-		b := new(bytes.Buffer)
-		toPlainText(b, node)
-		if b.String() != label {
+		if plainTextOf(node) != label {
 			return 0, 0, 0, errNotFound
 		}
 		td := node.NextSibling
 		if td == nil || td.Type != html.ElementNode || td.DataAtom != atom.Td {
 			return 0, 0, 0, errNotFound
 		}
-		b.Reset()
-		toPlainText(b, td)
-		return parseDate(b.String())
+		return parseDate(plainTextOf(td))
 	}
 	if node.Type == html.TextNode {
 		return 0, 0, 0, errNotFound
@@ -329,8 +421,8 @@ func parseDate2(yearStr, monStr, dayStr, bcStr string) (year, mon, day int, err 
 }
 
 func findDeathsUL(node *html.Node) *html.Node {
-	h2El := findNode(node, func(n *html.Node) bool {
-		return n.Type == html.ElementNode && n.DataAtom == atom.H2 && elAttr(n, "id") == "Deaths"
+	h2El := findElNode(node, func(n *html.Node) bool {
+		return n.DataAtom == atom.H2 && elAttr(n, "id") == "Deaths"
 	})
 	if h2El == nil {
 		return nil
@@ -341,6 +433,12 @@ func findDeathsUL(node *html.Node) *html.Node {
 		}
 	}
 	return nil
+}
+
+func findElNode(node *html.Node, pred func(*html.Node) bool) *html.Node {
+	return findNode(node, func(n *html.Node) bool {
+		return n.Type == html.ElementNode && pred(n)
+	})
 }
 
 func findNode(node *html.Node, pred func(*html.Node) bool) *html.Node {
@@ -359,14 +457,14 @@ func findNode(node *html.Node, pred func(*html.Node) bool) *html.Node {
 }
 
 func findInfoBox(node *html.Node) *html.Node {
-	return findNode(node, func(n *html.Node) bool {
-		return n.Type == html.ElementNode && n.DataAtom == atom.Table && elClassContains(n, "infobox")
+	return findElNode(node, func(n *html.Node) bool {
+		return n.DataAtom == atom.Table && elClassContains(n, "infobox")
 	})
 }
 
 func findImg(node *html.Node) (src, alt string) {
-	found := findNode(node, func(n *html.Node) bool {
-		return n.Type == html.ElementNode && n.DataAtom == atom.Img
+	found := findElNode(node, func(n *html.Node) bool {
+		return n.DataAtom == atom.Img
 	})
 	if found != nil {
 		return elAttr(found, "src"), elAttr(found, "alt")
@@ -388,6 +486,12 @@ func toPlainText(w io.Writer, node *html.Node) {
 			toPlainText(w, subnode)
 		}
 	}
+}
+
+func plainTextOf(node *html.Node) string {
+	buf := new(bytes.Buffer)
+	toPlainText(buf, node)
+	return buf.String()
 }
 
 func elAttr(node *html.Node, key string) string {
