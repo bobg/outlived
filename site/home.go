@@ -108,6 +108,9 @@ const homeTmpl = `
           vertical-align: top;
           margin: 1em 2em;
       }
+      a.figure {
+          font-weight: bold;
+      }
     </style>
   </head>
   <body>
