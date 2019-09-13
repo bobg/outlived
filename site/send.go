@@ -157,6 +157,8 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 }
 
 const mailTextTemplate = `
+This is an update from Outlived! <https://outlived.net>
+
 You were born on {{ .born }}, which was {{ call .numprinter .alivedays }} days ago.
 
 You have now outlived:
@@ -166,19 +168,23 @@ You have now outlived:
 - {{ .Name }}, {{ if .Desc }}{{ .Desc }}, {{ end }}{{ .Born }}—{{ .Died }}. {{ call $redir .Link }}
 {{ end }}
 
-Visit https://outlived.net/unsubscribe to change your mail-delivery preference.
+Data supplied by Wikipedia, the free encyclopedia. <https://en.wikipedia.org/>
+
+To stop receiving these updates, visit https://outlived.net/unsubscribe.
 `
 
 const mailHTMLTemplate = `
+<p>This is an update from <a href="https://outlived.net/">Outlived</a>!</p>
+
 <p>You were born on {{ .born }}, which was {{ call .numprinter .alivedays }} days ago.</p>
 
 <p>You have now outlived:</p>
 
-<ul style="margin: 0 auto; text-align: center; display: grid; grid-template-columns: repeat(auto-fill, 20em);">
+<div style="text-align: center;">
   {{ $redir := .redir }}
   {{ range .figures }}
-    <li style="display: inline-block; vertical-align: top; margin: 1em 2em;">
-      <a href="{{ call $redir .Link }}" target="_blank">
+    <div style="display: inline-block; vertical-align: top; margin: 1em 2em; width: 16em;">
+      <a href="{{ call $redir .Link }}" style="font-weight: bold;" target="_blank">
         {{ if .ImgSrc }}
           <img style="max-width: 64px; height: auto;" src="{{ call $redir .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
         {{ end }}
@@ -188,9 +194,11 @@ const mailHTMLTemplate = `
         {{ .Desc }}<br>
       {{ end }}
       {{ .Born }}&mdash;{{ .Died }}
-    </li>
+    </div>
   {{ end }}
-</ul>
+</div>
 
-<p style="font-size: smaller;">Visit <a href="https://outlived.net/unsubscribe">Outlived</a> to change your mail-delivery preference.</p>
+<p>Data supplied by <a href="https://en.wikipedia.org/">Wikipedia</a>, the free encyclopedia.</p>
+
+<p style="font-size: smaller;">To stop receiving these updates, visit <a href="https://outlived.net/unsubscribe">Outlived</a>.</p>
 `

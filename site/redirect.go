@@ -71,6 +71,10 @@ func rlink(req *http.Request, target string) (*url.URL, error) {
 		return rest[2:]
 	}
 
+	if strings.HasPrefix(target, "http:") || strings.HasPrefix(target, "https:") {
+		return url.Parse(target)
+	}
+
 	if rest := try("//upload.wikimedia.org/wikipedia/commons/thumb/"); rest != "" {
 		v.Set("ct", rest)
 	} else if rest := try("//upload.wikimedia.org/wikipedia/commons/"); rest != "" {
@@ -79,10 +83,8 @@ func rlink(req *http.Request, target string) (*url.URL, error) {
 		v.Set("et", rest)
 	} else if rest := try("//upload.wikimedia.org/wikipedia/en/"); rest != "" {
 		v.Set("e", rest)
-	} else if rest := strings.TrimPrefix(target, "/wiki/"); rest != target && rest != "" {
-		v.Set("w", rest)
 	} else {
-		return url.Parse(target)
+		v.Set("w", strings.TrimPrefix(target, "/wiki/"))
 	}
 
 	r.RawQuery = v.Encode()

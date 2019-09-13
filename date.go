@@ -77,7 +77,8 @@ func (d Date) YDSince(other Date) (years, days int) {
 }
 
 func (d Date) String() string {
-	return fmt.Sprintf("%d-%02d-%02d", d.Y, d.M, d.D)
+	m := d.M.String()
+	return fmt.Sprintf("%d %s %d", d.D, m[:3], d.Y)
 }
 
 func daysInMonth(y int, m time.Month) int {

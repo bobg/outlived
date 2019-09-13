@@ -37,8 +37,11 @@ func (s *Server) scrapeQueue() string {
 }
 
 func (s *Server) taskName(inp string) string {
-	h := sha256.Sum256([]byte(inp))
-	src := basexx.NewBuffer(h[:], basexx.Binary)
+	hasher := sha256.New()
+	hasher.Write([]byte{1}) // version of this hash
+	hasher.Write([]byte(inp))
+	h := hasher.Sum(nil)
+	src := basexx.NewBuffer(h, basexx.Binary)
 	buf := make([]byte, basexx.Length(256, 50, len(h)))
 	dest := basexx.NewBuffer(buf[:], basexx.Base50)
 	_, err := basexx.Convert(dest, src) // discard error
@@ -84,7 +87,7 @@ func (s *Server) handleScrape(w http.ResponseWriter, req *http.Request) error {
 			}
 		}
 	}
-	log.Print("queued new scrapeday tasks")
+
 	return nil
 }
 
@@ -113,7 +116,7 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 	log.Printf("scraping day %s %d", time.Month(m), d)
 
 	ctx := req.Context()
-	return outlived.ScrapeDay(ctx, time.Month(m), d, func(ctx context.Context, href, title, desc string) error {
+	return outlived.ScrapeDay(ctx, new(http.Client), time.Month(m), d, func(ctx context.Context, href, title, desc string) error {
 		u, _ := url.Parse("/task/scrapeperson")
 
 		v := url.Values{}
@@ -128,7 +131,11 @@ func (s *Server) handleScrapeday(w http.ResponseWriter, req *http.Request) error
 			s.taskName(href),
 			u.String(),
 		)
-		return err
+		if err != nil {
+			log.Printf("enqueueing scrapeperson task for %s (%s): %s", title, href, err)
+			// otherwise ignore error
+		}
+		return nil
 	})
 }
 
@@ -144,10 +151,8 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 		desc  = req.FormValue("desc")
 	)
 
-	log.Printf("scraping person %s (%s)", title, href)
-
 	ctx := req.Context()
-	return outlived.ScrapePerson(ctx, href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, alt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
+	err = outlived.ScrapePerson(ctx, new(http.Client), href, title, desc, func(ctx context.Context, title, desc, href, imgSrc, alt string, bornY, bornM, bornD, diedY, diedM, diedD, aliveDays, pageviews int) error {
 		fig := &outlived.Figure{
 			Name:      title,
 			Desc:      desc,
@@ -162,4 +167,10 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 		}
 		return outlived.ReplaceFigures(ctx, s.dsClient, []*outlived.Figure{fig})
 	})
+	if err != nil {
+		log.Printf("scraping person %s: %s", title, err)
+		// Otherwise ignore this error. We'll get this person next time round.
+	}
+
+	return nil
 }
