@@ -184,7 +184,7 @@ const mailHTMLTemplate = `
   {{ $redir := .redir }}
   {{ range .figures }}
     <div style="display: inline-block; vertical-align: top; margin: 1em 2em; width: 16em;">
-      <a href="{{ call $redir .Link }}" style="font-weight: bold;" target="_blank">
+      <a href="{{ call $redir .Link }}" style="font-weight: bold;" target="_blank" rel="noopener noreferrer">
         {{ if .ImgSrc }}
           <img style="max-width: 64px; height: auto;" src="{{ call $redir .ImgSrc }}" alt="{{ .ImgAlt }}"><br>
         {{ end }}
