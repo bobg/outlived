@@ -129,7 +129,7 @@ $(document).ready(function() {
 
       resp.Figures.forEach(figure => {
         var liEl = $('<li></li>');
-        var aEl = $('<a class="figure" target="_blank"></a>').attr('href', 'https://en.wikipedia.org/wiki/' + figure.Link);
+        var aEl = $('<a class="figure" target="_blank" rel="noopener noreferrer"></a>').attr('href', 'https://en.wikipedia.org/wiki/' + figure.Link);
         if (figure.ImgSrc) {
           aEl.append($('<img class="img64">').attr('src', 'https:' + figure.ImgSrc).attr('alt', figure.ImgAlt));
           aEl.append($('<br>'));

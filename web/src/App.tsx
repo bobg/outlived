@@ -2,32 +2,31 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 
+import { Figures } from './Figures'
+import { User } from './User'
+
 interface State {
   data: any // xxx
 }
 
-class App extends React.Component<State> {
-  constructor(props) {
+class App extends React.Component<{}, State> {
+  constructor(props: any) {
     super(props)
     this.state = {data: {}}
   }
 
   private getData = async () => {
-    const req = new XMLHttpRequest()
-    return new Promise((resolve, reject) => {
-      req.open('POST', xxxurl, true) // xxx true?
-      req.send(xxx)
+    const setState = this.setState
+
+    fetch('xxx', {
+      method: 'POST',
+      credentials: 'same-origin',
+    }).then((data: any) => {
+      setState({data})
     })
   }
 
-
-    // xxx server request
-    this.setState({data})
-  }
-
-  public componentDidMount = () => {
-    this.getData()
-  }
+  public componentDidMount = () => this.getData()
 
   public render() {
     const { data } = this.state
@@ -37,10 +36,10 @@ class App extends React.Component<State> {
         <header className="App-header">
           <img src={logo} className="App-logo" alt="Outlived" />
         </header>
-        <User user={data.user} />
+        <User csrf={data.csrf} user={data.user} />
         <Figures figures={data.figures} user={data.user} />
       </div>
-    );
+    )
   }
 }
 
