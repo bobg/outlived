@@ -92,7 +92,7 @@ func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req
 		return errors.Wrap(err, "generating verification token")
 	}
 
-	link, err := url.Parse(fmt.Sprintf("/verify?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
+	link, err := url.Parse(fmt.Sprintf("/s/verify?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
 	if err != nil {
 		return errors.Wrap(err, "constructing verification link")
 	}

@@ -1,35 +1,46 @@
-import React from "react";
+import React from 'react'
 
-import { LogoutButton } from "./LogoutButton";
-import { ReceiveMailCheckbox } from "./ReceiveMailCheckbox";
+import { LogoutButton } from './LogoutButton'
+import { ReceiveMailCheckbox } from './ReceiveMailCheckbox'
 
 interface Props {
-  csrf: string;
-  user: any; // xxx
+  csrf: string
+  user: any
 }
 
 interface State {
-  email?: string;
-  password?: string;
+  born?: string
+  email?: string
+  password?: string
 }
 
 export class User extends React.Component<Props, State> {
   private login = () => {
-    const { email, password } = this.state;
+    const { email, password } = this.state
 
-    fetch("xxx", {
-      method: "POST",
-      credentials: "same-origin",
+    fetch('/s/login', {
+      method: 'POST',
+      credentials: 'same-origin',
       body: JSON.stringify({
         email,
-        password
-      })
-    });
-  };
+        password,
+      }),
+    })
+  }
 
   private signup = () => {
-    // xxx
-  };
+    const { born, email, password } = this.state
+
+    fetch('/s/signup', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        email,
+        password,
+        born,
+      }),
+    })
+  }
 
   private loginDisabled = (): boolean => {
     return (
@@ -37,12 +48,12 @@ export class User extends React.Component<Props, State> {
       !emailValid(this.state.email) ||
       !this.state.password ||
       !passwordValid(this.state.password)
-    );
-  };
-  private signupDisabled = () => this.loginDisabled();
+    )
+  }
+  private signupDisabled = () => this.loginDisabled()
 
   public render = () => {
-    const { csrf, user } = this.props;
+    const { csrf, user } = this.props
 
     if (user) {
       return (
@@ -55,25 +66,25 @@ export class User extends React.Component<Props, State> {
             <ReceiveMailCheckbox csrf={csrf} user={user} />
           </div>
         </div>
-      );
+      )
     }
 
     return (
       <div>
-        <label htmlFor="email">E-mail address</label>
+        <label htmlFor='email'>E-mail address</label>
         <input
-          type="email"
-          id="email"
-          name="email"
+          type='email'
+          id='email'
+          name='email'
           onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
             this.setState({ email: ev.target.value })
           }
         />
-        <label htmlFor="password">Password</label>
+        <label htmlFor='password'>Password</label>
         <input
-          type="password"
-          id="password"
-          name="password"
+          type='password'
+          id='password'
+          name='password'
           onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
             this.setState({ password: ev.target.value })
           }
@@ -85,15 +96,15 @@ export class User extends React.Component<Props, State> {
           Sign up
         </button>
       </div>
-    );
-  };
+    )
+  }
 }
 
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
 const emailValid = (inp: string) => {
-  return /^\w+([.+-]\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(inp);
-};
+  return /^\w+([.+-]\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(inp)
+}
 
 const passwordValid = (inp: string) => {
-  return !!inp;
-};
+  return !!inp
+}

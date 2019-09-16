@@ -62,33 +62,43 @@ type Server struct {
 	home       *url.URL
 }
 
+type staticContentServer struct {
+	h http.Handler
+}
+
+func (sc *staticContentServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.URL.Path == "/" {
+		req.URL.Path = "/index.html"
+	}
+	sc.h.ServeHTTP(w, req)
+}
+
 func (s *Server) Serve(ctx context.Context) {
-	handle("/", s.handleHome) // TODO: this handles every /foo that's not handled elsewhere, but shouldn't.
-	handle("/figures", s.handleFigures)
-	handle("/forgot", s.handleForgot)
-	handle("/load", s.handleLoad)
-	handle("/login", s.handleLogin)
-	handle("/logout", s.handleLogout)
+	// This is for testing. In production, / is routed by app.yaml.
+	http.Handle("/", &staticContentServer{h: http.FileServer(http.Dir(s.contentDir))})
+
+	handle("/s/figures", s.handleFigures)
+	handle("/s/forgot", s.handleForgot)
+	handle("/s/load", s.handleLoad)
+	handle("/s/login", s.handleLogin)
+	handle("/s/logout", s.handleLogout)
 	handle("/r", s.handleRedirect)
-	handle("/reset", s.handleReset)
-	handle("/reverify", s.handleReverify)
-	handle("/setactive", s.handleSetActive)
-	handle("/signup", s.handleSignup)
-	handle("/verify", s.handleVerify)
+	handle("/s/reset", s.handleReset)
+	handle("/s/reverify", s.handleReverify)
+	handle("/s/setactive", s.handleSetActive)
+	handle("/s/signup", s.handleSignup)
+	handle("/s/verify", s.handleVerify)
 
-	http.Handle("/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
-
-	// This is for testing. In production, /static/ is routed by app.yaml.
-	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(s.contentDir))))
+	http.Handle("/s/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
 
 	// cron-initiated
-	handle("/task/scrape", s.handleScrape)
-	handle("/task/expire", s.handleExpire)
-	handle("/task/send", s.handleSend)
+	handle("/t/scrape", s.handleScrape)
+	handle("/t/expire", s.handleExpire)
+	handle("/t/send", s.handleSend)
 
 	// task-queue-initiated
-	handle("/task/scrapeday", s.handleScrapeday)
-	handle("/task/scrapeperson", s.handleScrapeperson)
+	handle("/t/scrapeday", s.handleScrapeday)
+	handle("/t/scrapeperson", s.handleScrapeperson)
 
 	log.Printf("listening for requests on %s", s.addr)
 

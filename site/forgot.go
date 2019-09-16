@@ -137,7 +137,7 @@ const forgotTmpl = `
   <body>
     <h1>Outlived</h1>
 
-    <form method="POST" action="/reset">
+    <form method="POST" action="/s/reset">
       <input type="hidden" name="u" value="{{ .u }}"></input>
       <input type="hidden" name="t" value="{{ .t }}"></input>
       <input type="hidden" name="idem" value="{{ .idem }}"></input>

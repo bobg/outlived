@@ -39,7 +39,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 			return errors.Wrap(err, "generating verification token")
 		}
 
-		link, err := url.Parse(fmt.Sprintf("/forgot?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
+		link, err := url.Parse(fmt.Sprintf("/s/forgot?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
 		if err != nil {
 			return errors.Wrap(err, "constructing forgot-password link")
 		}
