@@ -77,6 +77,7 @@ func (s *Server) Serve(ctx context.Context) {
 	// This is for testing. In production, / is routed by app.yaml.
 	http.Handle("/", &staticContentServer{h: http.FileServer(http.Dir(s.contentDir))})
 
+	handle("/s/data", s.handleData)
 	handle("/s/figures", s.handleFigures)
 	handle("/s/forgot", s.handleForgot)
 	handle("/s/load", s.handleLoad)

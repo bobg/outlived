@@ -76,6 +76,35 @@ func (d Date) YDSince(other Date) (years, days int) {
 	return years, days
 }
 
+func (d Date) YDSinceStr(other Date) string {
+	years, days := d.YDSince(other)
+	if years == 0 && days == 0 {
+		return "0 days"
+	}
+	if years == 0 && days == 1 {
+		return "1 day"
+	}
+	if years == 0 && days > 1 {
+		return fmt.Sprintf("%d days", days)
+	}
+	if years == 1 && days == 0 {
+		return "1 year"
+	}
+	if years == 1 && days == 1 {
+		return "1 year, 1 day"
+	}
+	if years == 1 && days > 1 {
+		return fmt.Sprintf("1 year, %d days", days)
+	}
+	if years > 1 && days == 0 {
+		return fmt.Sprintf("%d years", years)
+	}
+	if years > 1 && days == 1 {
+		return fmt.Sprintf("%d years, 1 day", years)
+	}
+	return fmt.Sprintf("%d years, %d days", years, days)
+}
+
 func (d Date) String() string {
 	m := d.M.String()
 	return fmt.Sprintf("%d %s %d", d.D, m[:3], d.Y)
