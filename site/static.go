@@ -5,6 +5,11 @@ import (
 	"path/filepath"
 )
 
-func (s *Server) handleStatic(w http.ResponseWriter, req *http.Request) {
-	http.ServeFile(w, req, filepath.Join(s.contentDir, req.URL.Path))
+func (s *Server) handleStatic(w http.ResponseWriter, req *http.Request) error {
+	path := req.URL.Path
+	if path == "/" {
+		path = "/index.html"
+	}
+	http.ServeFile(w, req, filepath.Join(s.contentDir, path))
+	return nil
 }

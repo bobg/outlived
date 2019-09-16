@@ -62,20 +62,9 @@ type Server struct {
 	home       *url.URL
 }
 
-type staticContentServer struct {
-	h http.Handler
-}
-
-func (sc *staticContentServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if req.URL.Path == "/" {
-		req.URL.Path = "/index.html"
-	}
-	sc.h.ServeHTTP(w, req)
-}
-
 func (s *Server) Serve(ctx context.Context) {
 	// This is for testing. In production, / is routed by app.yaml.
-	http.Handle("/", &staticContentServer{h: http.FileServer(http.Dir(s.contentDir))})
+	handle("/", s.handleStatic)
 
 	handle("/s/data", s.handleData)
 	handle("/s/figures", s.handleFigures)
