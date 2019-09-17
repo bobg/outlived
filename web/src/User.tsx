@@ -2,10 +2,11 @@ import React from 'react'
 
 import { LogoutButton } from './LogoutButton'
 import { ReceiveMailCheckbox } from './ReceiveMailCheckbox'
+import { UserData } from './types'
 
 interface Props {
-  csrf: string
-  user: any
+  onLogin: (user: UserData) => void
+  user?: UserData
 }
 
 interface State {
@@ -15,10 +16,12 @@ interface State {
 }
 
 export class User extends React.Component<Props, State> {
-  private login = () => {
+  public state: State = {}
+
+  private login = async () => {
     const { email, password } = this.state
 
-    fetch('/s/login', {
+    const resp = await fetch('/s/login', {
       method: 'POST',
       credentials: 'same-origin',
       body: JSON.stringify({
@@ -26,6 +29,8 @@ export class User extends React.Component<Props, State> {
         password,
       }),
     })
+    const user = await resp.json() as UserData
+    this.props.onLogin(user)
   }
 
   private signup = () => {
@@ -44,6 +49,7 @@ export class User extends React.Component<Props, State> {
 
   private loginDisabled = (): boolean => {
     return (
+      !this.state ||
       !this.state.email ||
       !emailValid(this.state.email) ||
       !this.state.password ||
@@ -53,13 +59,14 @@ export class User extends React.Component<Props, State> {
   private signupDisabled = () => this.loginDisabled()
 
   public render = () => {
-    const { csrf, user } = this.props
+    const { user } = this.props
 
     if (user) {
+      const { csrf, email } = user
       return (
         <div>
           <div>
-            Signed in as {user.email}.
+            Signed in as {email}.
             <LogoutButton csrf={csrf} />
           </div>
           <div>
@@ -89,10 +96,10 @@ export class User extends React.Component<Props, State> {
             this.setState({ password: ev.target.value })
           }
         />
-        <button onClick={() => this.login} disabled={this.loginDisabled()}>
+        <button onClick={() => this.login()} disabled={this.loginDisabled()}>
           Log in
         </button>
-        <button onClick={() => this.signup} disabled={this.signupDisabled()}>
+        <button onClick={() => this.signup()} disabled={this.signupDisabled()}>
           Sign up
         </button>
       </div>

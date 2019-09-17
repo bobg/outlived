@@ -13,6 +13,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
+	"golang.org/x/text/message"
 	"google.golang.org/appengine"
 )
 
@@ -29,6 +30,7 @@ func NewServer(ctx context.Context, contentDir, projectID, locationID string, ds
 		projectID:  projectID,
 		locationID: locationID,
 		dsClient:   dsClient,
+		p:          message.NewPrinter(message.MatchLanguage("en")),
 	}
 
 	if appengine.IsAppEngine() {
@@ -60,6 +62,7 @@ type Server struct {
 	tasks      taskService
 	sender     sender
 	home       *url.URL
+	p          *message.Printer
 }
 
 func (s *Server) Serve(ctx context.Context) {
@@ -72,7 +75,6 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/s/load", s.handleLoad)
 	handle("/s/login", s.handleLogin)
 	handle("/s/logout", s.handleLogout)
-	handle("/r", s.handleRedirect)
 	handle("/s/reset", s.handleReset)
 	handle("/s/reverify", s.handleReverify)
 	handle("/s/setactive", s.handleSetActive)
@@ -80,6 +82,8 @@ func (s *Server) Serve(ctx context.Context) {
 	handle("/s/verify", s.handleVerify)
 
 	http.Handle("/s/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
+
+	handle("/r", s.handleRedirect)
 
 	// cron-initiated
 	handle("/t/scrape", s.handleScrape)
@@ -124,6 +128,7 @@ type handlerFunc func(http.ResponseWriter, *http.Request) error
 
 func handlerCaller(f handlerFunc) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
+
 		log.Printf("%s %s", req.Method, req.URL)
 
 		ww := &respWriter{w: w}
@@ -221,6 +226,10 @@ func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
 		return codeErrType{code: http.StatusUnauthorized}
 	}
 	return nil
+}
+
+func (s *Server) numPrinter(n int) string {
+	return s.p.Sprintf("%v", n)
 }
 
 var homeURL *url.URL

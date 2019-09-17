@@ -2,6 +2,7 @@ package site
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	htemplate "html/template"
 	"log"
@@ -20,20 +21,32 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 		return fmt.Errorf("method %s not allowed", req.Method)
 	}
 
-	var (
-		u        outlived.User
-		email    = req.FormValue("email")
-		password = req.FormValue("password")
-		forgot   = req.FormValue("forgot")
-	)
-	ctx := req.Context()
-	err := aesite.LookupUser(ctx, s.dsClient, email, &u)
+	var loginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Forgot   bool   `json:"forgot"`
+		TZName   string `json:"tzname"`
+	}
+	err := json.NewDecoder(req.Body).Decode(&loginReq)
 	if err != nil {
-		// TODO: distinguish "not found" errors from others
-		return errors.Wrapf(err, "looking up user %s", email)
+		return errors.Wrap(err, "decoding request")
 	}
 
-	if forgot != "" {
+	var (
+		now   = tzNow(loginReq.TZName)
+		today = outlived.TimeDate(now)
+	)
+
+	var u outlived.User
+
+	ctx := req.Context()
+	err = aesite.LookupUser(ctx, s.dsClient, loginReq.Email, &u)
+	if err != nil {
+		// TODO: distinguish "not found" errors from others
+		return errors.Wrapf(err, "looking up user %s", loginReq.Email)
+	}
+
+	if loginReq.Forgot {
 		expSecs, nonce, vtoken, err := aesite.VerificationToken(&u)
 		if err != nil {
 			return errors.Wrap(err, "generating verification token")
@@ -81,23 +94,30 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 		return errors.Wrap(err, "rendering post-forgot page")
 	}
 
-	ok, err := u.CheckPW(password)
+	ok, err := u.CheckPW(loginReq.Password)
 	if err != nil {
-		return errors.Wrapf(err, "checking password for user %s", email)
+		return errors.Wrapf(err, "checking password for user %s", loginReq.Email)
 	}
 	if !ok {
 		return codeErr(errors.New("email/password invalid"), http.StatusUnauthorized)
 	}
 
-	log.Printf("logging in user %s", email)
+	log.Printf("logging in user %s", loginReq.Email)
 
 	sess, err := aesite.NewSession(ctx, s.dsClient, u.Key())
 	if err != nil {
-		return errors.Wrapf(err, "creating session for user %s", email)
+		return errors.Wrapf(err, "creating session for user %s", loginReq.Email)
 	}
+	_, d, err := s.getUserData2(ctx, sess, &u, today)
+	if err != nil {
+		return errors.Wrap(err, "getting user data")
+	}
+
 	sess.SetCookie(w)
-	http.Redirect(w, req, "/", http.StatusSeeOther)
-	return nil
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	err = json.NewEncoder(w).Encode(d)
+
+	return errors.Wrap(err, "encoding response")
 }
 
 const fmailText = `Follow this link to reset your Outlived password:

@@ -2,11 +2,12 @@ import React from 'react'
 import logo from './logo.svg'
 import './App.css'
 
+import { Data, UserData } from './types'
 import { Figures } from './Figures'
 import { User } from './User'
 
 interface State {
-  data: any
+  data: Data
 }
 
 class App extends React.Component<{}, State> {
@@ -16,28 +17,32 @@ class App extends React.Component<{}, State> {
   }
 
   private getData = async () => {
-    const setState = this.setState
-
-    fetch('/s/data', {
+    const resp = await fetch('/s/data', {
       method: 'POST',
       credentials: 'same-origin',
-    }).then((data: any) => {
-      setState({ data })
     })
+    const data = await resp.json() as Data
+    this.setState({ data })
   }
 
   public componentDidMount = () => this.getData()
 
-  public render() {
+  private onLogin = (user: UserData) => {
     const { data } = this.state
+    this.setState({ data: { ...data, user } })
+  }
+
+  public render() {
+    const { figures, today, user } = this.state.data
 
     return (
       <div className='App'>
         <header className='App-header'>
           <img src={logo} className='App-logo' alt='Outlived' />
         </header>
-        <User csrf={data.csrf} user={data.user} />
-        <Figures figures={data.figures} user={data.user} />
+        <User onLogin={this.onLogin} user={user} />
+        {today && <div>Today is {today}.</div>}
+        {figures && <Figures figures={figures} />}
       </div>
     )
   }
