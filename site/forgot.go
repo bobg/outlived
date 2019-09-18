@@ -72,7 +72,7 @@ func (s *Server) handleForgot(w http.ResponseWriter, req *http.Request) error {
 	return errors.Wrap(err, "executing HTML template")
 }
 
-func (s *Server) handleReset(w http.ResponseWriter, req *http.Request) error {
+func (s *Server) handleResetPW(w http.ResponseWriter, req *http.Request) error {
 	if req.Method != "POST" {
 		return fmt.Errorf("method %s not allowed", req.Method)
 	}
@@ -137,7 +137,7 @@ const forgotTmpl = `
   <body>
     <h1>Outlived</h1>
 
-    <form method="POST" action="/s/reset">
+    <form method="POST" action="/s/resetpw">
       <input type="hidden" name="u" value="{{ .u }}"></input>
       <input type="hidden" name="t" value="{{ .t }}"></input>
       <input type="hidden" name="idem" value="{{ .idem }}"></input>

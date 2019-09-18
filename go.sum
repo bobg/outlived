@@ -12,6 +12,8 @@ github.com/bobg/aesite v0.0.0-20190907161757-3dfe5a01220b h1:oTMWntqa5vaot2cTx+2
 github.com/bobg/aesite v0.0.0-20190907161757-3dfe5a01220b/go.mod h1:3OQmmMju2TngZJAYkbz5u31b+xf+1TVUK4N9JQzr43s=
 github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670 h1:XtSWfSk6kHNQvCSMj7frxDiaBoZR9nCci7OOoSeYH9E=
 github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670/go.mod h1:TUZ3/ZfQrnD0AMpTd+1qeiJ8ogd4fo5wbs4d3lwJUD0=
+github.com/bobg/hj v0.0.0-20190917151500-f783fec5382f h1:DO6V5+2IC2bWzH87CHloB0Mt/qDZ3sshpUcynsYX79c=
+github.com/bobg/hj v0.0.0-20190917151500-f783fec5382f/go.mod h1:CM4+6ikcJvL8rIT0siOog1RnENEswje1v/hh27JXkvw=
 github.com/bobg/htree v0.0.0-20190912140020-cc2e2ea5bd0d h1:EbOO1YK3R5gPgzhVEaUv9vjqdGdjvPfb2nyw8GQgVLg=
 github.com/bobg/htree v0.0.0-20190912140020-cc2e2ea5bd0d/go.mod h1:TeQov1b1cmHeO9VZESNfjAtyC8ekHuGdVpOqfczNJE0=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
