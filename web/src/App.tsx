@@ -38,11 +38,11 @@ class App extends React.Component<{}, State> {
     return (
       <div className='App'>
         <header className='App-header'>
-          <img src={logo} className='App-logo' alt='Outlived' />
+          Outlived
         </header>
         <User onLogin={this.onLogin} user={user} />
         {today && <div>Today is {today}.</div>}
-        {figures && <Figures figures={figures} />}
+        {figures && <Figures figures={figures} user={user} />}
       </div>
     )
   }
