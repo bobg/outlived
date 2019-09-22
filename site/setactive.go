@@ -1,28 +1,26 @@
 package site
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
 )
 
-func (s *Server) handleSetActive(w http.ResponseWriter, req *http.Request) error {
-	var (
-		ctx       = req.Context()
-		active    = req.FormValue("active") == "true"
-		csrfToken = req.FormValue("csrf")
-	)
-	sess, err := aesite.GetSession(ctx, s.dsClient, req)
-	if err != nil {
-		return errors.Wrap(err, "getting session")
-	}
+func (s *Server) handleSetActive(
+	ctx context.Context,
+	req struct {
+		CSRF   string
+		Active bool
+	},
+) error {
+	sess := getSess(ctx)
 	if sess == nil {
 		return codeErrType{code: http.StatusUnauthorized}
 	}
-	err = sess.CSRFCheck(csrfToken)
+	err := sess.CSRFCheck(req.CSRF)
 	if err != nil {
 		return errors.Wrap(err, "checking CSRF token")
 	}
@@ -31,7 +29,10 @@ func (s *Server) handleSetActive(w http.ResponseWriter, req *http.Request) error
 	if err != nil {
 		return errors.Wrapf(err, "getting user for session %d", sess.ID)
 	}
-	u.Active = active
+	if u.Active == req.Active {
+		return nil
+	}
+	u.Active = req.Active
 	_, err = s.dsClient.Put(ctx, u.Key(), &u)
 	return errors.Wrapf(err, "updating user %s", u.Email)
 }

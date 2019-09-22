@@ -61,19 +61,12 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-func (s *Server) handleReverify(w http.ResponseWriter, req *http.Request) error {
-	var (
-		ctx  = req.Context()
-		csrf = req.FormValue("csrf")
-	)
-	sess, err := aesite.GetSession(ctx, s.dsClient, req)
-	if err != nil {
-		return errors.Wrap(err, "getting session")
-	}
+func (s *Server) handleReverify(ctx context.Context, req struct{ CSRF string }) error {
+	sess := getSess(ctx)
 	if sess == nil {
 		return codeErrType{code: http.StatusUnauthorized}
 	}
-	err = sess.CSRFCheck(csrf)
+	err := sess.CSRFCheck(req.CSRF)
 	if err != nil {
 		return errors.Wrap(err, "checking CSRF token")
 	}

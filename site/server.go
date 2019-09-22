@@ -72,16 +72,16 @@ func (s *Server) Serve(ctx context.Context) {
 	// This is for testing. In production, / is routed by app.yaml.
 	handleErrFunc(mux, "/", s.handleStatic)
 
-	mux.Handle("/s/data", hj.Handler(s.handleData, onErr))
+	mux.Handle("/s/data", sessHandler(hj.Handler(s.handleData, onErr)))
 
 	// handle("/s/figures", s.handleFigures)
 	mux.Handle("/s/forgot", hj.Handler(s.handleForgot, onErr))
 	handleErrFunc(mux, "/s/load", s.handleLoad)
 	mux.Handle("/s/login", hj.Handler(s.handleLogin, onErr))
-	mux.Handle("/s/logout", hj.Handler(s.handleLogout, onErr))
+	mux.Handle("/s/logout", sessHandler(hj.Handler(s.handleLogout, onErr)))
 	mux.Handle("/s/resetpw", hj.Handler(s.handleResetPW, onErr))
-	mux.Handle("/s/reverify", hj.Handler(s.handleReverify, onErr))
-	mux.Handle("/s/setactive", hj.Handler(s.handleSetActive, onErr))
+	mux.Handle("/s/reverify", sessHandler(hj.Handler(s.handleReverify, onErr)))
+	mux.Handle("/s/setactive", sessHandler(hj.Handler(s.handleSetActive, onErr)))
 	mux.Handle("/s/signup", hj.Handler(s.handleSignup, onErr))
 	handleErrFunc(mux, "/s/verify", s.handleVerify)
 
@@ -100,7 +100,13 @@ func (s *Server) Serve(ctx context.Context) {
 
 	log.Printf("listening for requests on %s", s.addr)
 
-	srv := &http.Server{Addr: s.addr}
+	srv := &http.Server{
+		Addr: s.addr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			log.Printf("%s %s", req.Method, req.URL)
+			mux.ServeHTTP(w, req)
+		}),
+	}
 
 	if appengine.IsAppEngine() {
 		err := srv.ListenAndServe()
@@ -112,6 +118,10 @@ func (s *Server) Serve(ctx context.Context) {
 		<-ctx.Done()
 		srv.Shutdown(ctx)
 	}
+}
+
+func onErr(_ context.Context, err error) {
+	log.Print(err.Error())
 }
 
 func httpErr(w http.ResponseWriter, code int, format string, args ...interface{}) {

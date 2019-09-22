@@ -1,26 +1,21 @@
 package site
 
 import (
-	"fmt"
+	"context"
 	"net/http"
 
-	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
 )
 
-func (s *Server) handleLogout(w http.ResponseWriter, req *http.Request) error {
-	if req.Method != "POST" {
-		return fmt.Errorf("method %s not allowed", req.Method)
-	}
-
-	ctx := req.Context()
-	sess, err := aesite.GetSession(ctx, s.dsClient, req)
-	if err != nil {
-		return errors.Wrap(err, "getting session")
-	}
+func (s *Server) handleLogout(
+	ctx context.Context,
+	req struct {
+		CSRF string
+	},
+) error {
+	sess := getSess(ctx)
 	if sess != nil {
-		csrfToken := req.FormValue("csrf")
-		err = sess.CSRFCheck(csrfToken)
+		err := sess.CSRFCheck(req.CSRF)
 		if err != nil {
 			return errors.Wrap(err, "checking CSRF token")
 		}

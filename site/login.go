@@ -33,7 +33,7 @@ func (s *Server) handleLogin(
 
 	var u outlived.User
 
-	err = aesite.LookupUser(ctx, s.dsClient, req.Email, &u)
+	err := aesite.LookupUser(ctx, s.dsClient, req.Email, &u)
 	if err != nil {
 		// TODO: distinguish "not found" errors from others
 		return nil, errors.Wrapf(err, "looking up user %s", req.Email)

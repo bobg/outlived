@@ -2,9 +2,7 @@ package site
 
 import (
 	"context"
-	"encoding/json"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/bobg/aesite"
@@ -50,23 +48,22 @@ type (
 	}
 )
 
-func (s *Server) handleData(w http.ResponseWriter, req *http.Request) error {
+func (s *Server) handleData(
+	ctx context.Context,
+	req struct {
+		TZName string `json:"tzname"`
+	},
+) (*dataResp, error) {
 	var (
-		ctx    = req.Context()
-		tzname = req.FormValue("tzname")
-		now    = tzNow(tzname)
-		today  = outlived.TimeDate(now)
-		resp   = dataResp{Today: now.Format("Monday, 2 Jan 2006")}
+		now   = tzNow(req.TZName)
+		today = outlived.TimeDate(now)
+		resp  = &dataResp{Today: now.Format("Monday, 2 Jan 2006")}
+		sess  = getSess(ctx)
 	)
-
-	sess, err := aesite.GetSession(ctx, s.dsClient, req)
-	if err != nil {
-		return errors.Wrap(err, "getting session")
-	}
 
 	figures, err := outlived.FiguresDiedOn(ctx, s.dsClient, today.M, today.D, 24)
 	if err != nil {
-		return errors.Wrapf(err, "getting figures that died on %d %s", today.D, today.M)
+		return nil, errors.Wrapf(err, "getting figures that died on %d %s", today.D, today.M)
 	}
 	for _, figure := range figures {
 		f := s.toFigureData(figure)
@@ -76,14 +73,12 @@ func (s *Server) handleData(w http.ResponseWriter, req *http.Request) error {
 	if sess != nil {
 		_, d, err := s.getUserData(ctx, sess, today)
 		if err != nil {
-			return errors.Wrap(err, "getting user data")
+			return nil, errors.Wrap(err, "getting user data")
 		}
 		resp.User = d
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	err = json.NewEncoder(w).Encode(resp)
-	return errors.Wrap(err, "encoding response")
+	return resp, nil
 }
 
 func (s *Server) getUserData(ctx context.Context, sess *aesite.Session, today outlived.Date) (*outlived.User, *userData, error) {
