@@ -79,12 +79,8 @@ func (s *Server) handleLogin(
 			return nil, errors.Wrap(err, "sending forgot-password mail")
 		}
 
-		htmpl, err = htemplate.New("").Parse(postForgotTmpl)
-		if err != nil {
-			return nil, errors.Wrap(err, "parsing post-forgot page template")
-		}
-		err = htmpl.Execute(w, nil)
-		return nil, errors.Wrap(err, "rendering post-forgot page")
+		// xxx
+		return nil, nil
 	}
 
 	ok, err := u.CheckPW(req.Password)

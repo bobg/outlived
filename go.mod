@@ -5,7 +5,7 @@ require (
 	cloud.google.com/go/datastore v1.0.0
 	github.com/bobg/aesite v0.0.0-20190907161757-3dfe5a01220b
 	github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670
-	github.com/bobg/hj v0.0.0-20190917151500-f783fec5382f
+	github.com/bobg/hj v1.1.2
 	github.com/bobg/htree v0.0.0-20190912140020-cc2e2ea5bd0d
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect

@@ -54,6 +54,8 @@ func (s *Server) handleData(
 		TZName string `json:"tzname"`
 	},
 ) (*dataResp, error) {
+	log.Printf("xxx handleData called with timezone %s", req.TZName)
+
 	var (
 		now   = tzNow(req.TZName)
 		today = outlived.TimeDate(now)
@@ -77,6 +79,8 @@ func (s *Server) handleData(
 		}
 		resp.User = d
 	}
+
+	log.Printf("xxx handleData: %#v", resp)
 
 	return resp, nil
 }

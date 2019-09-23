@@ -1,10 +1,10 @@
 import React from 'react'
-import logo from './logo.svg'
 import './App.css'
 
 import { Data, UserData } from './types'
 import { Figures } from './Figures'
 import { User } from './User'
+import { tzname } from './tz'
 
 interface State {
   data: Data
@@ -20,8 +20,14 @@ class App extends React.Component<{}, State> {
     const resp = await fetch('/s/data', {
       method: 'POST',
       credentials: 'same-origin',
+      body: JSON.stringify({
+        tzname: tzname(),
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
     })
-    const data = await resp.json() as Data
+    const data = (await resp.json()) as Data
     this.setState({ data })
   }
 
@@ -37,9 +43,7 @@ class App extends React.Component<{}, State> {
 
     return (
       <div className='App'>
-        <header className='App-header'>
-          Outlived
-        </header>
+        <header>Outlived</header>
         <User onLogin={this.onLogin} user={user} />
         {today && <div>Today is {today}.</div>}
         {figures && <Figures figures={figures} user={user} />}

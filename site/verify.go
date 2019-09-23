@@ -75,11 +75,11 @@ func (s *Server) handleReverify(ctx context.Context, req struct{ CSRF string }) 
 	if err != nil {
 		return errors.Wrapf(err, "getting user for session %d", sess.ID)
 	}
-	err = s.sendVerificationMail(ctx, &u, req)
+	err = s.sendVerificationMail(ctx, &u)
 	return errors.Wrap(err, "sending verification mail")
 }
 
-func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req *http.Request) error {
+func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User) error {
 	expSecs, nonce, vtoken, err := aesite.VerificationToken(u)
 	if err != nil {
 		return errors.Wrap(err, "generating verification token")

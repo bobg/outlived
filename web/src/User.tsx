@@ -3,6 +3,7 @@ import React from 'react'
 import { LogoutButton } from './LogoutButton'
 import { ReceiveMailCheckbox } from './ReceiveMailCheckbox'
 import { UserData } from './types'
+import { tzname } from './tz'
 
 interface Props {
   onLogin: (user: UserData) => void
@@ -27,9 +28,10 @@ export class User extends React.Component<Props, State> {
       body: JSON.stringify({
         email,
         password,
+        tzname: tzname(),
       }),
     })
-    const user = await resp.json() as UserData
+    const user = (await resp.json()) as UserData
     this.props.onLogin(user)
   }
 
@@ -43,6 +45,7 @@ export class User extends React.Component<Props, State> {
         email,
         password,
         born,
+        tzname: tzname(),
       }),
     })
   }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs'
+import { Tab, Tabs } from 'react-bootstrap'
 
 import { FigureData, UserData } from './types'
 
@@ -17,13 +17,11 @@ export class Figures extends React.Component<Props> {
 
     if (user) {
       return (
-        <Tabs>
-          <TabList>
-            <Tab>Died on this date</Tab>
-            <Tab>Died {daysAlive - 1} days ago</Tab>
-          </TabList>
-          <TabPanel>{renderFigs(figures, true)}</TabPanel>
-          <TabPanel>{renderFigs(user.figures, false)}</TabPanel>
+        <Tabs id="figures">
+          <Tab title='Died on this date'>{renderFigs(figures, true)}</Tab>
+          <Tab title='You have recently outlived'>
+            {renderFigs(user.figures, false)}
+          </Tab>
         </Tabs>
       )
     }

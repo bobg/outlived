@@ -2,11 +2,11 @@ package site
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
-	"github.com/bobg/hj"
 )
 
 func handleErrFunc(mux *http.ServeMux, pattern string, f func(http.ResponseWriter, *http.Request) error) {
@@ -24,8 +24,8 @@ func (e errFuncHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func sessHandler(next http.Handler) http.Handler {
-	return sessHandlerType{next: next}
+func (s *Server) sessHandler(next http.Handler) http.Handler {
+	return sessHandlerType{next: next, dsClient: s.dsClient}
 }
 
 type sessHandlerType struct {
@@ -34,6 +34,8 @@ type sessHandlerType struct {
 }
 
 func (s sessHandlerType) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	log.Printf("xxx sessHandlerType handling %s", req.URL)
+
 	ctx := req.Context()
 	sess, err := aesite.GetSession(ctx, s.dsClient, req)
 	if err != nil {
@@ -57,9 +59,13 @@ func getSess(ctx context.Context) *aesite.Session {
 	return nil
 }
 
+type responder interface {
+	Respond(http.ResponseWriter)
+}
+
 func errRespond(w http.ResponseWriter, err error) {
-	if c, ok := err.(hj.CodeErr); ok {
-		c.Respond(w)
+	if r, ok := err.(responder); ok {
+		r.Respond(w)
 	} else {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
