@@ -74,7 +74,6 @@ func (s *Server) Serve(ctx context.Context) {
 
 	mux.Handle("/s/data", s.sessHandler(hj.Handler(s.handleData, onErr)))
 
-	// handle("/s/figures", s.handleFigures)
 	handleErrFunc(mux, "/s/forgot", s.handleForgot)
 	handleErrFunc(mux, "/s/load", s.handleLoad)
 	mux.Handle("/s/login", hj.Handler(s.handleLogin, onErr))

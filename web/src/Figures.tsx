@@ -8,7 +8,20 @@ interface Props {
   user?: UserData
 }
 
-export class Figures extends React.Component<Props> {
+interface State {
+  activeTab?: string
+}
+
+export class Figures extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props)
+    this.state = { activeTab: '2' }
+  }
+
+  private handleTab = (activeTab: string) => {
+    this.setState({ activeTab })
+  }
+
   public render = () => {
     const { figures, user } = this.props
     if (!figures) {
@@ -17,41 +30,55 @@ export class Figures extends React.Component<Props> {
 
     if (user) {
       return (
-        <Tabs id="figures">
-          <Tab title='Died on this date'>{renderFigs(figures, true)}</Tab>
-          <Tab title='You have recently outlived'>
+        <Tabs
+          id='figures'
+          activeKey={this.state.activeTab}
+          onSelect={this.handleTab}
+        >
+          <Tab eventKey={1} title='Died on this date'>
+            {renderFigs(figures, true)}
+          </Tab>
+          <Tab eventKey={2} title='You have recently outlived'>
             {renderFigs(user.figures, false)}
           </Tab>
         </Tabs>
       )
     }
 
-    return <div>{renderFigs(figures, true)}</div>
+    return (
+      <div>
+        <p>Died on this date:</p>
+        {renderFigs(figures, true)}
+      </div>
+    )
   }
 }
 
-const renderFig = (fig: FigureData, showAge: boolean) => (
-  <div>
-    <a
-      className='figure'
-      target='_blank'
-      rel='noopener noreferrer'
-      href={fig.href}
-    >
-      {fig.imgSrc && (
-        <img className='img64' src={fig.imgSrc} alt={fig.imgAlt} />
-      )}
-      {fig.name}
-      <br />
-      {fig.desc}
-      {fig.desc && <br />}
-      {fig.born}&mdash;{fig.died}
-      {showAge && <br />}
-      {showAge && '(' + fig.yearsDaysAlive + ')'}
-    </a>
-  </div>
-)
-
 const renderFigs = (figs: FigureData[], showAge: boolean) => (
-  <div>{figs.map((fig: FigureData) => renderFig(fig, showAge))}</div>
+  <ul className='grid'>
+    {figs.map((fig: FigureData) => (
+      <li>
+        <a
+          className='figure'
+          target='_blank'
+          rel='noopener noreferrer'
+          href={fig.href}
+        >
+          {fig.imgSrc && (
+            <span>
+              <img className='img64' src={fig.imgSrc} alt={fig.imgAlt} />
+              <br />
+            </span>
+          )}
+          {fig.name}
+        </a>
+        <br />
+        {fig.desc}
+        {fig.desc && <br />}
+        {fig.born}&mdash;{fig.died}
+        {showAge && <br />}
+        {showAge && '(' + fig.yearsDaysAlive + ')'}
+      </li>
+    ))}
+  </ul>
 )

@@ -31,3 +31,26 @@
     transform: rotate(360deg);
   }
 }
+
+img.img64 {
+    max-width: 64px;
+    height: auto;
+}
+ul.grid {
+    margin: 0 auto;
+    text-align: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 20em);
+}
+ul.grid li {
+    display: inline-block;
+    vertical-align: top;
+    margin: 1em 2em;
+}
+a.figure {
+    font-weight: bold;
+}
+
+.fade.active {
+    opacity: 100;
+}

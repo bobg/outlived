@@ -83,11 +83,7 @@ func (s *Server) handleLogin(
 		return nil, nil
 	}
 
-	ok, err := u.CheckPW(req.Password)
-	if err != nil {
-		return nil, errors.Wrapf(err, "checking password for user %s", req.Email)
-	}
-	if !ok {
+	if !u.CheckPW(req.Password) {
 		return nil, hj.CodeErr{Err: errors.New("email/password invalid"), C: http.StatusUnauthorized}
 	}
 
@@ -98,7 +94,14 @@ func (s *Server) handleLogin(
 		return nil, errors.Wrapf(err, "creating session for user %s", req.Email)
 	}
 	_, d, err := s.getUserData2(ctx, sess, &u, today)
-	return d, errors.Wrap(err, "getting user data")
+	if err != nil {
+		return nil, errors.Wrap(err, "getting user data")
+	}
+
+	w := hj.Response(ctx)
+	sess.SetCookie(w)
+
+	return d, nil
 }
 
 const fmailText = `Follow this link to reset your Outlived password:

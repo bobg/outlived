@@ -7,6 +7,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
+	"github.com/bobg/hj"
 )
 
 func handleErrFunc(mux *http.ServeMux, pattern string, f func(http.ResponseWriter, *http.Request) error) {
@@ -34,18 +35,20 @@ type sessHandlerType struct {
 }
 
 func (s sessHandlerType) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Printf("xxx sessHandlerType handling %s", req.URL)
-
 	ctx := req.Context()
 	sess, err := aesite.GetSession(ctx, s.dsClient, req)
-	if err != nil {
+	if err == http.ErrNoCookie {
+		log.Print("no session cookie in HTTP request")
+	} else if err == datastore.ErrNoSuchEntity {
+		log.Print("session cookie not found in datastore, skipping")
+	} else if err == aesite.ErrInactive {
+		log.Print("found inactive session, skipping")
+	} else if err != nil {
 		errRespond(w, err)
 		return
 	}
-	if sess != nil {
-		ctx = context.WithValue(ctx, sessKey{}, sess)
-		req = req.WithContext(ctx)
-	}
+	ctx = context.WithValue(ctx, sessKey{}, sess)
+	req = req.WithContext(ctx)
 	s.next.ServeHTTP(w, req)
 }
 
@@ -59,12 +62,8 @@ func getSess(ctx context.Context) *aesite.Session {
 	return nil
 }
 
-type responder interface {
-	Respond(http.ResponseWriter)
-}
-
 func errRespond(w http.ResponseWriter, err error) {
-	if r, ok := err.(responder); ok {
+	if r, ok := err.(hj.Responder); ok {
 		r.Respond(w)
 	} else {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

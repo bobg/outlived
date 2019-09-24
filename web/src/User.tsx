@@ -30,6 +30,9 @@ export class User extends React.Component<Props, State> {
         password,
         tzname: tzname(),
       }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
     })
     const user = (await resp.json()) as UserData
     this.props.onLogin(user)
@@ -47,6 +50,9 @@ export class User extends React.Component<Props, State> {
         born,
         tzname: tzname(),
       }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
     })
   }
 
