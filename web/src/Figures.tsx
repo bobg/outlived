@@ -9,14 +9,11 @@ interface Props {
 }
 
 interface State {
-  activeTab?: string
+  activeTab: string
 }
 
 export class Figures extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props)
-    this.state = { activeTab: '2' }
-  }
+  public state: State = {activeTab: '2'}
 
   private handleTab = (activeTab: string) => {
     this.setState({ activeTab })

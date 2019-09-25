@@ -1,4 +1,5 @@
 import React from 'react'
+import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
 
 import { LogoutButton } from './LogoutButton'
 import { ReceiveMailCheckbox } from './ReceiveMailCheckbox'
@@ -14,6 +15,7 @@ interface State {
   born?: string
   email?: string
   password?: string
+  loggingIn?: boolean
 }
 
 export class User extends React.Component<Props, State> {
@@ -21,6 +23,8 @@ export class User extends React.Component<Props, State> {
 
   private login = async () => {
     const { email, password } = this.state
+
+    this.setState({ loggingIn: false })
 
     const resp = await fetch('/s/login', {
       method: 'POST',
@@ -56,17 +60,6 @@ export class User extends React.Component<Props, State> {
     })
   }
 
-  private loginDisabled = (): boolean => {
-    return (
-      !this.state ||
-      !this.state.email ||
-      !emailValid(this.state.email) ||
-      !this.state.password ||
-      !passwordValid(this.state.password)
-    )
-  }
-  private signupDisabled = () => this.loginDisabled()
-
   public render = () => {
     const { user } = this.props
 
@@ -86,39 +79,57 @@ export class User extends React.Component<Props, State> {
     }
 
     return (
-      <div>
-        <label htmlFor='email'>E-mail address</label>
-        <input
-          type='email'
-          id='email'
-          name='email'
-          onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
-            this.setState({ email: ev.target.value })
-          }
-        />
-        <label htmlFor='password'>Password</label>
-        <input
-          type='password'
-          id='password'
-          name='password'
-          onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
-            this.setState({ password: ev.target.value })
-          }
-        />
-        <button onClick={() => this.login()} disabled={this.loginDisabled()}>
-          Log in
-        </button>
-        <button onClick={() => this.signup()} disabled={this.signupDisabled()}>
-          Sign up
-        </button>
-      </div>
+      <>
+        <p>Log in to see whom you’ve recently outlived.</p>
+
+        <div>
+          <label htmlFor='email'>E-mail address</label>
+          <input
+            type='email'
+            id='email'
+            name='email'
+            onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
+              this.setState({ email: ev.target.value })
+            }
+          />
+          <button
+            onClick={() => this.setState({ loggingIn: true })}
+            disabled={!emailValid(this.state.email)}
+          >
+            Log in
+          </button>
+        </div>
+
+        {this.state.loggingIn && (
+          <Modal show={true} onExit={() => this.setState({ loggingIn: false })}>
+            <Modal.Header closeButton>
+              <ModalTitle>Password</ModalTitle>
+            </Modal.Header>
+
+            <ModalBody>
+              <label htmlFor='password'>Password for {this.state.email}</label>
+              <input
+                type='password'
+                id='password'
+                name='password'
+                onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
+                  this.setState({ password: ev.target.value })
+                }
+              />
+              <button onClick={this.login} disabled={!this.state.password}>
+                Log in
+              </button>
+            </ModalBody>
+          </Modal>
+        )}
+      </>
     )
   }
 }
 
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
-const emailValid = (inp: string) => {
-  return /^\w+([.+-]\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(inp)
+const emailValid = (inp?: string) => {
+  return inp && /^\w+([.+-]\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(inp)
 }
 
 const passwordValid = (inp: string) => {
