@@ -2,7 +2,7 @@ import React from 'react'
 import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
 
 import { LogoutButton } from './LogoutButton'
-import { ReceiveMailCheckbox } from './ReceiveMailCheckbox'
+import { post } from './post'
 import { UserData } from './types'
 import { tzname } from './tz'
 
@@ -16,27 +16,26 @@ interface State {
   email?: string
   password?: string
   loggingIn?: boolean
+  receivingMail: boolean
 }
 
 export class User extends React.Component<Props, State> {
-  public state: State = {}
+  constructor(props: Props) {
+    super(props)
+    this.state = {
+      receivingMail: !!props.user && props.user.verified && props.user.active,
+    }
+  }
 
   private login = async () => {
     const { email, password } = this.state
 
     this.setState({ loggingIn: false })
 
-    const resp = await fetch('/s/login', {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: JSON.stringify({
-        email,
-        password,
-        tzname: tzname(),
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const resp = await post('/s/login', {
+      email,
+      password,
+      tzname: tzname(),
     })
     const user = (await resp.json()) as UserData
     this.props.onLogin(user)
@@ -45,19 +44,25 @@ export class User extends React.Component<Props, State> {
   private signup = () => {
     const { born, email, password } = this.state
 
-    fetch('/s/signup', {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: JSON.stringify({
-        email,
-        password,
-        born,
-        tzname: tzname(),
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    post('/s/signup', {
+      email,
+      password,
+      born,
+      tzname: tzname(),
     })
+  }
+
+  private setActive = (active: boolean) => {
+    if (!this.props.user) {
+      return
+    }
+    const { csrf } = this.props.user
+    const resp = post('/s/setactive', {
+      csrf,
+      active,
+    })
+    // xxx check resp
+    this.setState({ receivingMail: active })
   }
 
   public render = () => {
@@ -72,7 +77,15 @@ export class User extends React.Component<Props, State> {
             <LogoutButton csrf={csrf} />
           </div>
           <div>
-            <ReceiveMailCheckbox csrf={csrf} user={user} />
+            <label htmlFor='active'>Receive Outlived mail?</label>
+            <input
+              type='checkbox'
+              id='active'
+              name='active'
+              checked={this.state.receivingMail}
+              disabled={!user.verified}
+              onChange={ev => this.setActive(ev.target.checked)}
+            />
           </div>
         </div>
       )

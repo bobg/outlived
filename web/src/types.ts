@@ -17,6 +17,8 @@ export interface UserData {
   yearsDaysAlive: string
   email: string
   figures: FigureData[]
+  verified: boolean
+  active: boolean
 }
 
 export interface Data {

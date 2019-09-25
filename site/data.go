@@ -45,6 +45,8 @@ type (
 		YearsDaysAlive string       `json:"yearsDaysAlive"`
 		Email          string       `json:"email"`
 		Figures        []figureData `json:"figures"`
+		Verified       bool         `json:"verified"`
+		Active         bool         `json:"active"`
 	}
 )
 
@@ -105,6 +107,8 @@ func (s *Server) getUserData2(ctx context.Context, sess *aesite.Session, u *outl
 		DaysAlive:      s.numPrinter(alive),
 		YearsDaysAlive: today.YDSinceStr(u.Born),
 		Email:          u.Email,
+		Verified:       u.Verified,
+		Active:         u.Active,
 	}
 
 	figures, err := outlived.FiguresAliveForAtMost(ctx, s.dsClient, alive-1, 24)

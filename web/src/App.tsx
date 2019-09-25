@@ -2,9 +2,10 @@ import React from 'react'
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
-import { Data, UserData } from './types'
 import { Figures } from './Figures'
+import { post } from './post'
 import { User } from './User'
+import { Data, UserData } from './types'
 import { tzname } from './tz'
 
 interface State {
@@ -18,15 +19,8 @@ class App extends React.Component<{}, State> {
   }
 
   private getData = async () => {
-    const resp = await fetch('/s/data', {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: JSON.stringify({
-        tzname: tzname(),
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const resp = await post('/s/data', {
+      tzname: tzname(),
     })
     const data = (await resp.json()) as Data
     this.setState({ data })
