@@ -32,8 +32,8 @@
   }
 }
 
-img.img64 {
-    max-width: 64px;
+img.img128 {
+    max-width: 128px;
     height: auto;
 }
 ul.grid {
@@ -49,8 +49,4 @@ ul.grid li {
 }
 a.figure {
     font-weight: bold;
-}
-
-.fade.active {
-    opacity: 100;
 }
