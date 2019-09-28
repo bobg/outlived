@@ -2,42 +2,43 @@ import React from 'react'
 import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
 
 interface Props {
-  buttonLabel: string
-  // xxx add oncancel callback
+  buttonLabel?: string
+  onClose: () => void
   onSubmit: (pw: string) => void
   prompt?: string
+  show: () => boolean
   title?: string
 }
 
 interface State {
   pw: string
-  show: boolean
 }
 
 export class PasswordDialog extends React.Component<Props, State> {
-  public state = { pw: '', show: true }
+  public state = { pw: '' }
 
-  private handleSubmit = () => {
+  private handleSubmit = (ev: React.FormEvent<HTMLFormElement>) => {
     const { pw } = this.state
     if (!passwordValid(pw)) {
       return
     }
-    this.onSubmit(this.state.pw)
-    this.setState({ show: false })
+    this.props.onSubmit(this.state.pw)
+    this.props.onClose()
+    ev.preventDefault()
   }
 
-  private handleChange = (ev: Event) => {
-    this.setState({ pw: ev.target.value })
+  private handleChange = (ev: React.FormEvent<HTMLInputElement>) => {
+    this.setState({ pw: ev.currentTarget.value })
   }
 
   public componentDidMount = () => {
-    this.setState({ pw: '', show: true })
+    this.setState({ pw: '' })
   }
 
   public render = () => {
     const { buttonLabel, prompt, title } = this.props
     return (
-      <Modal show={this.state.show}>
+      <Modal onHide={this.props.onClose} show={this.props.show()}>
         <Modal.Header closeButton>
           <ModalTitle>{title || 'Password'}</ModalTitle>
         </Modal.Header>
@@ -54,7 +55,7 @@ export class PasswordDialog extends React.Component<Props, State> {
             </label>
             <button
               type='submit'
-              disabled={() => !passwordValid(this.state.pw)}
+              disabled={!passwordValid(this.state.pw)}
             >
               {buttonLabel || 'Submit'}
             </button>

@@ -1,7 +1,9 @@
 import React from 'react'
 import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
+import DatePicker from 'react-date-picker'
 
 import { LogoutButton } from './LogoutButton'
+import { PasswordDialog } from './Password'
 import { post } from './post'
 import { UserData } from './types'
 import { tzname } from './tz'
@@ -12,25 +14,26 @@ interface Props {
 }
 
 interface State {
-  born?: string
+  birthDate: Date
   email?: string
+  enteringBirthdate?: boolean
+  enteringPassword?: boolean
   password?: string
-  loggingIn?: boolean
   receivingMail: boolean
+  signingUp?: boolean
 }
 
 export class User extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
+      birthDate: new Date('1969-7-20'),
       receivingMail: !!props.user && props.user.verified && props.user.active,
     }
   }
 
   private login = async () => {
     const { email, password } = this.state
-
-    this.setState({ loggingIn: false })
 
     const resp = await post('/s/login', {
       email,
@@ -42,12 +45,12 @@ export class User extends React.Component<Props, State> {
   }
 
   private signup = () => {
-    const { born, email, password } = this.state
+    const { birthDate, email, password } = this.state
 
     post('/s/signup', {
       email,
       password,
-      born,
+      born: birthDate, // xxx
       tzname: tzname(),
     })
   }
@@ -65,6 +68,25 @@ export class User extends React.Component<Props, State> {
     this.setState({ receivingMail: active })
   }
 
+  private onPassword = async (pw: string) => {
+    const { email } = this.state
+    this.setState({
+      enteringBirthdate: this.state.signingUp,
+      password: pw,
+    })
+    if (this.state.signingUp) {
+      return
+    }
+    const resp = await post('/s/login', {
+      email,
+      password: pw,
+      tzname: tzname(),
+    })
+    // xxx check for error
+    const user = (await resp.json()) as UserData
+    this.props.onLogin(user)
+  }
+
   public render = () => {
     const { user } = this.props
 
@@ -73,7 +95,7 @@ export class User extends React.Component<Props, State> {
       return (
         <div>
           <div>
-            Signed in as {email}.
+            Logged in as {email}.
             <LogoutButton csrf={csrf} />
           </div>
           <div>
@@ -106,35 +128,46 @@ export class User extends React.Component<Props, State> {
             }
           />
           <button
-            onClick={() => this.setState({ loggingIn: true })}
+            onClick={() => this.setState({ enteringPassword: true })}
             disabled={!emailValid(this.state.email)}
           >
             Log in
           </button>
+          <button
+            onClick={() =>
+              this.setState({ enteringPassword: true, signingUp: true })
+            }
+            disabled={!emailValid(this.state.email)}
+          >
+            Sign up
+          </button>
         </div>
 
-        {this.state.loggingIn && (
-          <Modal show={true} onExit={() => this.setState({ loggingIn: false })}>
-            <Modal.Header closeButton>
-              <ModalTitle>Password</ModalTitle>
-            </Modal.Header>
+        <PasswordDialog
+          prompt={this.state.signingUp ? 'Choose password' : 'Enter password'}
+          show={() => !!this.state.enteringPassword}
+          onClose={() => this.setState({ enteringPassword: false })}
+          onSubmit={this.onPassword}
+        />
 
-            <ModalBody>
-              <label htmlFor='password'>Password for {this.state.email}</label>
-              <input
-                type='password'
-                id='password'
-                name='password'
-                onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
-                  this.setState({ password: ev.target.value })
-                }
-              />
-              <button onClick={this.login} disabled={!this.state.password}>
-                Log in
-              </button>
-            </ModalBody>
-          </Modal>
-        )}
+        <Modal
+          onHide={() =>
+            this.setState({ enteringBirthdate: false, signingUp: false })
+          }
+          show={this.state.enteringBirthdate}
+        >
+          <Modal.Header closeButton>
+            <ModalTitle>Birth date</ModalTitle>
+          </Modal.Header>
+          <ModalBody>
+            <DatePicker
+              onChange={(date: Date | Date[]) => {
+                this.setState({ birthDate: date as Date }) // xxx hack
+              }}
+              value={this.state.birthDate}
+            />
+          </ModalBody>
+        </Modal>
       </>
     )
   }
@@ -143,8 +176,4 @@ export class User extends React.Component<Props, State> {
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
 const emailValid = (inp?: string) => {
   return inp && /^\w+([.+-]\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(inp)
-}
-
-const passwordValid = (inp: string) => {
-  return !!inp
 }
