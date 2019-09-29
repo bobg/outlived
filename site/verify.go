@@ -61,19 +61,12 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-func (s *Server) handleReverify(w http.ResponseWriter, req *http.Request) error {
-	var (
-		ctx  = req.Context()
-		csrf = req.FormValue("csrf")
-	)
-	sess, err := aesite.GetSession(ctx, s.dsClient, req)
-	if err != nil {
-		return errors.Wrap(err, "getting session")
-	}
+func (s *Server) handleReverify(ctx context.Context, req struct{ CSRF string }) error {
+	sess := getSess(ctx)
 	if sess == nil {
 		return codeErrType{code: http.StatusUnauthorized}
 	}
-	err = sess.CSRFCheck(csrf)
+	err := sess.CSRFCheck(req.CSRF)
 	if err != nil {
 		return errors.Wrap(err, "checking CSRF token")
 	}
@@ -82,17 +75,17 @@ func (s *Server) handleReverify(w http.ResponseWriter, req *http.Request) error 
 	if err != nil {
 		return errors.Wrapf(err, "getting user for session %d", sess.ID)
 	}
-	err = s.sendVerificationMail(ctx, &u, req)
+	err = s.sendVerificationMail(ctx, &u)
 	return errors.Wrap(err, "sending verification mail")
 }
 
-func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User, req *http.Request) error {
+func (s *Server) sendVerificationMail(ctx context.Context, u *outlived.User) error {
 	expSecs, nonce, vtoken, err := aesite.VerificationToken(u)
 	if err != nil {
 		return errors.Wrap(err, "generating verification token")
 	}
 
-	link, err := url.Parse(fmt.Sprintf("/verify?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
+	link, err := url.Parse(fmt.Sprintf("/s/verify?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
 	if err != nil {
 		return errors.Wrap(err, "constructing verification link")
 	}

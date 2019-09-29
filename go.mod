@@ -3,8 +3,9 @@ module github.com/bobg/outlived
 require (
 	cloud.google.com/go v0.44.1
 	cloud.google.com/go/datastore v1.0.0
-	github.com/bobg/aesite v0.0.0-20190907161757-3dfe5a01220b
+	github.com/bobg/aesite v1.0.0
 	github.com/bobg/basexx v0.0.0-20190610182406-dbebfe56b670
+	github.com/bobg/hj v1.1.3
 	github.com/bobg/htree v0.0.0-20190912140020-cc2e2ea5bd0d
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
@@ -22,3 +23,5 @@ require (
 	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
+
+go 1.12

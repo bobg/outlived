@@ -2,6 +2,7 @@ package site
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	htemplate "html/template"
 	"log"
@@ -10,38 +11,43 @@ import (
 	ttemplate "text/template"
 
 	"github.com/bobg/aesite"
+	"github.com/bobg/hj"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
 )
 
-func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
-	if req.Method != "POST" {
-		return fmt.Errorf("method %s not allowed", req.Method)
-	}
-
+func (s *Server) handleLogin(
+	ctx context.Context,
+	req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Forgot   bool   `json:"forgot"`
+		TZName   string `json:"tzname"`
+	},
+) (*userData, error) {
 	var (
-		u        outlived.User
-		email    = req.FormValue("email")
-		password = req.FormValue("password")
-		forgot   = req.FormValue("forgot")
+		now   = tzNow(req.TZName)
+		today = outlived.TimeDate(now)
 	)
-	ctx := req.Context()
-	err := aesite.LookupUser(ctx, s.dsClient, email, &u)
+
+	var u outlived.User
+
+	err := aesite.LookupUser(ctx, s.dsClient, req.Email, &u)
 	if err != nil {
 		// TODO: distinguish "not found" errors from others
-		return errors.Wrapf(err, "looking up user %s", email)
+		return nil, errors.Wrapf(err, "looking up user %s", req.Email)
 	}
 
-	if forgot != "" {
+	if req.Forgot {
 		expSecs, nonce, vtoken, err := aesite.VerificationToken(&u)
 		if err != nil {
-			return errors.Wrap(err, "generating verification token")
+			return nil, errors.Wrap(err, "generating verification token")
 		}
 
-		link, err := url.Parse(fmt.Sprintf("/forgot?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
+		link, err := url.Parse(fmt.Sprintf("/s/forgot?e=%d&n=%s&t=%s&u=%s", expSecs, nonce, vtoken, u.Key().Encode()))
 		if err != nil {
-			return errors.Wrap(err, "constructing forgot-password link")
+			return nil, errors.Wrap(err, "constructing forgot-password link")
 		}
 		link = homeURL.ResolveReference(link)
 
@@ -49,55 +55,53 @@ func (s *Server) handleLogin(w http.ResponseWriter, req *http.Request) error {
 
 		ttmpl, err := ttemplate.New("").Parse(fmailText)
 		if err != nil {
-			return errors.Wrap(err, "parsing plain-text template")
+			return nil, errors.Wrap(err, "parsing plain-text template")
 		}
 		textBuf := new(bytes.Buffer)
 		err = ttmpl.Execute(textBuf, dict)
 		if err != nil {
-			return errors.Wrap(err, "executing plain-text template")
+			return nil, errors.Wrap(err, "executing plain-text template")
 		}
 
 		htmpl, err := htemplate.New("").Parse(fmailHTML)
 		if err != nil {
-			return errors.Wrap(err, "parsing HTML template")
+			return nil, errors.Wrap(err, "parsing HTML template")
 		}
 		htmlBuf := new(bytes.Buffer)
 		err = htmpl.Execute(htmlBuf, dict)
 		if err != nil {
-			return errors.Wrap(err, "executing HTML template")
+			return nil, errors.Wrap(err, "executing HTML template")
 		}
 
 		const subject = "Reset your Outlived password"
 		err = s.sender.send(ctx, from, []string{u.Email}, subject, textBuf, htmlBuf)
 		if err != nil {
-			return errors.Wrap(err, "sending forgot-password mail")
+			return nil, errors.Wrap(err, "sending forgot-password mail")
 		}
 
-		htmpl, err = htemplate.New("").Parse(postForgotTmpl)
-		if err != nil {
-			return errors.Wrap(err, "parsing post-forgot page template")
-		}
-		err = htmpl.Execute(w, nil)
-		return errors.Wrap(err, "rendering post-forgot page")
+		// xxx
+		return nil, nil
 	}
 
-	ok, err := u.CheckPW(password)
-	if err != nil {
-		return errors.Wrapf(err, "checking password for user %s", email)
-	}
-	if !ok {
-		return codeErr(errors.New("email/password invalid"), http.StatusUnauthorized)
+	if !u.CheckPW(req.Password) {
+		return nil, hj.CodeErr{Err: errors.New("email/password invalid"), C: http.StatusUnauthorized}
 	}
 
-	log.Printf("logging in user %s", email)
+	log.Printf("logging in user %s", req.Email)
 
 	sess, err := aesite.NewSession(ctx, s.dsClient, u.Key())
 	if err != nil {
-		return errors.Wrapf(err, "creating session for user %s", email)
+		return nil, errors.Wrapf(err, "creating session for user %s", req.Email)
 	}
+	_, d, err := s.getUserData2(ctx, sess, &u, today)
+	if err != nil {
+		return nil, errors.Wrap(err, "getting user data")
+	}
+
+	w := hj.Response(ctx)
 	sess.SetCookie(w)
-	http.Redirect(w, req, "/", http.StatusSeeOther)
-	return nil
+
+	return d, nil
 }
 
 const fmailText = `Follow this link to reset your Outlived password:

@@ -2,9 +2,17 @@ runtime: go112
 main: ./cmd/outlived
 
 handlers:
-- url: /static/(.*)
-  static_files: static/\1
-  upload: static/.*
-- url: /.*
+- url: /r
   script: auto
   secure: always
+- url: /s/.*
+  script: auto
+  secure: always
+- url: /t/.*
+  script: auto
+  secure: always
+- url: /
+  static_files: web/build/index.html
+- url: /(.*)
+  static_files: web/build/\1
+  upload: web/build/.*

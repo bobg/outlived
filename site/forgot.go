@@ -1,7 +1,7 @@
 package site
 
 import (
-	"fmt"
+	"context"
 	"html/template"
 	"log"
 	"net/http"
@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
+	"github.com/bobg/hj"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
@@ -72,44 +73,34 @@ func (s *Server) handleForgot(w http.ResponseWriter, req *http.Request) error {
 	return errors.Wrap(err, "executing HTML template")
 }
 
-func (s *Server) handleReset(w http.ResponseWriter, req *http.Request) error {
-	if req.Method != "POST" {
-		return fmt.Errorf("method %s not allowed", req.Method)
-	}
-
-	ctx := req.Context()
-
-	var (
-		userKeyStr = req.FormValue("u")
-		vtoken     = req.FormValue("t")
-		idem       = req.FormValue("idem")
-		newPW      = req.FormValue("p")
-	)
-
-	userKey, err := datastore.DecodeKey(userKeyStr)
-	if err != nil {
-		return codeErr(err, http.StatusBadRequest, "decoding user key")
-	}
-
+func (s *Server) handleResetPW(
+	ctx context.Context,
+	req struct {
+		UserKey *datastore.Key `json:"u"`
+		Vtoken  string         `json:"t"`
+		Idem    string         `json:"idem"`
+		NewPW   string         `json:"p"`
+	},
+) error {
 	var user outlived.User
-	err = s.dsClient.Get(ctx, userKey, &user)
+	err := s.dsClient.Get(ctx, req.UserKey, &user)
 	if err != nil {
 		return errors.Wrap(err, "getting user record")
 	}
 
 	// Check that idem is both valid for this user and not yet used.
 
-	err = user.CheckToken(strings.NewReader(vtoken), idem)
+	err = user.CheckToken(strings.NewReader(req.Vtoken), req.Idem)
 	if err != nil {
 		return errors.Wrap(err, "checking idempotency key")
 	}
 
-	err = aesite.Idempotent(ctx, s.dsClient, idem)
+	err = aesite.Idempotent(ctx, s.dsClient, req.Idem)
 	if err != nil {
 		return errors.Wrap(err, "checking for token reuse")
 	}
 
-	err = aesite.UpdatePW(ctx, s.dsClient, &user, newPW)
+	err = aesite.UpdatePW(ctx, s.dsClient, &user, req.NewPW)
 	if err != nil {
 		return errors.Wrap(err, "storing updated password")
 	}
@@ -120,8 +111,9 @@ func (s *Server) handleReset(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return errors.Wrapf(err, "creating session for user %s", user.Email)
 	}
+
+	w := hj.Response(ctx)
 	sess.SetCookie(w)
-	http.Redirect(w, req, "/", http.StatusSeeOther)
 
 	return nil
 }
@@ -137,7 +129,7 @@ const forgotTmpl = `
   <body>
     <h1>Outlived</h1>
 
-    <form method="POST" action="/reset">
+    <form method="POST" action="/s/resetpw">
       <input type="hidden" name="u" value="{{ .u }}"></input>
       <input type="hidden" name="t" value="{{ .t }}"></input>
       <input type="hidden" name="idem" value="{{ .idem }}"></input>

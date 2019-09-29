@@ -12,7 +12,9 @@ import (
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
+	"github.com/bobg/hj"
 	"github.com/pkg/errors"
+	"golang.org/x/text/message"
 	"google.golang.org/appengine"
 )
 
@@ -29,6 +31,7 @@ func NewServer(ctx context.Context, contentDir, projectID, locationID string, ds
 		projectID:  projectID,
 		locationID: locationID,
 		dsClient:   dsClient,
+		p:          message.NewPrinter(message.MatchLanguage("en")),
 	}
 
 	if appengine.IsAppEngine() {
@@ -60,39 +63,49 @@ type Server struct {
 	tasks      taskService
 	sender     sender
 	home       *url.URL
+	p          *message.Printer
 }
 
 func (s *Server) Serve(ctx context.Context) {
-	handle("/", s.handleHome) // TODO: this handles every /foo that's not handled elsewhere, but shouldn't.
-	handle("/figures", s.handleFigures)
-	handle("/forgot", s.handleForgot)
-	handle("/load", s.handleLoad)
-	handle("/login", s.handleLogin)
-	handle("/logout", s.handleLogout)
-	handle("/r", s.handleRedirect)
-	handle("/reset", s.handleReset)
-	handle("/reverify", s.handleReverify)
-	handle("/setactive", s.handleSetActive)
-	handle("/signup", s.handleSignup)
-	handle("/verify", s.handleVerify)
+	mux := http.NewServeMux()
 
-	http.Handle("/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
+	// This is for testing. In production, / is routed by app.yaml.
+	handleErrFunc(mux, "/", s.handleStatic)
 
-	// This is for testing. In production, /static/ is routed by app.yaml.
-	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir(s.contentDir))))
+	mux.Handle("/s/data", s.sessHandler(hj.Handler(s.handleData, onErr)))
+
+	handleErrFunc(mux, "/s/forgot", s.handleForgot)
+	handleErrFunc(mux, "/s/load", s.handleLoad)
+	mux.Handle("/s/login", hj.Handler(s.handleLogin, onErr))
+	handleErrFunc(mux, "/s/logout", s.handleLogout)
+	mux.Handle("/s/resetpw", hj.Handler(s.handleResetPW, onErr))
+	mux.Handle("/s/reverify", s.sessHandler(hj.Handler(s.handleReverify, onErr)))
+	mux.Handle("/s/setactive", s.sessHandler(hj.Handler(s.handleSetActive, onErr)))
+	mux.Handle("/s/signup", hj.Handler(s.handleSignup, onErr))
+	handleErrFunc(mux, "/s/verify", s.handleVerify)
+
+	mux.Handle("/s/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
+
+	handleErrFunc(mux, "/r", s.handleRedirect)
 
 	// cron-initiated
-	handle("/task/scrape", s.handleScrape)
-	handle("/task/expire", s.handleExpire)
-	handle("/task/send", s.handleSend)
+	handleErrFunc(mux, "/t/scrape", s.handleScrape)
+	handleErrFunc(mux, "/t/expire", s.handleExpire)
+	handleErrFunc(mux, "/t/send", s.handleSend)
 
 	// task-queue-initiated
-	handle("/task/scrapeday", s.handleScrapeday)
-	handle("/task/scrapeperson", s.handleScrapeperson)
+	handleErrFunc(mux, "/t/scrapeday", s.handleScrapeday)
+	handleErrFunc(mux, "/t/scrapeperson", s.handleScrapeperson)
 
 	log.Printf("listening for requests on %s", s.addr)
 
-	srv := &http.Server{Addr: s.addr}
+	srv := &http.Server{
+		Addr: s.addr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			log.Printf("%s %s", req.Method, req.URL)
+			mux.ServeHTTP(w, req)
+		}),
+	}
 
 	if appengine.IsAppEngine() {
 		err := srv.ListenAndServe()
@@ -104,6 +117,10 @@ func (s *Server) Serve(ctx context.Context) {
 		<-ctx.Done()
 		srv.Shutdown(ctx)
 	}
+}
+
+func onErr(_ context.Context, err error) {
+	log.Print(err.Error())
 }
 
 func httpErr(w http.ResponseWriter, code int, format string, args ...interface{}) {
@@ -120,31 +137,21 @@ func httpErr(w http.ResponseWriter, code int, format string, args ...interface{}
 	http.Error(w, fmt.Sprintf(format, args...), code)
 }
 
-type handlerFunc func(http.ResponseWriter, *http.Request) error
-
-func handlerCaller(f handlerFunc) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		log.Printf("%s %s", req.Method, req.URL)
-
-		ww := &respWriter{w: w}
-		err := f(ww, req)
-		if err != nil {
-			code := http.StatusInternalServerError
-			if err, ok := err.(codeErrType); ok {
-				code = err.code
-			}
-			log.Printf("%s", err)
-			http.Error(w, err.Error(), code)
-			return
-		}
-		if !ww.writeCalled {
-			w.WriteHeader(http.StatusNoContent)
-		}
-	}
+func handle(pattern string, f interface{}) {
+	http.Handle(pattern, logHandler{next: hj.Handler(f, logErr)})
 }
 
-func handle(pattern string, f handlerFunc) {
-	http.HandleFunc(pattern, handlerCaller(f))
+type logHandler struct {
+	next http.Handler
+}
+
+func (lh logHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	log.Printf("%s %s", req.Method, req.URL)
+	lh.next.ServeHTTP(w, req)
+}
+
+func logErr(_ context.Context, err error) {
+	log.Print(err.Error())
 }
 
 type codeErrType struct {
@@ -221,6 +228,10 @@ func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
 		return codeErrType{code: http.StatusUnauthorized}
 	}
 	return nil
+}
+
+func (s *Server) numPrinter(n int) string {
+	return s.p.Sprintf("%v", n)
 }
 
 var homeURL *url.URL

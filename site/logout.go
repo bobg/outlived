@@ -18,16 +18,14 @@ func (s *Server) handleLogout(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "getting session")
 	}
-	if sess != nil {
-		csrfToken := req.FormValue("csrf")
-		err = sess.CSRFCheck(csrfToken)
-		if err != nil {
-			return errors.Wrap(err, "checking CSRF token")
-		}
-		err = sess.Cancel(ctx, s.dsClient)
-		if err != nil {
-			return errors.Wrap(err, "canceling session")
-		}
+	csrf := req.FormValue("csrf")
+	err = sess.CSRFCheck(csrf)
+	if err != nil {
+		return errors.Wrap(err, "checking CSRF token")
+	}
+	err = sess.Cancel(ctx, s.dsClient)
+	if err != nil {
+		return errors.Wrap(err, "canceling session")
 	}
 	http.Redirect(w, req, "/", http.StatusSeeOther)
 	return nil
