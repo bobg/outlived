@@ -9,44 +9,102 @@ import { post } from './post'
 import { UserData } from './types'
 import { tzname } from './tz'
 
-interface Props {
-  onLogin: (user: UserData) => void
-  user?: UserData
+interface LoggedInProps {
+  user: UserData
 }
 
-interface State {
-  birthDate: Date
-  email?: string
-  enteringBirthdate?: boolean
-  enteringPassword?: boolean
-  password?: string
-  receivingMail?: boolean
-  signingUp?: boolean
+interface LoggedInState {
+  receivingMail: boolean
+  reverified: boolean
 }
 
-export class User extends React.Component<Props, State> {
-  constructor(props: Props) {
+export class LoggedInUser extends React.Component<
+  LoggedInProps,
+  LoggedInState
+> {
+  constructor(props: LoggedInProps) {
     super(props)
+    const { user } = props
     this.state = {
-      birthDate: new Date(),
+      receivingMail: user.verified && user.active,
+      reverified: false,
     }
-    console.log(`xxx props.user ${JSON.stringify(props.user)}`)
   }
 
   private setActive = async (active: boolean) => {
-    if (!this.props.user) {
-      console.log(`xxx setActive short-circuiting`)
-      return
-    }
     const { csrf } = this.props.user
     const resp = await post('/s/setactive', {
       csrf,
       active,
     })
     // xxx check resp
-    console.log(`xxx setActive, setting receivingMail to ${active}`)
     this.setState({ receivingMail: active })
   }
+
+  private reverify = async () => {
+    const { csrf } = this.props.user
+    const resp = await post('/s/reverify', { csrf })
+    // xxx check resp
+    this.setState({ reverified: true })
+  }
+
+  public render = () => {
+    const { user } = this.props
+    const { active, csrf, email, verified } = user
+
+    return (
+      <div>
+        <div>
+          Logged in as {email}.
+          <LogoutButton csrf={csrf} />
+        </div>
+        <div>
+          <label htmlFor='active'>
+            <span>Receive Outlived mail?</span>
+            <Toggle
+              id='active'
+              checked={!!this.state.receivingMail}
+              disabled={!user.verified}
+              onChange={ev => this.setActive(ev.target.checked)}
+            />
+          </label>
+          {!user.verified &&
+            (this.state.reverified ? (
+              <span id='reverified'>
+                Check your e-mail for a verification message from Outlived.
+              </span>
+            ) : (
+              <span id='unconfirmed'>
+                You have not yet confirmed your e-mail address.
+                <button id='resend-button' onClick={this.reverify}>
+                  Resend verification
+                </button>
+              </span>
+            ))}
+        </div>
+      </div>
+    )
+  }
+}
+
+interface LoggedOutProps {
+  onLogin: (user: UserData) => void
+}
+
+interface LoggedOutState {
+  birthDate: Date
+  email?: string
+  enteringBirthdate?: boolean
+  enteringPassword?: boolean
+  password?: string
+  signingUp?: boolean
+}
+
+export class LoggedOutUser extends React.Component<
+  LoggedOutProps,
+  LoggedOutState
+> {
+  public state: LoggedOutState = { birthDate: new Date() }
 
   private onPassword = async (pw: string) => {
     const { email } = this.state
@@ -84,144 +142,72 @@ export class User extends React.Component<Props, State> {
     this.props.onLogin(user)
   }
 
-  public componentDidMount = () => {
-    const { user } = this.props
+  public render = () => (
+    <>
+      <p>Log in to see whom you’ve recently outlived.</p>
 
-    console.log(`xxx componentDidMount: user is ${JSON.stringify(user)}`)
-
-    if (!user) {
-      return
-    }
-    const { active, verified } = user
-    console.log(
-      `xxx componentDidMount: setting receivingMail to ${verified && active}`
-    )
-    this.setState({ receivingMail: verified && active })
-  }
-
-  public shouldComponentUpdate = (
-    nextProps: Props,
-    nextState: State,
-    nextContent: any
-  ) => {
-    const superShould = super.shouldComponentUpdate
-    if (superShould && superShould(nextProps, nextState, nextContent)) {
-      console.log(`xxx super.shouldComponentUpdate says yes`)
-      return true
-    }
-    if (!nextProps.user !== !this.props.user) {
-      console.log(`xxx super.shouldComponentUpdate says no but I say yes [1]`)
-      return true
-    }
-    if (!nextState.receivingMail !== !this.state.receivingMail) {
-      console.log(`xxx super.shouldComponentUpdate says no but I say yes [2]`)
-      return true
-    }
-    return false
-  }
-
-  public render = () => {
-    const { user } = this.props
-
-    console.log(
-      `xxx User render, !!user is ${!!user}, receivingMail is ${
-        this.state.receivingMail
-      }`
-    )
-
-    if (user) {
-      const { active, csrf, email, verified } = user
-      return (
-        <div>
-          <div>
-            Logged in as {email}.
-            <LogoutButton csrf={csrf} />
-          </div>
-          <div>
-            <label htmlFor='active'>
-              <span>Receive Outlived mail?</span>
-              <Toggle
-                id='active'
-                checked={!!this.state.receivingMail}
-                disabled={!user.verified}
-                onChange={ev => {
-                  console.log(`xxx flipping toggle, ev.target.checked is ${ev.target.checked}`)
-                  this.setActive(ev.target.checked)
-                }}
-              />
-            </label>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <>
-        <p>Log in to see whom you’ve recently outlived.</p>
-
-        <div>
-          <label htmlFor='email'>E-mail address</label>
-          <input
-            type='email'
-            id='email'
-            name='email'
-            onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
-              this.setState({ email: ev.target.value })
-            }
-          />
-          <button
-            onClick={() => this.setState({ enteringPassword: true })}
-            disabled={!emailValid(this.state.email)}
-          >
-            Log in
-          </button>
-          <button
-            onClick={() =>
-              this.setState({ enteringPassword: true, signingUp: true })
-            }
-            disabled={!emailValid(this.state.email)}
-          >
-            Sign up
-          </button>
-        </div>
-
-        <PasswordDialog
-          prompt={this.state.signingUp ? 'Choose password' : 'Enter password'}
-          show={() => !!this.state.enteringPassword}
-          onClose={() => this.setState({ enteringPassword: false })}
-          onSubmit={this.onPassword}
-        />
-
-        <Modal
-          onHide={() =>
-            this.setState({ enteringBirthdate: false, signingUp: false })
+      <div>
+        <label htmlFor='email'>E-mail address</label>
+        <input
+          type='email'
+          id='email'
+          name='email'
+          onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
+            this.setState({ email: ev.target.value })
           }
-          show={this.state.enteringBirthdate}
+        />
+        <button
+          onClick={() => this.setState({ enteringPassword: true })}
+          disabled={!emailValid(this.state.email)}
         >
-          <Modal.Header closeButton>
-            <ModalTitle>Birth date</ModalTitle>
-          </Modal.Header>
-          <ModalBody>
-            <form onSubmit={this.onBirthDate}>
-              <DatePicker
-                onChange={(d: Date | Date[]) => {
-                  const date = d as Date // xxx hack
-                  this.setState({ birthDate: date }) // xxx hack
-                }}
-                value={this.state.birthDate}
-              />
-              <button
-                type='submit'
-                disabled={!birthdateValid(this.state.birthDate)}
-              >
-                Submit
-              </button>
-            </form>
-          </ModalBody>
-        </Modal>
-      </>
-    )
-  }
+          Log in
+        </button>
+        <button
+          onClick={() =>
+            this.setState({ enteringPassword: true, signingUp: true })
+          }
+          disabled={!emailValid(this.state.email)}
+        >
+          Sign up
+        </button>
+      </div>
+
+      <PasswordDialog
+        prompt={this.state.signingUp ? 'Choose password' : 'Enter password'}
+        show={() => !!this.state.enteringPassword}
+        onClose={() => this.setState({ enteringPassword: false })}
+        onSubmit={this.onPassword}
+      />
+
+      <Modal
+        onHide={() =>
+          this.setState({ enteringBirthdate: false, signingUp: false })
+        }
+        show={this.state.enteringBirthdate}
+      >
+        <Modal.Header closeButton>
+          <ModalTitle>Birth date</ModalTitle>
+        </Modal.Header>
+        <ModalBody>
+          <form onSubmit={this.onBirthDate}>
+            <DatePicker
+              onChange={(d: Date | Date[]) => {
+                const date = d as Date // xxx hack
+                this.setState({ birthDate: date })
+              }}
+              value={this.state.birthDate}
+            />
+            <button
+              type='submit'
+              disabled={!birthdateValid(this.state.birthDate)}
+            >
+              Submit
+            </button>
+          </form>
+        </ModalBody>
+      </Modal>
+    </>
+  )
 }
 
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.

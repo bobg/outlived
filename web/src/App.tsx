@@ -5,7 +5,7 @@ import 'react-toggle/style.css'
 
 import { Figures } from './Figures'
 import { post } from './post'
-import { User } from './User'
+import { LoggedInUser, LoggedOutUser } from './User'
 import { Data, FigureData, UserData } from './types'
 import { tzname } from './tz'
 
@@ -34,14 +34,17 @@ class App extends React.Component<{}, State> {
   public render() {
     const { figures, today, user } = this.state
 
-    console.log(`xxx App render, !!user is ${!!user}`)
-
     return (
       <div className='App'>
         <header>Outlived</header>
-        <User onLogin={this.onLogin} user={user} />
+        {user && <LoggedInUser user={user} />}
+        {!user && <LoggedOutUser onLogin={this.onLogin} />}
         {today && <div>Today is {today}.</div>}
         {figures && <Figures figures={figures} user={user} />}
+        <p>
+          Data supplied by <a href='https://en.wikipedia.org/'>Wikipedia</a>,
+          the free encyclopedia.
+        </p>
       </div>
     )
   }
