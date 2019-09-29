@@ -14,6 +14,8 @@ handlers:
 - url: /(..*)
   static_files: web/build/\1
   upload: web/build/.*
+  secure: always
 - url: /
   static_files: web/build/index.html
   upload: web/build/index.html
+  secure: always
