@@ -27,4 +27,6 @@
 SCRAPED*
 older/*
 creds.json
-web/*
+web/node_modules/*
+web/public/*
+web/src/*
