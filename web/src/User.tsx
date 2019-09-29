@@ -50,7 +50,7 @@ export class LoggedInUser extends React.Component<
 
   public render = () => {
     const { user } = this.props
-    const { active, csrf, email, verified } = user
+    const { csrf, email, verified } = user
 
     return (
       <div>
@@ -68,7 +68,7 @@ export class LoggedInUser extends React.Component<
               onChange={ev => this.setActive(ev.target.checked)}
             />
           </label>
-          {!user.verified &&
+          {!verified &&
             (this.state.reverified ? (
               <span id='reverified'>
                 Check your e-mail for a verification message from Outlived.
