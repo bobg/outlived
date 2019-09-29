@@ -30,7 +30,7 @@ type (
 		Born string `json:"born"`
 		Died string `json:"died"`
 
-		DaysAlive      string `json:"daysAlive"`
+		DaysAlive      int    `json:"daysAlive"`
 		YearsDaysAlive string `json:"yearsDaysAlive"`
 
 		Href   string `json:"href"`
@@ -41,7 +41,7 @@ type (
 	userData struct {
 		CSRF           string       `json:"csrf"`
 		Born           string       `json:"born"`
-		DaysAlive      string       `json:"daysAlive"`
+		DaysAlive      int          `json:"daysAlive"`
 		YearsDaysAlive string       `json:"yearsDaysAlive"`
 		Email          string       `json:"email"`
 		Figures        []figureData `json:"figures"`
@@ -104,7 +104,7 @@ func (s *Server) getUserData2(ctx context.Context, sess *aesite.Session, u *outl
 	d := &userData{
 		CSRF:           csrf,
 		Born:           u.Born.String(),
-		DaysAlive:      s.numPrinter(alive),
+		DaysAlive:      alive,
 		YearsDaysAlive: today.YDSinceStr(u.Born),
 		Email:          u.Email,
 		Verified:       u.Verified,
@@ -129,7 +129,7 @@ func (s *Server) toFigureData(figure *outlived.Figure) figureData {
 		Desc:           figure.Desc,
 		Born:           figure.Born.String(),
 		Died:           figure.Died.String(),
-		DaysAlive:      s.numPrinter(figure.DaysAlive),
+		DaysAlive:      figure.DaysAlive,
 		YearsDaysAlive: figure.Died.YDSinceStr(figure.Born),
 		Href:           "https://en.wikipedia.org/wiki/" + figure.Link,
 		ImgAlt:         figure.ImgAlt,

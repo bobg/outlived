@@ -53,7 +53,7 @@ export class LoggedInUser extends React.Component<
     const { csrf, email, verified } = user
 
     return (
-      <div>
+      <div className='user'>
         <div>
           Logged in as {email}.
           <LogoutButton csrf={csrf} />

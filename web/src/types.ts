@@ -3,7 +3,7 @@ export interface FigureData {
   desc?: string
   born: string
   died: string
-  daysAlive: string
+  daysAlive: number
   yearsDaysAlive: string
   href: string
   imgAlt?: string
@@ -13,7 +13,7 @@ export interface FigureData {
 export interface UserData {
   csrf: string
   born: string
-  daysAlive: string
+  daysAlive: number
   yearsDaysAlive: string
   email: string
   figures: FigureData[]

@@ -39,7 +39,7 @@ class App extends React.Component<{}, State> {
         <header>Outlived</header>
         {user && <LoggedInUser user={user} />}
         {!user && <LoggedOutUser onLogin={this.onLogin} />}
-        {today && <div>Today is {today}.</div>}
+        {today && <div id="today">Today is {today}.</div>}
         {figures && <Figures figures={figures} user={user} />}
         <p>
           Data supplied by <a href='https://en.wikipedia.org/'>Wikipedia</a>,

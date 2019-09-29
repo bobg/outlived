@@ -29,26 +29,29 @@ export class Figures extends React.Component<Props, State> {
       return (
         <>
           <div>
-            You were born on {user.born}, which was {user.daysAlive} days ago.
+            You were born on {user.born}, which was{' '}
+            {user.daysAlive.toLocaleString()} days ago.
           </div>
-          <Tabs
-            id='figures'
-            activeKey={this.state.activeTab}
-            onSelect={this.handleTab}
-          >
-            <Tab eventKey={1} title='Died on this date'>
-              {renderFigs(figures, true)}
-            </Tab>
-            <Tab eventKey={2} title='You have recently outlived'>
-              {renderFigs(user.figures, false)}
-            </Tab>
-          </Tabs>
+          <div id='figures'>
+            <Tabs
+              id='figures'
+              activeKey={this.state.activeTab}
+              onSelect={this.handleTab}
+            >
+              <Tab eventKey={1} title='Died on this date'>
+                {renderFigs(figures, true)}
+              </Tab>
+              <Tab eventKey={2} title='You have recently outlived'>
+                {renderFigs(user.figures, false)}
+              </Tab>
+            </Tabs>
+          </div>
         </>
       )
     }
 
     return (
-      <div>
+      <div id='figures'>
         <p>Died on this date:</p>
         {renderFigs(figures, true)}
       </div>
