@@ -1,6 +1,7 @@
 import React from 'react'
 import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
 import DatePicker from 'react-date-picker'
+import Toggle from 'react-toggle'
 
 import { LogoutButton } from './LogoutButton'
 import { PasswordDialog } from './Password'
@@ -19,7 +20,7 @@ interface State {
   enteringBirthdate?: boolean
   enteringPassword?: boolean
   password?: string
-  receivingMail: boolean
+  receivingMail?: boolean
   signingUp?: boolean
 }
 
@@ -27,44 +28,23 @@ export class User extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      birthDate: new Date('1969-7-20'),
-      receivingMail: !!props.user && props.user.verified && props.user.active,
+      birthDate: new Date(),
     }
+    console.log(`xxx props.user ${JSON.stringify(props.user)}`)
   }
 
-  private login = async () => {
-    const { email, password } = this.state
-
-    const resp = await post('/s/login', {
-      email,
-      password,
-      tzname: tzname(),
-    })
-    const user = (await resp.json()) as UserData
-    this.props.onLogin(user)
-  }
-
-  private signup = () => {
-    const { birthDate, email, password } = this.state
-
-    post('/s/signup', {
-      email,
-      password,
-      born: birthDate, // xxx
-      tzname: tzname(),
-    })
-  }
-
-  private setActive = (active: boolean) => {
+  private setActive = async (active: boolean) => {
     if (!this.props.user) {
+      console.log(`xxx setActive short-circuiting`)
       return
     }
     const { csrf } = this.props.user
-    const resp = post('/s/setactive', {
+    const resp = await post('/s/setactive', {
       csrf,
       active,
     })
     // xxx check resp
+    console.log(`xxx setActive, setting receivingMail to ${active}`)
     this.setState({ receivingMail: active })
   }
 
@@ -87,11 +67,70 @@ export class User extends React.Component<Props, State> {
     this.props.onLogin(user)
   }
 
+  private onBirthDate = async (ev: React.FormEvent<HTMLFormElement>) => {
+    ev.preventDefault()
+    const { birthDate } = this.state
+    if (!birthdateValid(birthDate)) {
+      return
+    }
+    const { email, password } = this.state
+    const resp = await post('/s/signup', {
+      email,
+      password,
+      born: datestr(birthDate),
+      tzname: tzname(),
+    })
+    const user = (await resp.json()) as UserData
+    this.props.onLogin(user)
+  }
+
+  public componentDidMount = () => {
+    const { user } = this.props
+
+    console.log(`xxx componentDidMount: user is ${JSON.stringify(user)}`)
+
+    if (!user) {
+      return
+    }
+    const { active, verified } = user
+    console.log(
+      `xxx componentDidMount: setting receivingMail to ${verified && active}`
+    )
+    this.setState({ receivingMail: verified && active })
+  }
+
+  public shouldComponentUpdate = (
+    nextProps: Props,
+    nextState: State,
+    nextContent: any
+  ) => {
+    const superShould = super.shouldComponentUpdate
+    if (superShould && superShould(nextProps, nextState, nextContent)) {
+      console.log(`xxx super.shouldComponentUpdate says yes`)
+      return true
+    }
+    if (!nextProps.user !== !this.props.user) {
+      console.log(`xxx super.shouldComponentUpdate says no but I say yes [1]`)
+      return true
+    }
+    if (!nextState.receivingMail !== !this.state.receivingMail) {
+      console.log(`xxx super.shouldComponentUpdate says no but I say yes [2]`)
+      return true
+    }
+    return false
+  }
+
   public render = () => {
     const { user } = this.props
 
+    console.log(
+      `xxx User render, !!user is ${!!user}, receivingMail is ${
+        this.state.receivingMail
+      }`
+    )
+
     if (user) {
-      const { csrf, email } = user
+      const { active, csrf, email, verified } = user
       return (
         <div>
           <div>
@@ -99,15 +138,18 @@ export class User extends React.Component<Props, State> {
             <LogoutButton csrf={csrf} />
           </div>
           <div>
-            <label htmlFor='active'>Receive Outlived mail?</label>
-            <input
-              type='checkbox'
-              id='active'
-              name='active'
-              checked={this.state.receivingMail}
-              disabled={!user.verified}
-              onChange={ev => this.setActive(ev.target.checked)}
-            />
+            <label htmlFor='active'>
+              <span>Receive Outlived mail?</span>
+              <Toggle
+                id='active'
+                checked={!!this.state.receivingMail}
+                disabled={!user.verified}
+                onChange={ev => {
+                  console.log(`xxx flipping toggle, ev.target.checked is ${ev.target.checked}`)
+                  this.setActive(ev.target.checked)
+                }}
+              />
+            </label>
           </div>
         </div>
       )
@@ -160,12 +202,21 @@ export class User extends React.Component<Props, State> {
             <ModalTitle>Birth date</ModalTitle>
           </Modal.Header>
           <ModalBody>
-            <DatePicker
-              onChange={(date: Date | Date[]) => {
-                this.setState({ birthDate: date as Date }) // xxx hack
-              }}
-              value={this.state.birthDate}
-            />
+            <form onSubmit={this.onBirthDate}>
+              <DatePicker
+                onChange={(d: Date | Date[]) => {
+                  const date = d as Date // xxx hack
+                  this.setState({ birthDate: date }) // xxx hack
+                }}
+                value={this.state.birthDate}
+              />
+              <button
+                type='submit'
+                disabled={!birthdateValid(this.state.birthDate)}
+              >
+                Submit
+              </button>
+            </form>
           </ModalBody>
         </Modal>
       </>
@@ -176,4 +227,26 @@ export class User extends React.Component<Props, State> {
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
 const emailValid = (inp?: string) => {
   return inp && /^\w+([.+-]\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(inp)
+}
+
+const yearMillis =
+  365 /* days */ * 24 /* hours */ * 60 /* mins */ * 60 /* secs */ * 1000
+
+const birthdateValid = (d: Date) => {
+  const now = new Date()
+  const diff = now.valueOf() - d.valueOf()
+  if (diff < 13 * yearMillis) {
+    return false
+  }
+  if (diff > 200 * yearMillis) {
+    return false
+  }
+  return true
+}
+
+const datestr = (d: Date) => {
+  const y = d.getFullYear()
+  const m = 1 + d.getMonth() // come on javascript
+  const day = d.getDate() // come ON, javascript
+  return y + '-' + ('0' + m).substr(-2) + '-' + ('0' + day).substr(-2)
 }

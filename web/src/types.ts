@@ -22,7 +22,7 @@ export interface UserData {
 }
 
 export interface Data {
-  figures?: FigureData[]
-  today?: string
+  figures: FigureData[]
+  today: string
   user?: UserData
 }

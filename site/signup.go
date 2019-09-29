@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/bobg/aesite"
+	"github.com/bobg/hj"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
@@ -20,19 +20,18 @@ func (s *Server) handleSignup(
 		BornStr  string `json:"born"`
 		TZName   string `json:"tzname"`
 	},
-) error {
+) (*userData, error) {
 	born, err := outlived.ParseDate(req.BornStr)
 	if err != nil {
-		return codeErr(err, http.StatusBadRequest, "parsing birthdate")
+		return nil, codeErr(err, http.StatusBadRequest, "parsing birthdate")
 	}
 
-	loc, err := time.LoadLocation(req.TZName)
-	if err != nil {
-		log.Printf("error loading timezone %s, falling back to UTC: %s", req.TZName, err)
-		loc = time.UTC
-	}
+	var (
+		now   = tzNow(req.TZName)
+		today = outlived.TimeDate(now)
+		loc   = now.Location()
+	)
 
-	now := time.Now().In(loc)
 	_, tzoffset := now.Zone()
 
 	u := &outlived.User{
@@ -43,19 +42,29 @@ func (s *Server) handleSignup(
 	}
 	err = aesite.NewUser(ctx, s.dsClient, req.Email, req.Password, u)
 	if err != nil {
-		return errors.Wrap(err, "creating new user")
+		return nil, errors.Wrap(err, "creating new user")
 	}
 
 	err = s.sendVerificationMail(ctx, u)
 	if err != nil {
-		return errors.Wrap(err, "sending verification mail")
+		return nil, errors.Wrap(err, "sending verification mail")
 	}
 
 	log.Printf("signed up new user %s", u.Email)
 
-	// xxx
+	sess, err := aesite.NewSession(ctx, s.dsClient, u.Key())
+	if err != nil {
+		return nil, errors.Wrapf(err, "creating session for user %s", req.Email)
+	}
+	_, d, err := s.getUserData2(ctx, sess, u, today)
+	if err != nil {
+		return nil, errors.Wrap(err, "getting user data")
+	}
 
-	return nil
+	w := hj.Response(ctx)
+	sess.SetCookie(w)
+
+	return d, nil
 }
 
 const postSignupTmpl = `
