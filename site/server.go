@@ -75,7 +75,7 @@ func (s *Server) Serve(ctx context.Context) {
 	handleErrFunc(mux, "/s/load", s.handleLoad)
 	mux.Handle("/s/login", hj.Handler(s.handleLogin, onErr))
 	handleErrFunc(mux, "/s/logout", s.handleLogout)
-	mux.Handle("/s/resetpw", hj.Handler(s.handleResetPW, onErr))
+	handleErrFunc(mux, "/s/resetpw", s.handleResetPW)
 	mux.Handle("/s/reverify", s.sessHandler(hj.Handler(s.handleReverify, onErr)))
 	mux.Handle("/s/setactive", s.sessHandler(hj.Handler(s.handleSetActive, onErr)))
 	mux.Handle("/s/signup", hj.Handler(s.handleSignup, onErr))

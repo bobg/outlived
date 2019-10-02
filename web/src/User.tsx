@@ -3,7 +3,6 @@ import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
 import DatePicker from 'react-date-picker'
 import Toggle from 'react-toggle'
 
-import { LogoutButton } from './LogoutButton'
 import { PasswordDialog } from './Password'
 import { post } from './post'
 import { UserData } from './types'
@@ -56,7 +55,10 @@ export class LoggedInUser extends React.Component<
       <div className='user'>
         <div>
           Logged in as {email}.
-          <LogoutButton csrf={csrf} />
+          <form method='POST' action='/s/logout'>
+            <input type='hidden' name='csrf' value={csrf} />
+            <button type='submit'>Log out</button>
+          </form>
         </div>
         <div>
           <label htmlFor='active'>
@@ -117,12 +119,27 @@ export class LoggedOutUser extends React.Component<
     }
     const resp = await post('/s/login', {
       email,
+      forgot: false,
       password: pw,
       tzname: tzname(),
     })
     // xxx check for error
     const user = (await resp.json()) as UserData
     this.props.onLogin(user)
+  }
+
+  private onForgotPassword = async () => {
+    const { email } = this.state
+    if (!emailValid(email)) {
+      return
+    }
+    const resp = await post('/s/login', {
+      email,
+      forgot: true,
+      tzname: tzname(),
+    })
+    // xxx check for error
+    // xxx post "check your mail" message
   }
 
   private onBirthDate = async (ev: React.FormEvent<HTMLFormElement>) => {
@@ -176,6 +193,7 @@ export class LoggedOutUser extends React.Component<
         prompt={this.state.signingUp ? 'Choose password' : 'Enter password'}
         show={() => !!this.state.enteringPassword}
         onClose={() => this.setState({ enteringPassword: false })}
+        onForgot={this.state.signingUp ? undefined : this.onForgotPassword}
         onSubmit={this.onPassword}
       />
 

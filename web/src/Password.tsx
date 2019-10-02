@@ -4,6 +4,7 @@ import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
 interface Props {
   buttonLabel?: string
   onClose: () => void
+  onForgot?: () => void
   onSubmit: (pw: string) => void
   prompt?: string
   show: () => boolean
@@ -27,12 +28,17 @@ export class PasswordDialog extends React.Component<Props, State> {
     ev.preventDefault()
   }
 
-  private handleChange = (ev: React.FormEvent<HTMLInputElement>) => {
-    this.setState({ pw: ev.currentTarget.value })
+  private handleForgot = (ev: React.FormEvent<HTMLButtonElement>) => {
+    ev.preventDefault()
+    if (!this.props.onForgot) {
+      return
+    }
+    this.props.onForgot()
+    this.props.onClose()
   }
 
-  public componentDidMount = () => {
-    this.setState({ pw: '' })
+  private handleChange = (ev: React.FormEvent<HTMLInputElement>) => {
+    this.setState({ pw: ev.currentTarget.value })
   }
 
   public render = () => {
@@ -53,12 +59,12 @@ export class PasswordDialog extends React.Component<Props, State> {
                 onChange={this.handleChange}
               />
             </label>
-            <button
-              type='submit'
-              disabled={!passwordValid(this.state.pw)}
-            >
+            <button type='submit' disabled={!passwordValid(this.state.pw)}>
               {buttonLabel || 'Submit'}
             </button>
+            {this.props.onForgot && (
+              <button onClick={this.handleForgot}>Forgot password</button>
+            )}
           </form>
         </ModalBody>
       </Modal>
