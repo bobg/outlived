@@ -3,6 +3,7 @@ import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
 import DatePicker from 'react-date-picker'
 import Toggle from 'react-toggle'
 
+import { doAlert } from './Alert'
 import { PasswordDialog } from './Password'
 import { post } from './post'
 import { UserData } from './types'
@@ -32,19 +33,27 @@ export class LoggedInUser extends React.Component<
 
   private setActive = async (active: boolean) => {
     const { csrf } = this.props.user
-    const resp = await post('/s/setactive', {
-      csrf,
-      active,
-    })
-    // xxx check resp
-    this.setState({ receivingMail: active })
+    try {
+      await post('/s/setactive', {
+        csrf,
+        active,
+      })
+      this.setState({ receivingMail: active })
+    } catch (error) {
+      doAlert('Error setting e-mail preference. Please try again.')
+    }
   }
 
   private reverify = async () => {
     const { csrf } = this.props.user
-    const resp = await post('/s/reverify', { csrf })
-    // xxx check resp
-    this.setState({ reverified: true })
+    try {
+      await post('/s/reverify', { csrf })
+      this.setState({ reverified: true })
+    } catch (error) {
+      doAlert(
+        'Error resending verification message. Please try again in a moment.'
+      )
+    }
   }
 
   public render = () => {
@@ -117,15 +126,19 @@ export class LoggedOutUser extends React.Component<
     if (this.state.signingUp) {
       return
     }
-    const resp = await post('/s/login', {
-      email,
-      forgot: false,
-      password: pw,
-      tzname: tzname(),
-    })
-    // xxx check for error
-    const user = (await resp.json()) as UserData
-    this.props.onLogin(user)
+
+    try {
+      const resp = await post('/s/login', {
+        email,
+        forgot: false,
+        password: pw,
+        tzname: tzname(),
+      })
+      const user = (await resp.json()) as UserData
+      this.props.onLogin(user)
+    } catch (error) {
+      doAlert('Login failed')
+    }
   }
 
   private onForgotPassword = async () => {
@@ -133,13 +146,16 @@ export class LoggedOutUser extends React.Component<
     if (!emailValid(email)) {
       return
     }
-    const resp = await post('/s/login', {
-      email,
-      forgot: true,
-      tzname: tzname(),
-    })
-    // xxx check for error
-    // xxx post "check your mail" message
+    try {
+      await post('/s/login', {
+        email,
+        forgot: true,
+        tzname: tzname(),
+      })
+      doAlert('Check your e-mail for a password-reset message.')
+    } catch (error) {
+      doAlert('Error sending password-reset e-mail. Please try again in a moment.')
+    }
   }
 
   private onBirthDate = async (ev: React.FormEvent<HTMLFormElement>) => {
@@ -149,14 +165,18 @@ export class LoggedOutUser extends React.Component<
       return
     }
     const { email, password } = this.state
-    const resp = await post('/s/signup', {
-      email,
-      password,
-      born: datestr(birthDate),
-      tzname: tzname(),
-    })
-    const user = (await resp.json()) as UserData
-    this.props.onLogin(user)
+    try {
+      const resp = await post('/s/signup', {
+        email,
+        password,
+        born: datestr(birthDate),
+        tzname: tzname(),
+      })
+      const user = (await resp.json()) as UserData
+      this.props.onLogin(user)
+    } catch (error) {
+      doAlert(`Error creating account. Please try again.`)
+    }
   }
 
   public render = () => (

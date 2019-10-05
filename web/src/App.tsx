@@ -3,6 +3,7 @@ import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'react-toggle/style.css'
 
+import { Alert, doAlert, setAlertRef } from './Alert'
 import { Figures } from './Figures'
 import { post } from './post'
 import { LoggedInUser, LoggedOutUser } from './User'
@@ -19,12 +20,16 @@ class App extends React.Component<{}, State> {
   public state: State = { figures: [] }
 
   private getData = async () => {
-    const resp = await post('/s/data', {
-      tzname: tzname(),
-    })
-    const data = (await resp.json()) as Data
-    const { figures, today, user } = data
-    this.setState({ figures, today, user })
+    try {
+      const resp = await post('/s/data', {
+        tzname: tzname(),
+      })
+      const data = (await resp.json()) as Data
+      const { figures, today, user } = data
+      this.setState({ figures, today, user })
+    } catch (error) {
+      doAlert('Error loading data. Please try reloading this page in a moment.')
+    }
   }
 
   public componentDidMount = () => this.getData()
@@ -36,6 +41,7 @@ class App extends React.Component<{}, State> {
 
     return (
       <div className='App'>
+        <Alert ref={(r: Alert) => setAlertRef(r)} />
         <header>Outlived</header>
         {user && <LoggedInUser user={user} />}
         {!user && <LoggedOutUser onLogin={this.onLogin} />}
