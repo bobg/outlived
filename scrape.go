@@ -374,6 +374,10 @@ func scrapePageviews(ctx context.Context, client *http.Client, href string) (int
 var errNotFound = errors.New("not found")
 
 func findFullName(node *html.Node) (string, error) {
+	node = htree.Prune(node, func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.DataAtom == atom.Sup && htree.ElClassContains(n, "reference")
+	})
+
 	fnNode := htree.FindEl(node, func(n *html.Node) bool {
 		return htree.ElClassContains(n, "fn")
 	})
@@ -384,7 +388,7 @@ func findFullName(node *html.Node) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(txt), nil
+	return strings.Join(strings.Fields(txt), " "), nil
 }
 
 func findDateRow(node *html.Node, label string) (year, mon, day int, err error) {
