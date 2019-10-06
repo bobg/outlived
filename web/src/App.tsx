@@ -2,6 +2,7 @@ import React from 'react'
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'react-toggle/style.css'
+import 'semantic-ui-css/semantic.min.css'
 import { Placeholder } from 'semantic-ui-react'
 
 import { Alert, doAlert, setAlertRef } from './Alert'
