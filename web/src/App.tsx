@@ -2,6 +2,7 @@ import React from 'react'
 import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'react-toggle/style.css'
+import { Placeholder } from 'semantic-ui-react'
 
 import { Alert, doAlert, setAlertRef } from './Alert'
 import { Figures } from './Figures'
@@ -12,12 +13,13 @@ import { tzname } from './tz'
 
 interface State {
   figures: FigureData[]
+  loaded: boolean
   today?: string
   user?: UserData
 }
 
 class App extends React.Component<{}, State> {
-  public state: State = { figures: [] }
+  public state: State = { figures: [], loaded: false }
 
   private getData = async () => {
     try {
@@ -26,7 +28,7 @@ class App extends React.Component<{}, State> {
       })
       const data = (await resp.json()) as Data
       const { figures, today, user } = data
-      this.setState({ figures, today, user })
+      this.setState({ figures, loaded: true, today, user })
     } catch (error) {
       doAlert('Error loading data. Please try reloading this page in a moment.')
     }
@@ -37,12 +39,14 @@ class App extends React.Component<{}, State> {
   private onLogin = (user: UserData) => this.setState({ user })
 
   public render() {
-    const { figures, today, user } = this.state
+    const { figures, loaded, today, user } = this.state
 
     return (
       <div className='App'>
         <Alert ref={(r: Alert) => setAlertRef(r)} />
         <header>Outlived</header>
+        {loaded ? (
+            <>
         {user && <LoggedInUser user={user} />}
         {!user && <LoggedOutUser onLogin={this.onLogin} />}
         {today && <div id='today'>Today is {today}.</div>}
@@ -58,6 +62,10 @@ class App extends React.Component<{}, State> {
           </a>
           , the free encyclopedia.
         </p>
+            </>
+        ) : (
+          <Placeholder/>
+        )}
       </div>
     )
   }
