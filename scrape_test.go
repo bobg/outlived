@@ -64,6 +64,17 @@ func TestFindFullName(t *testing.T) {
 			html: `<div class="fn" style="text-align:center;font-size:125%;font-weight:bold;background-color: #cbe; font-size: 125%">Mehmed IV<br>محمد رابع</div>`,
 			want: "Mehmed IV محمد رابع",
 		},
+		{
+			html: `<div class="fn" style="display:inline">
+			         Ishikawa Goemon
+			         <br>
+			         <style data-mw-deduplicate="TemplateStyles:r886047488">
+			           .mw-parser-output .nobold{font-weight:normal}
+			         </style>
+			         <span class="nobold">石川 五右衛門</span>
+			       </div>`,
+			want: "Ishikawa Goemon 石川 五右衛門",
+		},
 	}
 
 	for i, c := range cases {
