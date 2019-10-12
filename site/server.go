@@ -220,6 +220,12 @@ func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
 		return nil
 	}
 
+	ctx := req.Context()
+	masterKey, err := aesite.GetSetting(ctx, s.dsClient, "master-key")
+	if err == nil && strings.TrimSpace(req.Header.Get("X-Outlived-Key")) == string(masterKey) {
+		return nil
+	}
+
 	h := strings.TrimSpace(req.Header.Get("X-AppEngine-QueueName"))
 	if h != queue {
 		return codeErrType{code: http.StatusUnauthorized}
