@@ -3,7 +3,7 @@ import './App.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'react-toggle/style.css'
 import 'semantic-ui-css/semantic.min.css'
-import { Placeholder } from 'semantic-ui-react'
+import { Loader } from 'semantic-ui-react'
 
 import { Alert, doAlert, setAlertRef } from './Alert'
 import { Figures } from './Figures'
@@ -51,7 +51,7 @@ class App extends React.Component<{}, State> {
         {user && <LoggedInUser user={user} />}
         {!user && <LoggedOutUser onLogin={this.onLogin} />}
         {today && <div id='today'>Today is {today}.</div>}
-        {figures && <Figures figures={figures} user={user} />}
+        {figures.length > 0 && <Figures figures={figures} user={user} />}
         <p>
           Data supplied by{' '}
           <a
@@ -65,7 +65,7 @@ class App extends React.Component<{}, State> {
         </p>
             </>
         ) : (
-          <Placeholder/>
+          <Loader active size='large'/>
         )}
       </div>
     )
