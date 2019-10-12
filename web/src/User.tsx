@@ -2,6 +2,7 @@ import React from 'react'
 import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
 import DatePicker from 'react-date-picker'
 import Toggle from 'react-toggle'
+import { Label, Popup } from 'semantic-ui-react'
 
 import { doAlert } from './Alert'
 import { PasswordDialog } from './Password'
@@ -70,15 +71,22 @@ export class LoggedInUser extends React.Component<
           </form>
         </div>
         <div>
-          <label htmlFor='active'>
-            <span>Receive Outlived mail?</span>
-            <Toggle
-              id='active'
-              checked={!!this.state.receivingMail}
-              disabled={!user.verified}
-              onChange={ev => this.setActive(ev.target.checked)}
-            />
-          </label>
+          <Popup
+            content='Up to one message per day with the notable figures you’ve just outlived.'
+            position='left center'
+            trigger={
+              <Label>
+                Receive Outlived mail?{' '}
+                <Toggle
+                  id='active'
+                  checked={!!this.state.receivingMail}
+                  disabled={!user.verified}
+                  onChange={ev => this.setActive(ev.target.checked)}
+                />
+              </Label>
+            }
+          />
+
           {!verified &&
             (this.state.reverified ? (
               <span id='reverified'>
@@ -154,7 +162,9 @@ export class LoggedOutUser extends React.Component<
       })
       doAlert('Check your e-mail for a password-reset message.')
     } catch (error) {
-      doAlert('Error sending password-reset e-mail. Please try again in a moment.')
+      doAlert(
+        'Error sending password-reset e-mail. Please try again in a moment.'
+      )
     }
   }
 
