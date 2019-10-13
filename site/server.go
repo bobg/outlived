@@ -81,7 +81,7 @@ func (s *Server) Serve(ctx context.Context) {
 	mux.Handle("/s/signup", hj.Handler(s.handleSignup, onErr))
 	handleErrFunc(mux, "/s/verify", s.handleVerify)
 
-	mux.Handle("/s/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
+	mux.Handle("/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
 
 	handleErrFunc(mux, "/r", s.handleRedirect)
 

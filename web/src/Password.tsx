@@ -1,5 +1,6 @@
 import React from 'react'
 import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
+import { Label } from 'semantic-ui-react'
 
 interface Props {
   buttonLabel?: string
@@ -50,15 +51,16 @@ export class PasswordDialog extends React.Component<Props, State> {
         </Modal.Header>
         <ModalBody>
           <form onSubmit={this.handleSubmit}>
-            <label htmlFor='password'>
-              {prompt || 'Enter password'}
+            <Label>
+              {prompt || 'Enter password'}{' '}
               <input
                 type='password'
                 id='password'
                 value={this.state.pw}
                 onChange={this.handleChange}
               />
-            </label>
+            </Label>
+            <br />
             <button type='submit' disabled={!passwordValid(this.state.pw)}>
               {buttonLabel || 'Submit'}
             </button>

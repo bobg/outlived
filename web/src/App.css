@@ -58,8 +58,12 @@ a.figure {
     font-weight: bold;
 }
 
-#figures {
+.figures {
     clear: both;
+}
+
+.figures.logged-out p {
+    text-align: left;
 }
 
 #today {

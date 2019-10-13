@@ -62,7 +62,7 @@ export class LoggedInUser extends React.Component<
     const { csrf, email, verified } = user
 
     return (
-      <div className='user'>
+      <div className='user logged-in'>
         <div>
           Logged in as {email}.
           <form method='POST' action='/s/logout'>
@@ -72,11 +72,12 @@ export class LoggedInUser extends React.Component<
         </div>
         <div>
           <Popup
-            content='Up to one message per day with the notable figures you’ve just outlived.'
+            content='Up to one message per day showing the notable figures you’ve just outlived.'
             position='left center'
             trigger={
               <Label>
-                Receive Outlived mail?{' '}
+                Receive Outlived mail?
+                <br />
                 <Toggle
                   id='active'
                   checked={!!this.state.receivingMail}
@@ -190,19 +191,22 @@ export class LoggedOutUser extends React.Component<
   }
 
   public render = () => (
-    <>
+    <div className='user logged-out'>
       <p>Log in to see whom you’ve recently outlived.</p>
 
       <div>
-        <label htmlFor='email'>E-mail address</label>
-        <input
-          type='email'
-          id='email'
-          name='email'
-          onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
-            this.setState({ email: ev.target.value })
-          }
-        />
+        <Label>
+          E-mail address{' '}
+          <input
+            type='email'
+            id='email'
+            name='email'
+            onChange={(ev: React.ChangeEvent<HTMLInputElement>) =>
+              this.setState({ email: ev.target.value })
+            }
+          />
+        </Label>
+        <br />
         <button
           onClick={() => this.setState({ enteringPassword: true })}
           disabled={!emailValid(this.state.email)}
@@ -254,7 +258,7 @@ export class LoggedOutUser extends React.Component<
           </form>
         </ModalBody>
       </Modal>
-    </>
+    </div>
   )
 }
 

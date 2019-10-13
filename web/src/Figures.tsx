@@ -1,5 +1,6 @@
 import React from 'react'
 import { Tab, Tabs } from 'react-bootstrap'
+import { Header } from 'semantic-ui-react'
 
 import { FigureData, UserData } from './types'
 
@@ -32,7 +33,7 @@ export class Figures extends React.Component<Props, State> {
             You were born on {user.born}, which was{' '}
             {user.daysAlive.toLocaleString()} days ago.
           </div>
-          <div id='figures'>
+          <div className='figures logged-in'>
             <Tabs
               id='figures'
               activeKey={this.state.activeTab}
@@ -51,8 +52,8 @@ export class Figures extends React.Component<Props, State> {
     }
 
     return (
-      <div id='figures'>
-        <p>Died on this date:</p>
+      <div className='figures logged-out'>
+        <Header size='medium'>Died on this date:</Header>
         {renderFigs(figures, true)}
       </div>
     )
