@@ -60,6 +60,7 @@ export class LoggedInUser extends React.Component<
   public render = () => {
     const { user } = this.props
     const { csrf, email, verified } = user
+    const { receivingMail, reverified } = this.state
 
     return (
       <div className='user logged-in'>
@@ -80,27 +81,28 @@ export class LoggedInUser extends React.Component<
                 <br />
                 <Toggle
                   id='active'
-                  checked={!!this.state.receivingMail}
-                  disabled={!user.verified}
+                  checked={!!receivingMail}
+                  disabled={!verified}
                   onChange={ev => this.setActive(ev.target.checked)}
                 />
+                {!verified && <br />}
+                {!verified && reverified && (
+                  <div id='reverified'>
+                    Check your e-mail for a verification message from Outlived.
+                  </div>
+                )}
+                {!verified && !reverified && (
+                  <Label id='unconfirmed'>
+                    You have not yet confirmed your e-mail address.
+                    <br />
+                    <button id='resend-button' onClick={this.reverify}>
+                      Resend verification
+                    </button>
+                  </Label>
+                )}
               </Label>
             }
           />
-
-          {!verified &&
-            (this.state.reverified ? (
-              <span id='reverified'>
-                Check your e-mail for a verification message from Outlived.
-              </span>
-            ) : (
-              <span id='unconfirmed'>
-                You have not yet confirmed your e-mail address.
-                <button id='resend-button' onClick={this.reverify}>
-                  Resend verification
-                </button>
-              </span>
-            ))}
         </div>
       </div>
     )

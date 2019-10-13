@@ -50,8 +50,7 @@ class App extends React.Component<{}, State> {
             <>
         {user && <LoggedInUser user={user} />}
         {!user && <LoggedOutUser onLogin={this.onLogin} />}
-        {today && <div id='today'>Today is {today}.</div>}
-        {figures.length > 0 && <Figures figures={figures} user={user} />}
+        {figures.length > 0 && <Figures figures={figures} today={today} user={user} />}
         <p>
           Data supplied by{' '}
           <a

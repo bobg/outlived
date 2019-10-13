@@ -1,11 +1,11 @@
 import React from 'react'
 import { Tab, Tabs } from 'react-bootstrap'
-import { Header } from 'semantic-ui-react'
 
 import { FigureData, UserData } from './types'
 
 interface Props {
   figures: FigureData[]
+  today?: string
   user?: UserData
 }
 
@@ -21,39 +21,39 @@ export class Figures extends React.Component<Props, State> {
   }
 
   public render = () => {
-    const { figures, user } = this.props
+    const { figures, today, user } = this.props
     if (!figures) {
       return null
     }
 
     if (user) {
       return (
-        <>
+        <div className='figures logged-in'>
+          {today && <div>Today is {today}.</div>}
           <div>
             You were born on {user.born}, which was{' '}
             {user.daysAlive.toLocaleString()} days ago.
           </div>
-          <div className='figures logged-in'>
-            <Tabs
-              id='figures'
-              activeKey={this.state.activeTab}
-              onSelect={this.handleTab}
-            >
-              <Tab eventKey={1} title='Died on this date'>
-                {renderFigs(figures, true)}
-              </Tab>
-              <Tab eventKey={2} title='You have recently outlived'>
-                {renderFigs(user.figures, false)}
-              </Tab>
-            </Tabs>
-          </div>
-        </>
+          <Tabs
+            id='figures'
+            activeKey={this.state.activeTab}
+            onSelect={this.handleTab}
+          >
+            <Tab eventKey={1} title='Died on this date'>
+              {renderFigs(figures, true)}
+            </Tab>
+            <Tab eventKey={2} title='You have recently outlived'>
+              {renderFigs(user.figures, false)}
+            </Tab>
+          </Tabs>
+        </div>
       )
     }
 
     return (
       <div className='figures logged-out'>
-        <Header size='medium'>Died on this date:</Header>
+        {today && <div>Today is {today}.</div>}
+        <div>Died on this date:</div>
         {renderFigs(figures, true)}
       </div>
     )
