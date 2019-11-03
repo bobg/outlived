@@ -30,6 +30,8 @@ github.com/bobg/htree v0.0.0-20191005005639-35be0ce3ae28 h1:XrCptX9qnSD3oJb0lkqo
 github.com/bobg/htree v0.0.0-20191005005639-35be0ce3ae28/go.mod h1:TeQov1b1cmHeO9VZESNfjAtyC8ekHuGdVpOqfczNJE0=
 github.com/bobg/htree v1.0.0 h1:s7nUqUaLaqOi62s5lNdAX+ONJ4Pi4VWAds5Upxs1Q8g=
 github.com/bobg/htree v1.0.0/go.mod h1:TeQov1b1cmHeO9VZESNfjAtyC8ekHuGdVpOqfczNJE0=
+github.com/bobg/htree v1.2.0 h1:Px6yJUWu2L5ymYbV/SbL4s3xoaadC4mc1ZqMzVPCtNE=
+github.com/bobg/htree v1.2.0/go.mod h1:TeQov1b1cmHeO9VZESNfjAtyC8ekHuGdVpOqfczNJE0=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

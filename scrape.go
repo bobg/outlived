@@ -210,7 +210,7 @@ func parsePerson(ctx context.Context, tree *html.Node, href, title string) (
 		return
 	}
 
-	imgSrc, imgAlt = findImg(infobox)
+	imgSrc, imgAlt = findInfoboxImg(infobox)
 
 	bornY, bornM, bornD, err = findDateRow(infobox, "Born")
 	if err != nil {
@@ -480,6 +480,39 @@ func findInfoBox(node *html.Node) *html.Node {
 	return htree.FindEl(node, func(n *html.Node) bool {
 		return n.DataAtom == atom.Table && htree.ElClassContains(n, "infobox")
 	})
+}
+
+// See https://github.com/bobg/outlived/issues/27.
+func findInfoboxImg(infobox *html.Node) (src, alt string) {
+	thCount := 0
+	htree.FindAllChildEls(
+		infobox,
+		func(n *html.Node) bool {
+			if src != "" {
+				return true
+			}
+			if n.DataAtom == atom.Table {
+				// Do not descend into nested tables
+				return true
+			}
+			if n.DataAtom == atom.Th {
+				thCount++
+			}
+			if thCount > 1 {
+				// Prune nodes under or after the second TH
+				return true
+			}
+			return n.DataAtom == atom.Img
+		},
+		func(n *html.Node) error {
+			if src == "" && n.DataAtom == atom.Img && thCount < 2 {
+				src = htree.ElAttr(n, "src")
+				alt = htree.ElAttr(n, "alt")
+			}
+			return nil
+		},
+	)
+	return src, alt
 }
 
 func findImg(node *html.Node) (src, alt string) {
