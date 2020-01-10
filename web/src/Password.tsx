@@ -45,7 +45,7 @@ export class PasswordDialog extends React.Component<Props, State> {
   public render = () => {
     const { buttonLabel, prompt, title } = this.props
     return (
-      <Modal onHide={this.props.onClose} show={this.props.show()}>
+      <Modal onHide={this.props.onClose} show={this.props.show()} id='password-modal'>
         <Modal.Header closeButton>
           <ModalTitle>{title || 'Password'}</ModalTitle>
         </Modal.Header>

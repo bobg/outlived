@@ -69,3 +69,7 @@ a.figure {
 #today {
     padding-top: 1em;
 }
+
+#password-modal {
+    text-align: center;
+}

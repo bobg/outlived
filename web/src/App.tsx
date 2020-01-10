@@ -47,24 +47,37 @@ class App extends React.Component<{}, State> {
         <Alert ref={(r: Alert) => setAlertRef(r)} />
         <header>Outlived</header>
         {loaded ? (
-            <>
-        {user && <LoggedInUser user={user} />}
-        {!user && <LoggedOutUser onLogin={this.onLogin} />}
-        {figures.length > 0 && <Figures figures={figures} today={today} user={user} />}
-        <p>
-          Data supplied by{' '}
-          <a
-            target='_blank'
-            rel='noopener noreferrer'
-            href='https://en.wikipedia.org/'
-          >
-            Wikipedia
-          </a>
-          , the free encyclopedia.
-        </p>
-            </>
+          <>
+            {user && <LoggedInUser user={user} />}
+            {!user && <LoggedOutUser onLogin={this.onLogin} />}
+            {figures.length > 0 && (
+              <Figures figures={figures} today={today} user={user} />
+            )}
+            <p>
+              Data supplied by{' '}
+              <a
+                target='_blank'
+                rel='noopener noreferrer'
+                href='https://en.wikipedia.org/'
+              >
+                Wikipedia
+              </a>
+              , the free encyclopedia.
+            </p>
+            <p>
+              Curious about how this site works? Read the source at{' '}
+              <a
+                target='_blank'
+                rel='noopener noreferrer'
+                href='https://github.com/bobg/outlived/'
+              >
+                github.com/bobg/outlived
+              </a>
+              !
+            </p>
+          </>
         ) : (
-          <Loader active size='large'/>
+          <Loader active size='large' />
         )}
       </div>
     )
