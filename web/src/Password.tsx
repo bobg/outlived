@@ -17,6 +17,8 @@ interface State {
 }
 
 export class PasswordDialog extends React.Component<Props, State> {
+  private inp?: HTMLInputElement
+
   public state = { pw: '' }
 
   private handleSubmit = (ev: React.FormEvent<HTMLFormElement>) => {
@@ -45,7 +47,16 @@ export class PasswordDialog extends React.Component<Props, State> {
   public render = () => {
     const { buttonLabel, prompt, title } = this.props
     return (
-      <Modal onHide={this.props.onClose} show={this.props.show()} id='password-modal'>
+      <Modal
+        onEntered={() => {
+          if (this.inp) {
+            this.inp.focus()
+          }
+        }}
+        onHide={this.props.onClose}
+        show={this.props.show()}
+        id='password-modal'
+      >
         <Modal.Header closeButton>
           <ModalTitle>{title || 'Password'}</ModalTitle>
         </Modal.Header>
@@ -56,6 +67,9 @@ export class PasswordDialog extends React.Component<Props, State> {
               <input
                 type='password'
                 id='password'
+                ref={(inp: HTMLInputElement) => {
+                  this.inp = inp
+                }}
                 value={this.state.pw}
                 onChange={this.handleChange}
               />
