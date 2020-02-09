@@ -302,8 +302,11 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 		return
 	}
 
-	// Look for the first <figure> under secNode.
+	// Look for the first <figure> under secNode, excluding tables (https://github.com/bobg/outlived/issues/27#issuecomment-552221279).
 	// Look for an <img> inside that, and perhaps also a <figcaption> (for the imgAlt).
+	secNode = htree.Prune(secNode, func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.DataAtom == atom.Table
+	})
 	figNode := htree.FindEl(secNode, func(n *html.Node) bool {
 		return n.DataAtom == atom.Figure
 	})

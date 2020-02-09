@@ -1,7 +1,10 @@
 package outlived
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -256,6 +259,56 @@ func TestFindInfoboxImg(t *testing.T) {
 			got, _ := findInfoboxImg(node)
 			if got != c.want {
 				t.Errorf(`got %s, want "%s"`, got, c.want)
+			}
+		})
+	}
+}
+
+func TestParsePerson(t *testing.T) {
+	cases := []struct {
+		srcfile      string
+		title        string
+		wantFullname string
+		wantImgSrc   string
+		wantErrStr   string
+	}{
+		{
+			srcfile:      "testdata/thomascampion.html",
+			title:        "Thomas Campion",
+			wantFullname: "Thomas Campion",
+		},
+	}
+
+	ctx := context.Background()
+
+	for _, c := range cases {
+		t.Run(c.title, func(t *testing.T) {
+			h, err := ioutil.ReadFile(c.srcfile)
+			if err != nil {
+				t.Fatal(err)
+			}
+			tree, err := html.Parse(bytes.NewReader(h))
+			if err != nil {
+				t.Fatal(err)
+			}
+			fullname, imgSrc, _ /* imgAlt */, _ /* bornY */, _ /* bornM */, _ /* bornD */, _ /* diedY */, _ /* diedM */, _ /* diedD */, err := parsePerson(ctx, tree, "testHref", c.title)
+			if err != nil {
+				if c.wantErrStr == "" {
+					t.Fatal(err)
+				}
+				if !strings.Contains(err.Error(), c.wantErrStr) {
+					t.Errorf("got error %s, want ...%s...", err, c.wantErrStr)
+				}
+				return
+			}
+			if c.wantErrStr != "" {
+				t.Fatalf("got no error, want ...%s...", c.wantErrStr)
+			}
+			if fullname != c.wantFullname {
+				t.Errorf("got fullname %s, want %s", fullname, c.wantFullname)
+			}
+			if imgSrc != c.wantImgSrc {
+				t.Errorf("got imgsrc %s, want %s", imgSrc, c.wantImgSrc)
 			}
 		})
 	}

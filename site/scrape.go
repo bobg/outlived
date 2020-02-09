@@ -170,6 +170,7 @@ func (s *Server) handleScrapeperson(w http.ResponseWriter, req *http.Request) er
 	if err != nil {
 		log.Printf("scraping person %s: %s", title, err)
 		// Otherwise ignore this error. We'll get this person next time round.
+		// (Or the error will persist and the person will expire out of the datastore.)
 	}
 
 	return nil
