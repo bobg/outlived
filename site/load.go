@@ -6,17 +6,27 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
 )
 
 func (s *Server) handleLoad(w http.ResponseWriter, req *http.Request) error {
-	// xxx authorized callers only
-
 	ctx := req.Context()
+
+	// Authorized callers only.
+	masterKey, err := aesite.GetSetting(ctx, s.dsClient, "master-key")
+	if err != nil {
+		return errors.Wrap(err, "getting master key")
+	}
+	if strings.TrimSpace(req.Header.Get("X-Outlived-Key")) != string(masterKey) {
+		return codeErrType{code: http.StatusUnauthorized}
+	}
+
 	csvr := csv.NewReader(req.Body)
 	now := time.Now()
 
@@ -60,6 +70,6 @@ func (s *Server) handleLoad(w http.ResponseWriter, req *http.Request) error {
 		}
 		figures = append(figures, f)
 	}
-	err := outlived.ReplaceFigures(ctx, s.dsClient, figures)
+	err = outlived.ReplaceFigures(ctx, s.dsClient, figures)
 	return errors.Wrap(err, "writing to datastore")
 }
