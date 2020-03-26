@@ -10,7 +10,7 @@ import (
 
 var commands = map[string]func(context.Context, *flag.FlagSet, []string) error{
 	"admin":  cliAdmin,
-	"scrape": cliScrape,
+	// "scrape": cliScrape,
 	"serve":  cliServe,
 }
 
