@@ -44,7 +44,7 @@ func (s *Server) handleRedirect(w http.ResponseWriter, req *http.Request) error 
 	return codeErrType{code: http.StatusBadRequest}
 }
 
-func rlink(req *http.Request, target string) (*url.URL, error) {
+func rlink(target string) (*url.URL, error) {
 	r := &url.URL{
 		Path: "/r",
 	}

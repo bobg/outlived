@@ -44,7 +44,7 @@ func (s *Server) taskName(inp string) string {
 	src := basexx.NewBuffer(h, basexx.Binary)
 	buf := make([]byte, basexx.Length(256, 50, len(h)))
 	dest := basexx.NewBuffer(buf[:], basexx.Base50)
-	_, err := basexx.Convert(dest, src) // discard error
+	_, err := basexx.Convert(dest, src)
 	if err != nil {
 		panic(err)
 	}

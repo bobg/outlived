@@ -376,17 +376,46 @@ func scrapePageviews(ctx context.Context, client *http.Client, href string) (int
 
 var errNotFound = errors.New("not found")
 
+var smallFontRE = regexp.MustCompile(`font-size: *([0-9]+)%`)
+
 func findFullName(node *html.Node) (string, error) {
 	node = htree.Prune(node, func(n *html.Node) bool {
 		return n.Type == html.ElementNode && n.DataAtom == atom.Sup && htree.ElClassContains(n, "reference")
 	})
-
 	fnNode := htree.FindEl(node, func(n *html.Node) bool {
 		return htree.ElClassContains(n, "fn")
 	})
 	if fnNode == nil {
 		return "", nil
 	}
+
+	// Remove any part of the name in a <small> tag,
+	// or in a <span style="...font-size:85%...">.
+	// (But keep honorifics.)
+	fnNode = htree.Prune(fnNode, func(n *html.Node) bool {
+		if n.Type != html.ElementNode {
+			return false
+		}
+		if htree.ElClassContains(n, "honorific-prefix") || htree.ElClassContains(n, "honorific-suffix") {
+			return false
+		}
+		if n.DataAtom == atom.Small {
+			return true
+		}
+		if n.DataAtom != atom.Span {
+			return false
+		}
+		match := smallFontRE.FindStringSubmatch(htree.ElAttr(n, "style"))
+		if len(match) < 2 {
+			return false
+		}
+		num, err := strconv.Atoi(match[1])
+		if err != nil {
+			return false // should be impossible
+		}
+		return num < 100
+	})
+
 	txt, err := htree.Text(fnNode)
 	if err != nil {
 		return "", err

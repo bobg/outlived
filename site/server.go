@@ -60,7 +60,6 @@ type Server struct {
 	dsClient   *datastore.Client
 	tasks      taskService
 	sender     sender
-	home       *url.URL
 }
 
 func (s *Server) Serve(ctx context.Context) {
@@ -97,11 +96,8 @@ func (s *Server) Serve(ctx context.Context) {
 	log.Printf("listening for requests on %s", s.addr)
 
 	srv := &http.Server{
-		Addr: s.addr,
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			log.Printf("%s %s", req.Method, req.URL)
-			mux.ServeHTTP(w, req)
-		}),
+		Addr:    s.addr,
+		Handler: mux,
 	}
 
 	if appengine.IsAppEngine() {
@@ -117,37 +113,6 @@ func (s *Server) Serve(ctx context.Context) {
 }
 
 func onErr(_ context.Context, err error) {
-	log.Print(err.Error())
-}
-
-func httpErr(w http.ResponseWriter, code int, format string, args ...interface{}) {
-	if code == 0 {
-		code = http.StatusInternalServerError
-	}
-
-	if format == "" && len(args) == 0 {
-		format = "%s"
-		args = []interface{}{http.StatusText(code)}
-	}
-
-	log.Printf(format, args...)
-	http.Error(w, fmt.Sprintf(format, args...), code)
-}
-
-func handle(pattern string, f interface{}) {
-	http.Handle(pattern, logHandler{next: hj.Handler(f, logErr)})
-}
-
-type logHandler struct {
-	next http.Handler
-}
-
-func (lh logHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	log.Printf("%s %s", req.Method, req.URL)
-	lh.next.ServeHTTP(w, req)
-}
-
-func logErr(_ context.Context, err error) {
 	log.Print(err.Error())
 }
 

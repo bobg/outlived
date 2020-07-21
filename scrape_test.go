@@ -56,7 +56,7 @@ func TestFindFullName(t *testing.T) {
 			           </a>
 			         </span>
 			       </div>`,
-			want: "Her Grace The Duchess of Devonshire DCVO",
+			want: "The Duchess of Devonshire",
 		},
 		{
 			html: `<div class="fn" style="text-align:center;font-size:125%;font-weight:bold;background-color: #cbe; font-size: 125%">
@@ -79,6 +79,18 @@ func TestFindFullName(t *testing.T) {
 			         <span class="nobold">石川 五右衛門</span>
 			       </div>`,
 			want: "Ishikawa Goemon 石川 五右衛門",
+		},
+		{
+			html: `<div style="display:inline-block; font-size:130%;" class="fn">Khorloogiin Choibalsan<br><small><style data-mw-deduplicate="TemplateStyles:r886223191">.mw-parser-output .font-mong{font-family:"Menk Hawang Tig","Menk Qagan Tig","Menk Garqag Tig","Menk Har_a Tig","Menk Scnin Tig","Oyun Gurban Ulus Tig","Oyun Qagan Tig","Oyun Garqag Tig","Oyun Har_a Tig","Oyun Scnin Tig","Oyun Agula Tig","Mongolian Baiti","Noto Sans Mongolian","Mongolian Universal White","Mongol Usug","Mongolian White","MongolianScript","Code2000","Menksoft Qagan"}.mw-parser-output .font-mong-mnc,.mw-parser-output .font-mong:lang(mnc-Mong),.mw-parser-output .font-mong:lang(dta-Mong),.mw-parser-output .font-mong:lang(sjo-Mong){font-family:"Abkai Xanyan","Abkai Xanyan LA","Abkai Xanyan VT","Abkai Xanyan XX","Abkai Xanyan SC","Abkai Buleku","Daicing White","Mongolian Baiti","Noto Sans Mongolian","Mongolian Universal White"}</style><span class="font-mong" style="display:inline-block; font-weight:normal; font-size: 1.25em; line-height: 1.25em; -webkit-writing-mode: vertical-lr; -o-writing-mode: vertical-lr; -ms-writing-mode: tb-lr; writing-mode: tb-lr; writing-mode: vertical-lr; vertical-align:text-top;">ᠬᠣᠷᠯᠤ᠎ᠠ ᠶᠢᠨ</span> <link rel="mw-deduplicated-inline-style" href="mw-data:TemplateStyles:r886223191"><span class="font-mong" style="display:inline-block; font-weight:normal; font-size: 1.25em; line-height: 1.25em; -webkit-writing-mode: vertical-lr; -o-writing-mode: vertical-lr; -ms-writing-mode: tb-lr; writing-mode: tb-lr; writing-mode: vertical-lr; vertical-align:text-top;">ᠴᠣᠶᠢᠪᠠᠯᠰᠠᠩ</span></small><br><small>Хорлоогийн Чойбалсан</small><br><small><i>Koroloogiin Çoibalsan</i></small></div>`,
+			want: "Khorloogiin Choibalsan",
+		},
+		{
+			html: `<div style="display:inline-block; font-size:130%;" class="fn">Yegor Gaidar<br><span style="font-size:85%;">Егор Гайдар</span></div>`,
+			want: "Yegor Gaidar",
+		},
+		{
+			html: `<div style="display:inline-block; font-size:130%;" class="fn">Kaarel Eenpalu<br><sup id="cite_ref-1" class="reference"><a href="#cite_note-1">[Note 1]</a></sup></div>`,
+			want: "Kaarel Eenpalu",
 		},
 	}
 

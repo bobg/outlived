@@ -67,7 +67,7 @@ func (s *Server) handleSend(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	redir := func(inp string) string {
-		r, _ := rlink(req, inp)
+		r, _ := rlink(inp)
 		return r.String()
 	}
 
