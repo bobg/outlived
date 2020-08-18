@@ -41,10 +41,6 @@ header {
   }
 }
 
-.label {
-    background-color: #97d4fc;
-}
-
 img.img128 {
     max-width: 128px;
     height: auto;
