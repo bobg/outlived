@@ -67,6 +67,9 @@ class App extends React.Component<{}, State> {
               , the free encyclopedia.
             </p>
             <p>
+              Some graphic design elements supplied by Suzanne Glickstein. Thanks Suze!
+            </p>
+            <p>
               Curious about how this site works? Read the source at{' '}
               <a
                 target='_blank'
