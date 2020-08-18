@@ -45,7 +45,9 @@ class App extends React.Component<{}, State> {
     return (
       <div className='App'>
         <Alert ref={(r: Alert) => setAlertRef(r)} />
-        <header>Outlived</header>
+        <header>
+          <img src='outlived.png' alt='Outlived' width="80%" />
+        </header>
         {loaded ? (
           <>
             {user && <LoggedInUser user={user} />}

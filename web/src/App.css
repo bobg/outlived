@@ -7,12 +7,14 @@ header {
     font-weight: bold;
     float: left;
     margin: 1em;
+    width: 60%;
+    text-align: left;
 }
 
 .user {
     font-size: smaller;
     float: right;
-    margin: 1em;
+    margin: 3em;
 }
 
 .App-header {
@@ -37,6 +39,10 @@ header {
   to {
     transform: rotate(360deg);
   }
+}
+
+.label {
+    background-color: #97d4fc;
 }
 
 img.img128 {
