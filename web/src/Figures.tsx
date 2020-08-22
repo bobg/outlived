@@ -16,8 +16,10 @@ interface State {
 export class Figures extends React.Component<Props, State> {
   public state: State = { activeTab: '2' }
 
-  private handleTab = (activeTab: string) => {
-    this.setState({ activeTab })
+  private handleTab = (activeTab: string|null) => {
+    if (activeTab) {
+      this.setState({ activeTab })
+    }
   }
 
   public render = () => {
@@ -39,10 +41,10 @@ export class Figures extends React.Component<Props, State> {
             activeKey={this.state.activeTab}
             onSelect={this.handleTab}
           >
-            <Tab eventKey={1} title='Died on this date'>
+            <Tab eventKey={'1'} title='Died on this date'>
               {renderFigs(figures, true)}
             </Tab>
-            <Tab eventKey={2} title='You have recently outlived'>
+            <Tab eventKey={'2'} title='You have recently outlived'>
               {renderFigs(user.figures, false)}
             </Tab>
           </Tabs>
