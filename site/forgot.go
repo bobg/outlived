@@ -10,6 +10,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
+	"github.com/bobg/mid"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
@@ -32,7 +33,7 @@ func (s *Server) handleForgot(w http.ResponseWriter, req *http.Request) error {
 
 	userKey, err := datastore.DecodeKey(userKeyStr)
 	if err != nil {
-		return codeErr(err, http.StatusBadRequest, "decoding user key")
+		return errors.Wrap(mid.CodeErr{C: http.StatusBadRequest, Err: err}, "decoding user key")
 	}
 
 	var user outlived.User
@@ -87,7 +88,7 @@ func (s *Server) handleResetPW(w http.ResponseWriter, req *http.Request) error {
 
 	userKey, err := datastore.DecodeKey(userKeyStr)
 	if err != nil {
-		return codeErr(err, http.StatusBadRequest, "decoding user key")
+		return errors.Wrap(mid.CodeErr{C: http.StatusBadRequest, Err: err}, "decoding user key")
 	}
 
 	var user outlived.User

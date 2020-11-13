@@ -58,80 +58,76 @@ func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, on
 		return errors.Wrapf(err, "parsing %s", pageName)
 	}
 
-	deaths := findDeathsUL(tree)
-	if deaths == nil {
-		return fmt.Errorf("no Deaths node in %s", pageName)
-	}
-
-	for li := deaths.FirstChild; li != nil; li = li.NextSibling {
-		if err = ctx.Err(); err != nil {
-			return err
-		}
-
-		if li.Type != html.ElementNode || li.DataAtom != atom.Li {
-			continue
-		}
-
-		// Find the <span> containing just a "–" (that's a dash [0x2013], not a hyphen).
-		dashNode := htree.FindEl(li, func(n *html.Node) bool {
-			if n.DataAtom != atom.Span {
-				return false
+	return foreachDeathsUL(tree, func(deaths *html.Node) error {
+		for li := deaths.FirstChild; li != nil; li = li.NextSibling {
+			if err = ctx.Err(); err != nil {
+				return err
 			}
-			txt, _ := htree.Text(n)
-			return txt == "–" // dash, not hyphen
-		})
-		if dashNode == nil {
-			continue
-		}
 
-		// Find the first sibling of dashNode that's an <a>.
-		var aNode *html.Node
-		for sib := dashNode.NextSibling; sib != nil; sib = sib.NextSibling {
-			if sib.Type != html.ElementNode {
+			if li.Type != html.ElementNode || li.DataAtom != atom.Li {
 				continue
 			}
-			if sib.DataAtom != atom.A {
+
+			// Find the <span> containing just a "–" (that's a dash [0x2013], not a hyphen).
+			dashNode := htree.FindEl(li, func(n *html.Node) bool {
+				if n.DataAtom != atom.Span {
+					return false
+				}
+				txt, _ := htree.Text(n)
+				return txt == "–" // dash, not hyphen
+			})
+			if dashNode == nil {
 				continue
 			}
-			aNode = sib
-			break
-		}
-		if aNode == nil {
-			continue
-		}
 
-		href := htree.ElAttr(aNode, "href")
-		href = strings.TrimPrefix(href, "./")
-
-		title := htree.ElAttr(aNode, "title")
-		title = paren.ReplaceAllString(title, "$1")
-
-		b := new(bytes.Buffer)
-
-		for node := aNode.NextSibling; node != nil; node = node.NextSibling {
-			if node.Type == html.ElementNode && node.DataAtom == atom.Sup {
+			// Find the first sibling of dashNode that's an <a>.
+			var aNode *html.Node
+			for sib := dashNode.NextSibling; sib != nil; sib = sib.NextSibling {
+				if sib.Type != html.ElementNode {
+					continue
+				}
+				if sib.DataAtom != atom.A {
+					continue
+				}
+				aNode = sib
 				break
 			}
-			err = htree.WriteText(b, node)
+			if aNode == nil {
+				continue
+			}
+
+			href := htree.ElAttr(aNode, "href")
+			href = strings.TrimPrefix(href, "./")
+
+			title := htree.ElAttr(aNode, "title")
+			title = paren.ReplaceAllString(title, "$1")
+
+			b := new(bytes.Buffer)
+
+			for node := aNode.NextSibling; node != nil; node = node.NextSibling {
+				if node.Type == html.ElementNode && node.DataAtom == atom.Sup {
+					break
+				}
+				err = htree.WriteText(b, node)
+				if err != nil {
+					return errors.Wrap(err, "converting description to plain text")
+				}
+			}
+
+			desc := b.String()
+			desc = strings.TrimPrefix(desc, ",")
+			if found := bRegex.FindStringIndex(desc); found != nil {
+				desc = desc[:found[0]]
+			}
+			desc = strings.TrimSpace(desc)
+
+			err = onPerson(ctx, href, title, desc)
 			if err != nil {
-				return errors.Wrap(err, "converting description to plain text")
+				return errors.Wrapf(err, "on person %s (%s)", title, href)
 			}
 		}
-
-		desc := b.String()
-		desc = strings.TrimPrefix(desc, ",")
-		if found := bRegex.FindStringIndex(desc); found != nil {
-			desc = desc[:found[0]]
-		}
-		desc = strings.TrimSpace(desc)
-
-		err = onPerson(ctx, href, title, desc)
-		if err != nil {
-			return errors.Wrapf(err, "on person %s (%s)", title, href)
-		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
 func ScrapePerson(
@@ -493,19 +489,47 @@ func parseDate2(yearStr, monStr, dayStr, bcStr string) (year, mon, day int, err 
 	return
 }
 
-func findDeathsUL(node *html.Node) *html.Node {
-	h2El := htree.FindEl(node, func(n *html.Node) bool {
-		return n.DataAtom == atom.H2 && htree.ElAttr(n, "id") == "Deaths"
-	})
-	if h2El == nil {
-		return nil
+func foreachDeathsUL(node *html.Node, f func(*html.Node) error) error {
+	heading := findDeathsH2(node)
+	if heading == nil {
+		return errors.New("no Deaths section found")
 	}
-	for sib := h2El.NextSibling; sib != nil; sib = sib.NextSibling {
-		if sib.Type == html.ElementNode && sib.DataAtom == atom.Ul {
-			return sib
+
+	var any bool
+	for sib := heading.NextSibling; sib != nil; sib = sib.NextSibling {
+		if sib.Type != html.ElementNode {
+			continue
+		}
+		if sib.DataAtom == atom.H2 {
+			break
+		}
+		err := htree.FindAllEls(sib, func(n *html.Node) bool { return n.DataAtom == atom.Ul }, func(n *html.Node) error {
+			any = true
+			return f(n)
+		})
+		if err != nil {
+			return err
 		}
 	}
+	if !any {
+		return errors.New("no deaths UL found")
+	}
 	return nil
+}
+
+func findDeathsH2(node *html.Node) *html.Node {
+	return htree.FindEl(node, func(n *html.Node) bool {
+		if n.DataAtom != atom.H2 {
+			return false
+		}
+		if htree.ElAttr(n, "id") == "Deaths" {
+			return true
+		}
+		span := htree.FindEl(n, func(n2 *html.Node) bool {
+			return n2.DataAtom == atom.Span && htree.ElAttr(n2, "id") == "Deaths"
+		})
+		return span != nil
+	})
 }
 
 func findInfoBox(node *html.Node) *html.Node {

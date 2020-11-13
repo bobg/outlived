@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/bobg/aesite"
-	"github.com/bobg/hj"
+	"github.com/bobg/mid"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
@@ -23,7 +23,7 @@ func (s *Server) handleSignup(
 ) (*userData, error) {
 	born, err := outlived.ParseDate(req.BornStr)
 	if err != nil {
-		return nil, codeErr(err, http.StatusBadRequest, "parsing birthdate")
+		return nil, errors.Wrap(mid.CodeErr{C: http.StatusBadRequest, Err: err}, "parsing birthdate")
 	}
 
 	var (
@@ -61,7 +61,7 @@ func (s *Server) handleSignup(
 		return nil, errors.Wrap(err, "getting user data")
 	}
 
-	w := hj.Response(ctx)
+	w := mid.ResponseWriter(ctx)
 	sess.SetCookie(w)
 
 	return d, nil

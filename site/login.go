@@ -11,7 +11,7 @@ import (
 	ttemplate "text/template"
 
 	"github.com/bobg/aesite"
-	"github.com/bobg/hj"
+	"github.com/bobg/mid"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
@@ -84,7 +84,7 @@ func (s *Server) handleLogin(
 	}
 
 	if !u.CheckPW(req.Password) {
-		return nil, hj.CodeErr{Err: errors.New("email/password invalid"), C: http.StatusUnauthorized}
+		return nil, mid.CodeErr{Err: errors.New("email/password invalid"), C: http.StatusUnauthorized}
 	}
 
 	log.Printf("logging in user %s", req.Email)
@@ -98,7 +98,7 @@ func (s *Server) handleLogin(
 		return nil, errors.Wrap(err, "getting user data")
 	}
 
-	w := hj.Response(ctx)
+	w := mid.ResponseWriter(ctx)
 	sess.SetCookie(w)
 
 	return d, nil

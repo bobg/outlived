@@ -13,6 +13,7 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
+	"github.com/bobg/mid"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
@@ -35,7 +36,7 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 
 	userKey, err := datastore.DecodeKey(userKeyStr)
 	if err != nil {
-		return codeErr(err, http.StatusBadRequest, "decoding user key")
+		return errors.Wrap(mid.CodeErr{C: http.StatusBadRequest, Err: err}, "decoding user key")
 	}
 
 	var user outlived.User
@@ -46,7 +47,7 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 
 	err = aesite.VerifyUser(ctx, s.dsClient, &user, expSecs, nonce, vtoken)
 	if err != nil {
-		return codeErr(err, http.StatusBadRequest, "verifying token")
+		return errors.Wrap(mid.CodeErr{C: http.StatusBadRequest, Err: err}, "verifying token")
 	}
 
 	log.Printf("verified user %s", user.Email)
@@ -64,7 +65,7 @@ func (s *Server) handleVerify(w http.ResponseWriter, req *http.Request) error {
 func (s *Server) handleReverify(ctx context.Context, req struct{ CSRF string }) error {
 	sess := getSess(ctx)
 	if sess == nil {
-		return codeErrType{code: http.StatusUnauthorized}
+		return mid.CodeErr{C: http.StatusUnauthorized}
 	}
 	err := sess.CSRFCheck(req.CSRF)
 	if err != nil {

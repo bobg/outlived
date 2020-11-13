@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/bobg/mid"
 )
 
 func (s *Server) handleRedirect(w http.ResponseWriter, req *http.Request) error {
@@ -41,7 +43,7 @@ func (s *Server) handleRedirect(w http.ResponseWriter, req *http.Request) error 
 		return nil
 	}
 
-	return codeErrType{code: http.StatusBadRequest}
+	return mid.CodeErr{C: http.StatusBadRequest}
 }
 
 func rlink(target string) (*url.URL, error) {

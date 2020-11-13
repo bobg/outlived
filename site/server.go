@@ -2,7 +2,6 @@ package site
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -12,7 +11,7 @@ import (
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
-	"github.com/bobg/hj"
+	"github.com/bobg/mid"
 	"github.com/pkg/errors"
 	"google.golang.org/appengine"
 )
@@ -66,32 +65,31 @@ func (s *Server) Serve(ctx context.Context) {
 	mux := http.NewServeMux()
 
 	// This is for testing. In production, / is routed by app.yaml.
-	handleErrFunc(mux, "/", s.handleStatic)
+	mux.Handle("/", mid.Err(s.handleStatic))
 
-	mux.Handle("/s/data", s.sessHandler(hj.Handler(s.handleData, onErr)))
-
-	handleErrFunc(mux, "/s/forgot", s.handleForgot)
-	handleErrFunc(mux, "/s/load", s.handleLoad)
-	mux.Handle("/s/login", hj.Handler(s.handleLogin, onErr))
-	handleErrFunc(mux, "/s/logout", s.handleLogout)
-	handleErrFunc(mux, "/s/resetpw", s.handleResetPW)
-	mux.Handle("/s/reverify", s.sessHandler(hj.Handler(s.handleReverify, onErr)))
-	mux.Handle("/s/setactive", s.sessHandler(hj.Handler(s.handleSetActive, onErr)))
-	mux.Handle("/s/signup", hj.Handler(s.handleSignup, onErr))
-	handleErrFunc(mux, "/s/verify", s.handleVerify)
+	mux.Handle("/s/data", s.sessHandler(mid.JSON(s.handleData)))
+	mux.Handle("/s/forgot", mid.Err(s.handleForgot))
+	mux.Handle("/s/load", mid.Err(s.handleLoad))
+	mux.Handle("/s/login", mid.JSON(s.handleLogin))
+	mux.Handle("/s/logout", mid.Err(s.handleLogout))
+	mux.Handle("/s/resetpw", mid.Err(s.handleResetPW))
+	mux.Handle("/s/reverify", s.sessHandler(mid.JSON(s.handleReverify)))
+	mux.Handle("/s/setactive", s.sessHandler(mid.JSON(s.handleSetActive)))
+	mux.Handle("/s/signup", mid.JSON(s.handleSignup))
+	mux.Handle("/s/verify", mid.Err(s.handleVerify))
 
 	mux.Handle("/unsubscribe", http.RedirectHandler("/", http.StatusMovedPermanently))
 
-	handleErrFunc(mux, "/r", s.handleRedirect)
+	mux.Handle("/r", mid.Err(s.handleRedirect))
 
 	// cron-initiated
-	handleErrFunc(mux, "/t/scrape", s.handleScrape)
-	handleErrFunc(mux, "/t/expire", s.handleExpire)
-	handleErrFunc(mux, "/t/send", s.handleSend)
+	mux.Handle("/t/scrape", mid.Err(s.handleScrape))
+	mux.Handle("/t/expire", mid.Err(s.handleExpire))
+	mux.Handle("/t/send", mid.Err(s.handleSend))
 
 	// task-queue-initiated
-	handleErrFunc(mux, "/t/scrapeday", s.handleScrapeday)
-	handleErrFunc(mux, "/t/scrapeperson", s.handleScrapeperson)
+	mux.Handle("/t/scrapeday", mid.Err(s.handleScrapeday))
+	mux.Handle("/t/scrapeperson", mid.Err(s.handleScrapeperson))
 
 	log.Printf("listening for requests on %s", s.addr)
 
@@ -110,36 +108,6 @@ func (s *Server) Serve(ctx context.Context) {
 		<-ctx.Done()
 		srv.Shutdown(ctx)
 	}
-}
-
-func onErr(_ context.Context, err error) {
-	log.Print(err.Error())
-}
-
-type codeErrType struct {
-	err  error // can be nil
-	code int
-}
-
-func (e codeErrType) Error() string {
-	s := http.StatusText(e.code)
-	if s == "" {
-		s = fmt.Sprintf("HTTP status %d", e.code)
-	} else {
-		s = fmt.Sprintf("%s (HTTP status %d)", s, e.code)
-	}
-	if e.err != nil {
-		return fmt.Sprintf("%s: %s", e.err, s)
-	}
-	return s
-}
-
-func codeErr(err error, code int, args ...interface{}) error {
-	if len(args) > 0 {
-		f := args[0].(string)
-		err = errors.Wrapf(err, f, args[1:]...)
-	}
-	return codeErrType{err: err, code: code}
 }
 
 // Function respWriter wraps an http.ResponseWriter,
@@ -173,7 +141,7 @@ func (s *Server) checkCron(req *http.Request) error {
 
 	h := strings.TrimSpace(req.Header.Get("X-Appengine-Cron"))
 	if h != "true" {
-		return codeErrType{code: http.StatusUnauthorized}
+		return mid.CodeErr{C: http.StatusUnauthorized}
 	}
 	return nil
 }
@@ -193,7 +161,7 @@ func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
 
 	h := strings.TrimSpace(req.Header.Get("X-AppEngine-QueueName"))
 	if h != queue {
-		return codeErrType{code: http.StatusUnauthorized}
+		return mid.CodeErr{C: http.StatusUnauthorized}
 	}
 	return nil
 }

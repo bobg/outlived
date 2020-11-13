@@ -7,23 +7,8 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
-	"github.com/bobg/hj"
+	"github.com/bobg/mid"
 )
-
-func handleErrFunc(mux *http.ServeMux, pattern string, f func(http.ResponseWriter, *http.Request) error) {
-	mux.Handle(pattern, errFuncHandler{f: f})
-}
-
-type errFuncHandler struct {
-	f func(http.ResponseWriter, *http.Request) error
-}
-
-func (e errFuncHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	err := e.f(w, req)
-	if err != nil {
-		errRespond(w, err)
-	}
-}
 
 func (s *Server) sessHandler(next http.Handler) http.Handler {
 	return sessHandlerType{next: next, dsClient: s.dsClient}
@@ -44,7 +29,7 @@ func (s sessHandlerType) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	} else if err == aesite.ErrInactive {
 		log.Print("found inactive session, skipping")
 	} else if err != nil {
-		errRespond(w, err)
+		mid.Errf(w, 0, "%s", err)
 		return
 	}
 	ctx = context.WithValue(ctx, sessKey{}, sess)
@@ -60,12 +45,4 @@ func getSess(ctx context.Context) *aesite.Session {
 		return val.(*aesite.Session)
 	}
 	return nil
-}
-
-func errRespond(w http.ResponseWriter, err error) {
-	if r, ok := err.(hj.Responder); ok {
-		r.Respond(w)
-	} else {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
 }

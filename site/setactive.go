@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/bobg/mid"
 	"github.com/pkg/errors"
 
 	"github.com/bobg/outlived"
@@ -18,7 +19,7 @@ func (s *Server) handleSetActive(
 ) error {
 	sess := getSess(ctx)
 	if sess == nil {
-		return codeErrType{code: http.StatusUnauthorized}
+		return mid.CodeErr{C: http.StatusUnauthorized}
 	}
 	err := sess.CSRFCheck(req.CSRF)
 	if err != nil {
