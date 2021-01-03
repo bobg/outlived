@@ -68,12 +68,11 @@ func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, on
 				continue
 			}
 
-			// Find the <span> containing just a "–" (that's a dash [0x2013], not a hyphen).
-			dashNode := htree.FindEl(li, func(n *html.Node) bool {
-				if n.DataAtom != atom.Span {
-					return false
-				}
+			// Find the node whose text is just a "–" (that's a dash [0x2013], not a hyphen).
+			// (In some pages, this is in its own <span>, and in others it's not.)
+			dashNode := htree.Find(li, func(n *html.Node) bool {
 				txt, _ := htree.Text(n)
+				txt = strings.TrimSpace(txt)
 				return txt == "–" // dash, not hyphen
 			})
 			if dashNode == nil {
