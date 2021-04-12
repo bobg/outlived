@@ -1,5 +1,6 @@
 import React from 'react'
-import { Tab, Tabs } from 'react-bootstrap'
+import { AppBar, Card, Grid, Tab, Tabs } from '@material-ui/core'
+import { TabPanel } from '@material-ui/lab'
 
 import { FigureData, UserData } from './types'
 
@@ -10,16 +11,14 @@ interface Props {
 }
 
 interface State {
-  activeTab: string
+  activeTab: any
 }
 
 export class Figures extends React.Component<Props, State> {
   public state: State = { activeTab: '2' }
 
-  private handleTab = (activeTab: string|null) => {
-    if (activeTab) {
-      this.setState({ activeTab })
-    }
+  private handleTab = (ev: React.ChangeEvent<{}>, value: any) => {
+    this.setState({ activeTab: value })
   }
 
   public render = () => {
@@ -29,6 +28,8 @@ export class Figures extends React.Component<Props, State> {
     }
 
     if (user) {
+      const { activeTab } = this.state
+
       return (
         <div className='figures logged-in'>
           {today && <div>Today is {today}.</div>}
@@ -36,18 +37,14 @@ export class Figures extends React.Component<Props, State> {
             You were born on {user.born}, which was{' '}
             {user.daysAlive.toLocaleString()} days ago.
           </div>
-          <Tabs
-            id='figures'
-            activeKey={this.state.activeTab}
-            onSelect={this.handleTab}
-          >
-            <Tab eventKey={'1'} title='Died on this date'>
-              {renderFigs(figures, true)}
-            </Tab>
-            <Tab eventKey={'2'} title='You have recently outlived'>
-              {renderFigs(user.figures, false)}
-            </Tab>
-          </Tabs>
+          <AppBar position='static'>
+            <Tabs id='figures' value={activeTab} onChange={this.handleTab}>
+              <Tab label='Died on this date' />
+              <Tab label='You have recently outlived' />
+            </Tabs>
+          </AppBar>
+          <TabPanel value={'0'}>{renderFigs(figures, true)}</TabPanel>
+          <TabPanel value={'1'}>{renderFigs(user.figures, false)}</TabPanel>
         </div>
       )
     }
@@ -63,9 +60,9 @@ export class Figures extends React.Component<Props, State> {
 }
 
 const renderFigs = (figs: FigureData[], showAge: boolean) => (
-  <ul className='grid'>
+  <Grid>
     {figs.map((fig: FigureData) => (
-      <li>
+      <Card variant='outlined'>
         <a
           className='figure'
           target='_blank'
@@ -86,7 +83,7 @@ const renderFigs = (figs: FigureData[], showAge: boolean) => (
         {fig.born}&mdash;{fig.died}
         {showAge && <br />}
         {showAge && '(' + fig.yearsDaysAlive + ')'}
-      </li>
+      </Card>
     ))}
-  </ul>
+  </Grid>
 )

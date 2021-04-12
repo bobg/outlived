@@ -1,14 +1,25 @@
 import React from 'react'
-import { Modal, ModalBody, ModalTitle } from 'react-bootstrap'
-import DatePicker from 'react-date-picker'
-import Toggle from 'react-toggle'
-import { Label, Popup } from 'semantic-ui-react'
 
-import { doAlert } from './Alert'
-import { PasswordDialog } from './Password'
+import { Button, FormControlLabel, Switch, Tooltip } from '@material-ui/core'
+
 import { post } from './post'
 import { UserData } from './types'
 import { tzname } from './tz'
+
+interface Props {
+  onLogin: (user: UserData) => void
+  user?: UserData
+}
+
+export class User extends React.Component<Props> {
+  public render = () => {
+    const { onLogin, user } = this.props
+    if (user) {
+      return <LoggedInUser user={user} />
+    }
+    return <LoggedOutUser onLogin={onLogin} />
+  }
+}
 
 interface LoggedInProps {
   user: UserData
@@ -19,10 +30,7 @@ interface LoggedInState {
   reverified: boolean
 }
 
-export class LoggedInUser extends React.Component<
-  LoggedInProps,
-  LoggedInState
-> {
+class LoggedInUser extends React.Component<LoggedInProps, LoggedInState> {
   constructor(props: LoggedInProps) {
     super(props)
     const { user } = props
@@ -32,16 +40,13 @@ export class LoggedInUser extends React.Component<
     }
   }
 
-  private setActive = async (active: boolean) => {
+  private setReceivingMail = async () => {
     const { csrf } = this.props.user
     try {
-      await post('/s/setactive', {
-        csrf,
-        active,
-      })
-      this.setState({ receivingMail: active })
+      await post('/s/setactive', { csrf, active })
+      this.setState({receivingMail: active})
     } catch (error) {
-      doAlert('Error setting e-mail preference. Please try again.')
+      // xxx alert Error setting e-mail preference. Please try again in a moment.
     }
   }
 
@@ -51,9 +56,7 @@ export class LoggedInUser extends React.Component<
       await post('/s/reverify', { csrf })
       this.setState({ reverified: true })
     } catch (error) {
-      doAlert(
-        'Error resending verification message. Please try again in a moment.'
-      )
+      // xxx alert Error resending verification message. Please try again in a moment.
     }
   }
 
@@ -68,42 +71,35 @@ export class LoggedInUser extends React.Component<
           Logged in as {email}.
           <form method='POST' action='/s/logout'>
             <input type='hidden' name='csrf' value={csrf} />
-            <button type='submit'>Log out</button>
+            <Button type='submit'>Log out</Button>
           </form>
         </div>
-        <div>
-          <Popup
-            content='Up to one message per day showing the notable figures you’ve just outlived.'
-            position='left center'
-            trigger={
-              <Label>
-                Receive Outlived mail?
-                <br />
-                <Toggle
-                  id='active'
-                  checked={!!receivingMail}
-                  disabled={!verified}
-                  onChange={ev => this.setActive(ev.target.checked)}
-                />
-                {!verified && <br />}
-                {!verified && reverified && (
-                  <div id='reverified'>
-                    Check your e-mail for a verification message from Outlived.
-                  </div>
-                )}
-                {!verified && !reverified && (
-                  <Label id='unconfirmed'>
-                    You have not yet confirmed your e-mail address.
-                    <br />
-                    <button id='resend-button' onClick={this.reverify}>
-                      Resend verification
-                    </button>
-                  </Label>
-                )}
-              </Label>
+        <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
+          <FormControlLabel
+            label='Receive Outlived mail?'
+            control={
+              <Switch
+                checked={receivingMail}
+                disabled={!verified}
+                onChange={this.setReceivingMail}
+              />
             }
           />
-        </div>
+          {!verified &&
+            (reverified ? (
+              <div id='reverified'>
+                Check your e-mail for a verification message from Outlived.
+              </div>
+            ) : (
+              <div id='unconfirmed'>
+                You have not yet confirmed your e-mail address.
+                <br />
+                <Button id='resend-button' onClick={this.reverify}>
+                  Resend verification
+                </Button>
+              </div>
+            ))}
+        </Tooltip>
       </div>
     )
   }
@@ -148,7 +144,7 @@ export class LoggedOutUser extends React.Component<
       const user = (await resp.json()) as UserData
       this.props.onLogin(user)
     } catch (error) {
-      doAlert('Login failed')
+      // xxx error Login failed
     }
   }
 
