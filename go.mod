@@ -3,7 +3,7 @@ module outlived
 require (
 	cloud.google.com/go v0.86.0
 	cloud.google.com/go/datastore v1.5.0
-	github.com/bobg/aesite v1.6.1
+	github.com/bobg/aesite v1.7.0
 	github.com/bobg/basexx v0.0.0-20191130163404-b0c4bda224a5
 	github.com/bobg/htree v1.2.1
 	github.com/bobg/mid v1.3.0

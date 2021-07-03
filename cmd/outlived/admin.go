@@ -65,10 +65,11 @@ func cliAdminListFigures(ctx context.Context, flagset *flag.FlagSet, args []stri
 			return fmt.Errorf("cannot supply both -test and -creds")
 		}
 
-		err := aesite.DSTest(ctx, *projectID)
+		done, err := aesite.DSTestWithDoneChan(ctx, *projectID)
 		if err != nil {
 			return err
 		}
+		defer func() { <-done }()
 	}
 
 	var options []option.ClientOption
@@ -112,10 +113,11 @@ func cliAdminListUsers(ctx context.Context, flagset *flag.FlagSet, args []string
 			return fmt.Errorf("cannot supply both -test and -creds")
 		}
 
-		err := aesite.DSTest(ctx, *projectID)
+		done, err := aesite.DSTestWithDoneChan(ctx, *projectID)
 		if err != nil {
 			return err
 		}
+		defer func() { <-done }()
 	}
 
 	var options []option.ClientOption
@@ -164,10 +166,11 @@ func cliAdminGet(ctx context.Context, flagset *flag.FlagSet, args []string) erro
 			return fmt.Errorf("cannot supply both -test and -creds")
 		}
 
-		err := aesite.DSTest(ctx, *projectID)
+		done, err := aesite.DSTestWithDoneChan(ctx, *projectID)
 		if err != nil {
 			return err
 		}
+		defer func() { <-done }()
 	}
 
 	var options []option.ClientOption
@@ -209,10 +212,11 @@ func cliAdminSet(ctx context.Context, flagset *flag.FlagSet, args []string) erro
 			return fmt.Errorf("cannot supply both -test and -creds")
 		}
 
-		err := aesite.DSTest(ctx, *projectID)
+		done, err := aesite.DSTestWithDoneChan(ctx, *projectID)
 		if err != nil {
 			return err
 		}
+		defer func() { <-done }()
 	}
 
 	var options []option.ClientOption
@@ -262,10 +266,11 @@ func cliAdminScrape(ctx context.Context, flagset *flag.FlagSet, args []string) e
 			return fmt.Errorf("cannot supply both -test and -creds")
 		}
 
-		err := aesite.DSTest(ctx, *projectID)
+		done, err := aesite.DSTestWithDoneChan(ctx, *projectID)
 		if err != nil {
 			return err
 		}
+		defer func() { <-done }()
 	}
 
 	var options []option.ClientOption

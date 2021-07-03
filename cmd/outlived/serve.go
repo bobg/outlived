@@ -33,10 +33,11 @@ func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {
 			return fmt.Errorf("cannot supply both -test and -creds")
 		}
 
-		err := aesite.DSTest(ctx, *projectID)
+		done, err := aesite.DSTestWithDoneChan(ctx, *projectID)
 		if err != nil {
 			return errors.Wrap(err, "starting test datastore service")
 		}
+		defer func() { <-done }()
 	}
 
 	var options []option.ClientOption

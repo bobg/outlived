@@ -49,6 +49,8 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/bobg/aesite v1.6.1 h1:UlygN2A/wyNbsV5VMkFtGrXFn45afg7RILFNjOkJhn8=
 github.com/bobg/aesite v1.6.1/go.mod h1:KrkwmbkB+6CC40skPDuSgj2rPrWGiGd9gUOk5LJcddQ=
+github.com/bobg/aesite v1.7.0 h1:aNXcG76GDa6snRQvJLqxDPDi2F3DAXq6LbS7w7t+wq8=
+github.com/bobg/aesite v1.7.0/go.mod h1:KrkwmbkB+6CC40skPDuSgj2rPrWGiGd9gUOk5LJcddQ=
 github.com/bobg/basexx v0.0.0-20191130163404-b0c4bda224a5 h1:pPQao/LZD4W8kXPb+TRUGUoT2uXqN11mAOAJ9kAx3gU=
 github.com/bobg/basexx v0.0.0-20191130163404-b0c4bda224a5/go.mod h1:TUZ3/ZfQrnD0AMpTd+1qeiJ8ogd4fo5wbs4d3lwJUD0=
 github.com/bobg/htree v1.2.1 h1:UfLQOFve4bSWOXUrAhcb2bcWkrkEKAyNuoAWbyDuRpQ=
