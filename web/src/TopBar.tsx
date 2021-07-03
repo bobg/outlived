@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react'
 
-import { AppBar, Toolbar } from '@material-ui/core'
+import { AppBar, Box, Toolbar } from '@material-ui/core'
+import { makeStyles } from '@material-ui/core/styles'
 
 import { User } from './User'
 import { UserData } from './types'
@@ -11,14 +12,29 @@ interface Props {
   setAlert: (alert: string) => void
 }
 
+const useStyles = makeStyles({
+  logo: {
+    flexGrow: 1,
+  },
+  user: {
+    minWidth: '12em',
+  },
+})
+
 export const TopBar = (props: Props) => {
   const { user, setUser, setAlert } = props
+
+  const classes = useStyles()
 
   return (
     <AppBar position='static'>
       <Toolbar>
-        <img src='outlived.png' alt='Outlived' width='80%' />
-        <User user={user} setUser={setUser} setAlert={setAlert} />
+        <Box className={classes.logo}>
+          <img src='outlived.png' alt='Outlived' width='50%' />
+        </Box>
+        <Box className={classes.user}>
+          <User user={user} setUser={setUser} setAlert={setAlert} />
+        </Box>
       </Toolbar>
     </AppBar>
   )

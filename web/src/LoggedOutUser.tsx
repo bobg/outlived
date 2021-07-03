@@ -1,6 +1,13 @@
 import React, { useCallback, useState } from 'react'
 
-import { Button, Paper, TextField } from '@material-ui/core'
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  Paper,
+  TextField,
+  Typography,
+} from '@material-ui/core'
 
 import { BirthdateDialog } from './BirthdateDialog'
 import { Password } from './Password'
@@ -86,19 +93,32 @@ export const LoggedOutUser = (props: Props) => {
   return (
     <>
       <Paper>
+        <Typography variant='caption'>
+          Log in to see whom you’ve recently outlived.
+        </Typography>
         <TextField
           autoFocus
           defaultValue=''
           onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
             setEmail(ev.target.value)
           }}
+          placeholder='E-mail address'
         />
-        <Button disabled={!emailValid(email)} onClick={onLoginButton}>
-          Log in
-        </Button>
-        <Button disabled={!emailValid(email)} onClick={onSignupButton}>
-          Sign up
-        </Button>
+        <Box
+          display='flex'
+          flexDirection='column'
+          alignItems='center'
+          justifyContent='center'
+        >
+          <ButtonGroup>
+            <Button disabled={!emailValid(email)} onClick={onLoginButton}>
+              Log in
+            </Button>
+            <Button disabled={!emailValid(email)} onClick={onSignupButton}>
+              Sign up
+            </Button>
+          </ButtonGroup>
+        </Box>
       </Paper>
       <BirthdateDialog
         open={birthdateDialogOpen}

@@ -1,13 +1,5 @@
 import React, { useCallback, useState } from 'react'
 
-import {
-  Button,
-  FormControlLabel,
-  Paper,
-  Switch,
-  Tooltip,
-} from '@material-ui/core'
-
 import { LoggedInUser } from './LoggedInUser'
 import { LoggedOutUser } from './LoggedOutUser'
 

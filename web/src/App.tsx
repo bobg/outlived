@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 
 import {
   AppBar,
+  Box,
   CircularProgress,
   Link,
   Snackbar,
@@ -39,15 +40,20 @@ export const App = () => {
     try {
       const resp = await post('/s/data', { tzname: tzname() })
       const data = (await resp.json()) as Data
-      setFigures(data.figures)
-      setToday(data.today)
-      setUser(data.user)
+      if (!data.figures) {
+        setAlert('Error: received no figures from server')
+      } else {
+        setFigures(data.figures)
+        setToday(data.today)
+        setUser(data.user)
+        setLoaded(true)
+      }
     } catch (error) {
       setAlert(`Error loading data: ${error.message}`)
     }
   }
 
-  if (!loaded) {
+  if (!loaded && !alert) {
     getData()
   }
 
@@ -60,8 +66,8 @@ export const App = () => {
       {loaded ? (
         <>
           <Figures figures={figures} today={today} user={user} />
-          <Typography variant='body2'>
-            <p>
+          <Box alignItems='center' justifyContent='center' textAlign='center'>
+            <Typography paragraph={true} variant='caption'>
               Data supplied by{' '}
               <Link
                 target='_blank'
@@ -71,12 +77,12 @@ export const App = () => {
                 Wikipedia
               </Link>
               , the free encyclopedia.
-            </p>
-            <p>
+            </Typography>
+            <Typography paragraph={true} variant='caption'>
               Some graphic design elements supplied by Suzanne Glickstein.
               Thanks Suze!
-            </p>
-            <p>
+            </Typography>
+            <Typography paragraph={true} variant='caption'>
               Curious about how this site works? Read the source at{' '}
               <Link
                 target='_blank'
@@ -86,8 +92,8 @@ export const App = () => {
                 github.com/bobg/outlived
               </Link>
               !
-            </p>
-          </Typography>
+            </Typography>
+          </Box>
         </>
       ) : (
         <CircularProgress />

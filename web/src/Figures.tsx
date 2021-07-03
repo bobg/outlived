@@ -1,6 +1,16 @@
-import React from 'react'
-import { AppBar, Card, Grid, Tab, Tabs } from '@material-ui/core'
-import { TabPanel } from '@material-ui/lab'
+import React, { useCallback, useState } from 'react'
+
+import {
+  AppBar,
+  Box,
+  Card,
+  CardContent,
+  Link,
+  Tab,
+  Typography,
+} from '@material-ui/core'
+import { makeStyles } from '@material-ui/core/styles'
+import { TabContext, TabList, TabPanel } from '@material-ui/lab'
 
 import { FigureData, UserData } from './types'
 
@@ -10,80 +20,96 @@ interface Props {
   user: UserData | null
 }
 
-interface State {
-  activeTab: any
-}
+const figStyles = makeStyles({
+  card: {
+    display: 'inline-block',
+    width: '12em',
+    margin: '6px',
+    textAlign: 'center',
+    verticalAlign: 'top',
+  },
+})
 
-export class Figures extends React.Component<Props, State> {
-  public state: State = { activeTab: '2' }
+export const Figures = (props: Props) => {
+  const { figures, today, user } = props
 
-  private handleTab = (ev: React.ChangeEvent<{}>, value: any) => {
-    this.setState({ activeTab: value })
-  }
+  const [activeTab, setActiveTab] = useState('died-today')
 
-  public render = () => {
-    const { figures, today, user } = this.props
-    if (!figures) {
-      return null
-    }
+  const classes = figStyles()
 
-    if (user) {
-      const { activeTab } = this.state
-
-      return (
-        <div className='figures logged-in'>
-          {today && <div>Today is {today}.</div>}
-          <div>
-            You were born on {user.born}, which was{' '}
-            {user.daysAlive.toLocaleString()} days ago.
-          </div>
-          <AppBar position='static'>
-            <Tabs id='figures' value={activeTab} onChange={this.handleTab}>
-              <Tab label='Died on this date' />
-              <Tab label='You have recently outlived' />
-            </Tabs>
-          </AppBar>
-          <TabPanel value={'0'}>{renderFigs(figures, true)}</TabPanel>
-          <TabPanel value={'1'}>{renderFigs(user.figures, false)}</TabPanel>
-        </div>
-      )
-    }
-
+  if (user) {
     return (
-      <div className='figures logged-out'>
-        {today && <div>Today is {today}.</div>}
-        <div>Died on this date:</div>
-        {renderFigs(figures, true)}
-      </div>
+      <Box alignItems='center' justifyContent='center' textAlign='center'>
+        {today && <Typography paragraph={true}>Today is {today}.</Typography>}
+        <Typography paragraph={true}>
+          You were born on {user.born}, which was{' '}
+          {user.daysAlive.toLocaleString()} days ago.
+        </Typography>
+        <TabContext value={activeTab}>
+          <AppBar position='static'>
+            <TabList
+              onChange={(event: React.ChangeEvent<{}>, newValue: string) =>
+                setActiveTab(newValue)
+              }
+            >
+              <Tab value='died-today' label='Died on this date' />
+              <Tab value='you-outlived' label='You have recently outlived' />
+            </TabList>
+          </AppBar>
+          <TabPanel value='died-today'>
+            {renderFigs(figures, true, classes)}
+          </TabPanel>
+          <TabPanel value='you-outlived'>
+            {renderFigs(user.figures, false, classes)}
+          </TabPanel>
+        </TabContext>
+      </Box>
     )
   }
+
+  return (
+    <div className='figures logged-out'>
+      {today && <div>Today is {today}.</div>}
+      <div>Died on this date:</div>
+      {renderFigs(figures, true, classes)}
+    </div>
+  )
 }
 
-const renderFigs = (figs: FigureData[], showAge: boolean) => (
-  <Grid>
-    {figs.map((fig: FigureData) => (
-      <Card variant='outlined'>
-        <a
-          className='figure'
-          target='_blank'
-          rel='noopener noreferrer'
-          href={fig.href}
-        >
-          {fig.imgSrc && (
-            <span>
-              <img className='img128' src={fig.imgSrc} alt={fig.imgAlt} />
-              <br />
-            </span>
-          )}
-          {fig.name}
-        </a>
-        <br />
-        {fig.desc}
-        {fig.desc && <br />}
-        {fig.born}&mdash;{fig.died}
-        {showAge && <br />}
-        {showAge && '(' + fig.yearsDaysAlive + ')'}
-      </Card>
-    ))}
-  </Grid>
-)
+// xxx figure out the right type for classes
+const renderFigs = (figs: FigureData[], showAge: boolean, classes: any) => {
+  return (
+    <>
+      {figs.map((fig: FigureData) => (
+        <Card className={classes.card}>
+          <CardContent>
+            <Link
+              className='figure'
+              target='_blank'
+              rel='noopener noreferrer'
+              href={fig.href}
+            >
+              {fig.imgSrc && (
+                <span>
+                  <img
+                    className={classes.image}
+                    src={fig.imgSrc}
+                    alt={fig.imgAlt}
+                  />
+                  <br />
+                </span>
+              )}
+              {fig.name}
+            </Link>
+            <br />
+            {fig.desc}
+            {fig.desc && <br />}
+            {fig.born}&mdash;{fig.died}
+            {showAge && <br />}
+            {showAge && '(' + fig.yearsDaysAlive + ')'}
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  )
+}

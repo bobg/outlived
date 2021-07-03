@@ -6,6 +6,7 @@ import {
   Paper,
   Switch,
   Tooltip,
+  Typography,
 } from '@material-ui/core'
 
 import { post } from './post'
@@ -44,16 +45,16 @@ export const LoggedInUser = (props: Props) => {
   return (
     <Paper>
       <div>
-        Logged in as {email}.
+        <Typography variant='caption'>Logged in as {email}.</Typography>
         <form method='POST' action='/s/logout'>
           <input type='hidden' name='csrf' value={csrf} />
           <Button type='submit'>Log out</Button>
         </form>
       </div>
-      <FormControlLabel
-        label='Receive Outlived mail?'
-        control={
-          <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
+      <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
+        <FormControlLabel
+          label='Receive Outlived mail?'
+          control={
             <Switch
               checked={receivingMail}
               disabled={!verified}
@@ -62,9 +63,9 @@ export const LoggedInUser = (props: Props) => {
                 checked: boolean
               ) => doSetReceivingMail(checked)}
             />
-          </Tooltip>
-        }
-      />
+          }
+        />
+      </Tooltip>
       {!verified &&
         (reverified ? (
           <div id='reverified'>
