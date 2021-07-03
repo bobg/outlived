@@ -17,7 +17,7 @@ import (
 	"golang.org/x/text/message"
 	"google.golang.org/api/iterator"
 
-	"github.com/bobg/outlived"
+	"outlived"
 )
 
 const subject = "You have outlived!"

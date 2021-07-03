@@ -15,7 +15,7 @@ import (
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 
-	"github.com/bobg/outlived"
+	"outlived"
 )
 
 var adminCommands = map[string]func(context.Context, *flag.FlagSet, []string) error{

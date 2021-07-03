@@ -8,7 +8,7 @@ import (
 	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
 
-	"github.com/bobg/outlived"
+	"outlived"
 )
 
 type (

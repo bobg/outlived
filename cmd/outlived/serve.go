@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/api/option"
 
-	"github.com/bobg/outlived/site"
+	"outlived/site"
 )
 
 func cliServe(ctx context.Context, flagset *flag.FlagSet, args []string) error {

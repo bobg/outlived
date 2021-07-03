@@ -1,15 +1,128 @@
-import React from 'react'
+import React, { useCallback, useState } from 'react'
 
-import { Button, FormControlLabel, Switch, Tooltip } from '@material-ui/core'
+import {
+  Button,
+  FormControlLabel,
+  Paper,
+  Switch,
+  Tooltip,
+} from '@material-ui/core'
+
+import { LoggedInUser } from './LoggedInUser'
+import { LoggedOutUser } from './LoggedOutUser'
 
 import { post } from './post'
 import { UserData } from './types'
 import { tzname } from './tz'
 
 interface Props {
-  onLogin: (user: UserData) => void
-  user?: UserData
+  user: UserData | null
+  setUser: (user: UserData) => void
+  setAlert: (alert: string) => void
 }
+
+export const User = (props: Props) => {
+  const { user, setUser, setAlert } = props
+
+  return (
+    {user ? (
+        <LoggedInUser user={user} setUser={setUser} setAlert={setAlert}/>
+    ) : (
+        <LoggedOutUser setUser={setUser} />
+    )}
+  )
+}
+
+
+  if (user) {
+    const { active, csrf, email, verified } = user
+    const [receivingMail, setReceivingMail] = useState(verified && active)
+    const [reverified, setReverified] = useState(false)
+
+    const doSetReceivingMail = async (checked: boolean) => {
+      try {
+        await post('/s/setactive', { csrf, active: checked })
+        setReceivingMail(checked)
+      } catch (error) {
+        setAlert(error.message)
+      }
+    }
+
+    return (
+      <Paper>
+        <div>
+          Logged in as {email}.
+          <form method='POST' action='/s/logout'>
+            <input type='hidden' name='csrf' value={csrf} />
+            <Button type='submit'>Log out</Button>
+          </form>
+        </div>
+        <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
+        <FormControlLabel label='Receive Outlived mail?' control={<Switch checked={receivingMail} disabled={!verified} onChange={(event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => doSetReceivingMail(checked)} />} />
+        {!verified && (
+          (reverified ? (
+                <div id='reverified'>
+                  Check your e-mail for a verification message from Outlived.
+                </div>
+              ) : (
+                <div id='unconfirmed'>
+                  You have not yet confirmed your e-mail address.
+                  <br />
+                  <Button id='resend-button' onClick={reverify}>
+                    Resend verification
+                  </Button>
+                </div>
+              ))
+        )}
+        </Tooltip>
+      </Paper>
+    )
+  }
+
+
+  return (
+    <Paper>
+      {user ? (
+        <div>
+          Logged in as {email}.
+          <form method='POST' action='/s/logout'>
+            <input type='hidden' name='csrf' value={csrf} />
+            <Button type='submit'>Log out</Button>
+          </form>
+        </div>
+      ) : (
+        <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
+          <FormControlLabel
+            label='Receive Outlived mail?'
+            control={
+              <Switch
+                checked={receivingMail}
+                disabled={!verified}
+                onChange={setReceivingMail}
+              />
+            }
+          />
+          {!verified &&
+            (reverified ? (
+              <div id='reverified'>
+                Check your e-mail for a verification message from Outlived.
+              </div>
+            ) : (
+              <div id='unconfirmed'>
+                You have not yet confirmed your e-mail address.
+                <br />
+                <Button id='resend-button' onClick={reverify}>
+                  Resend verification
+                </Button>
+              </div>
+            ))}
+        </Tooltip>
+      )}
+    </Paper>
+  )
+}
+
+/*
 
 export class User extends React.Component<Props> {
   public render = () => {
@@ -41,10 +154,10 @@ class LoggedInUser extends React.Component<LoggedInProps, LoggedInState> {
   }
 
   private setReceivingMail = async () => {
-    const { csrf } = this.props.user
+    const { active, csrf } = this.props.user
     try {
       await post('/s/setactive', { csrf, active })
-      this.setState({receivingMail: active})
+      this.setState({ receivingMail: active })
     } catch (error) {
       // xxx alert Error setting e-mail preference. Please try again in a moment.
     }
@@ -75,30 +188,32 @@ class LoggedInUser extends React.Component<LoggedInProps, LoggedInState> {
           </form>
         </div>
         <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
-          <FormControlLabel
-            label='Receive Outlived mail?'
-            control={
-              <Switch
-                checked={receivingMail}
-                disabled={!verified}
-                onChange={this.setReceivingMail}
-              />
-            }
-          />
-          {!verified &&
-            (reverified ? (
-              <div id='reverified'>
-                Check your e-mail for a verification message from Outlived.
-              </div>
-            ) : (
-              <div id='unconfirmed'>
-                You have not yet confirmed your e-mail address.
-                <br />
-                <Button id='resend-button' onClick={this.reverify}>
-                  Resend verification
-                </Button>
-              </div>
-            ))}
+          <>
+            <FormControlLabel
+              label='Receive Outlived mail?'
+              control={
+                <Switch
+                  checked={receivingMail}
+                  disabled={!verified}
+                  onChange={this.setReceivingMail}
+                />
+              }
+            />
+            {!verified &&
+              (reverified ? (
+                <div id='reverified'>
+                  Check your e-mail for a verification message from Outlived.
+                </div>
+              ) : (
+                <div id='unconfirmed'>
+                  You have not yet confirmed your e-mail address.
+                  <br />
+                  <Button id='resend-button' onClick={this.reverify}>
+                    Resend verification
+                  </Button>
+                </div>
+              ))}
+          </>
         </Tooltip>
       </div>
     )
@@ -260,10 +375,7 @@ export class LoggedOutUser extends React.Component<
   )
 }
 
-// Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
-const emailValid = (inp?: string) => {
-  return inp && /^\w+([.+-]\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(inp)
-}
+*/
 
 const yearMillis =
   365 /* days */ * 24 /* hours */ * 60 /* mins */ * 60 /* secs */ * 1000

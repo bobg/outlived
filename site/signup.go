@@ -9,7 +9,7 @@ import (
 	"github.com/bobg/mid"
 	"github.com/pkg/errors"
 
-	"github.com/bobg/outlived"
+	"outlived"
 )
 
 func (s *Server) handleSignup(

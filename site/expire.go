@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/bobg/outlived"
+	"outlived"
 )
 
 // Function handleExpire expires stale figures.
