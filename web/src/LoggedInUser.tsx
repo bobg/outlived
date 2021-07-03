@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from '@material-ui/core'
 
+import { post } from './post'
 import { UserData } from './types'
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export const LoggedInUser = (props: Props) => {
+  const { user, setUser, setAlert } = props
   const { active, csrf, email, verified } = user
   const [receivingMail, setReceivingMail] = useState(verified && active)
   const [reverified, setReverified] = useState(false)
@@ -48,10 +50,10 @@ export const LoggedInUser = (props: Props) => {
           <Button type='submit'>Log out</Button>
         </form>
       </div>
-      <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
-        <FormControlLabel
-          label='Receive Outlived mail?'
-          control={
+      <FormControlLabel
+        label='Receive Outlived mail?'
+        control={
+          <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
             <Switch
               checked={receivingMail}
               disabled={!verified}
@@ -60,23 +62,23 @@ export const LoggedInUser = (props: Props) => {
                 checked: boolean
               ) => doSetReceivingMail(checked)}
             />
-          }
-        />
-        {!verified &&
-          (reverified ? (
-            <div id='reverified'>
-              Check your e-mail for a verification message from Outlived.
-            </div>
-          ) : (
-            <div id='unconfirmed'>
-              You have not yet confirmed your e-mail address.
-              <br />
-              <Button id='resend-button' onClick={reverify}>
-                Resend verification
-              </Button>
-            </div>
-          ))}
-      </Tooltip>
+          </Tooltip>
+        }
+      />
+      {!verified &&
+        (reverified ? (
+          <div id='reverified'>
+            Check your e-mail for a verification message from Outlived.
+          </div>
+        ) : (
+          <div id='unconfirmed'>
+            You have not yet confirmed your e-mail address.
+            <br />
+            <Button id='resend-button' onClick={reverify}>
+              Resend verification
+            </Button>
+          </div>
+        ))}
     </Paper>
   )
 }

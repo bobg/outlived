@@ -1,9 +1,11 @@
 import React, { useCallback, useState } from 'react'
 
 import {
+  Button,
   Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
   TextField,
 } from '@material-ui/core'
 
@@ -21,7 +23,7 @@ export const BirthdateDialog = (props: Props) => {
   const [birthdate, setBirthdate] = useState<Date | null>(null)
 
   return (
-    <Dialog>
+    <Dialog open={open}>
       <DialogTitle>Birth date</DialogTitle>
       <form
         onSubmit={(ev: React.FormEvent<HTMLFormElement>) => {
@@ -39,8 +41,14 @@ export const BirthdateDialog = (props: Props) => {
             type='date'
             defaultValue='1988-11-14'
             onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
-              // xxx parse ev.target.value as a date
-              setBirthdate(d)
+              try {
+                const d = new Date(ev.target.value)
+                if (birthdateValid(d)) {
+                  setBirthdate(d)
+                }
+              } catch (error) {
+                // xxx ignore
+              }
             }}
           />
         </DialogContent>
@@ -53,4 +61,22 @@ export const BirthdateDialog = (props: Props) => {
       </form>
     </Dialog>
   )
+}
+
+const yearMillis =
+  365 /* days */ * 24 /* hours */ * 60 /* mins */ * 60 /* secs */ * 1000
+
+const birthdateValid = (d: Date) => {
+  const now = new Date()
+  const diff = now.valueOf() - d.valueOf()
+  if (diff < 13 * yearMillis) {
+    // No one under 13, thanks to COPPA.
+    return false
+  }
+  if (diff > 150 * yearMillis) {
+    // No one over 150, the maximum human lifespan!
+    // (https://www.scientificamerican.com/article/humans-could-live-up-to-150-years-new-research-suggests/)
+    return false
+  }
+  return true
 }

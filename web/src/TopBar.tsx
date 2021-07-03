@@ -17,7 +17,7 @@ export const TopBar = (props: Props) => {
   return (
     <AppBar position='static'>
       <Toolbar>
-        <img src='outlived.png' alt='Outlived' with='80%' />
+        <img src='outlived.png' alt='Outlived' width='80%' />
         <User user={user} setUser={setUser} setAlert={setAlert} />
       </Toolbar>
     </AppBar>

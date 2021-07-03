@@ -7,7 +7,7 @@ import { FigureData, UserData } from './types'
 interface Props {
   figures: FigureData[]
   today?: string
-  user?: UserData
+  user: UserData | null
 }
 
 interface State {
