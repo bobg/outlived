@@ -16,12 +16,11 @@ import { TabContext, TabList, TabPanel } from '@material-ui/lab'
 import { FigureData, UserData } from './types'
 
 interface Props {
-  figures: FigureData[]
-  today?: string
-  user: UserData | null
+  diedToday: FigureData[]
+  outlived: FigureData[] | null
 }
 
-const figStyles = (theme: Theme) =>
+const useStyles = (theme: Theme) =>
   makeStyles({
     card: {
       display: 'inline-block',
@@ -30,31 +29,19 @@ const figStyles = (theme: Theme) =>
       textAlign: 'center',
       verticalAlign: 'top',
     },
-    paper: {
-      backgroundColor: theme.palette.primary.light,
-      fontSize: '1.2rem',
-    },
   })
 
 export const Figures = (props: Props) => {
-  const { figures, today, user } = props
+  const { diedToday, outlived } = props
 
   const [activeTab, setActiveTab] = useState('died-today')
 
   const theme = useTheme()
-  const classes = figStyles(theme)()
+  const classes = useStyles(theme)()
 
-  if (user) {
-    return (
-      <Box alignItems='center' justifyContent='center' textAlign='center'>
-        {today && <Typography paragraph={true}>Today is {today}.</Typography>}
-        <Paper className={classes.paper}>
-          <Typography paragraph={true}>
-            You were born on {user.born}, which was{' '}
-            {user.daysAlive.toLocaleString()} days ago
-            <br />({user.yearsDaysAlive}).
-          </Typography>
-        </Paper>
+  return (
+    <Box alignItems='center' justifyContent='center' textAlign='center'>
+      {outlived ? (
         <TabContext value={activeTab}>
           <AppBar position='static'>
             <TabList
@@ -67,22 +54,19 @@ export const Figures = (props: Props) => {
             </TabList>
           </AppBar>
           <TabPanel value='died-today'>
-            {renderFigs(figures, true, classes)}
+            {renderFigs(diedToday, true, classes)}
           </TabPanel>
           <TabPanel value='you-outlived'>
-            {renderFigs(user.figures, false, classes)}
+            {renderFigs(outlived, false, classes)}
           </TabPanel>
         </TabContext>
-      </Box>
-    )
-  }
-
-  return (
-    <div className='figures logged-out'>
-      {today && <div>Today is {today}.</div>}
-      <div>Died on this date:</div>
-      {renderFigs(figures, true, classes)}
-    </div>
+      ) : (
+        <>
+          <Typography paragraph={true}>Died on this date:</Typography>
+          {renderFigs(diedToday, true, classes)}
+        </>
+      )}
+    </Box>
   )
 }
 

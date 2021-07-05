@@ -6,12 +6,13 @@ import {
   Box,
   CircularProgress,
   Link,
+  Paper,
   Snackbar,
   ThemeProvider,
   Typography,
 } from '@material-ui/core'
 import { Alert } from '@material-ui/lab'
-import { createMuiTheme } from '@material-ui/core/styles'
+import { createMuiTheme, makeStyles, Theme, useTheme } from '@material-ui/core/styles'
 
 import { Figures } from './Figures'
 import { TopBar } from './TopBar'
@@ -21,6 +22,40 @@ import { post } from './post'
 import { Data, FigureData, UserData } from './types'
 import { tzname } from './tz'
 
+// https://paletton.com/#uid=22m0u0k7kn32b-b4CrHa8i+cwdl
+const theme = createMuiTheme({
+  /*
+    palette: {
+    primary: {
+    light: '#9EAB84',
+    main: '#7E8D61',
+    dark: '#56633C',
+    contrastText: '#EBF0E0',
+    },
+    secondary: {
+    light: '#937285',
+    main: '#795369',
+    dark: '#553447',
+    contrastText: '#D3C5CD',
+    },
+    },
+  */
+  typography: {
+    button: {
+      textTransform: 'none',
+    },
+  },
+})
+
+const useStyles = (theme: Theme) => makeStyles({
+  today: {
+    backgroundColor: theme.palette.primary.light,
+    fontSize: '1.2rem',
+    margin: '1rem',
+    padding: '1rem',
+  },
+})
+
 export const App = () => {
   const [alert, setAlert] = useState('')
   const [figures, setFigures] = useState<FigureData[]>([])
@@ -28,30 +63,7 @@ export const App = () => {
   const [today, setToday] = useState('')
   const [user, setUser] = useState<UserData | null>(null)
 
-  // https://paletton.com/#uid=22m0u0k7kn32b-b4CrHa8i+cwdl
-  const theme = createMuiTheme({
-/*
-    palette: {
-      primary: {
-        light: '#9EAB84',
-        main: '#7E8D61',
-        dark: '#56633C',
-        contrastText: '#EBF0E0',
-      },
-      secondary: {
-        light: '#937285',
-        main: '#795369',
-        dark: '#553447',
-        contrastText: '#D3C5CD',
-      },
-    },
-*/
-    typography: {
-      button: {
-        textTransform: 'none',
-      },
-    },
-  })
+  const classes = useStyles(theme)()
 
   const getData = async () => {
     try {
@@ -82,7 +94,13 @@ export const App = () => {
       </Snackbar>
       {loaded ? (
         <>
-          <Figures figures={figures} today={today} user={user} />
+          <Paper className={classes.today}>
+            <Typography>Today is {today}.</Typography>
+          {user && (
+              <Typography>You were born on {user.born}, which was {user.daysAlive.toLocaleString()} days ago<br/>({user.yearsDaysAlive}).</Typography>
+          )}
+          </Paper>
+          <Figures diedToday={figures} outlived={user ? user.figures : null}/>
           <Box alignItems='center' justifyContent='center' textAlign='center'>
             <Typography paragraph={true} variant='caption'>
               Data supplied by{' '}
