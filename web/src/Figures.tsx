@@ -6,10 +6,11 @@ import {
   Card,
   CardContent,
   Link,
+  Paper,
   Tab,
   Typography,
 } from '@material-ui/core'
-import { makeStyles } from '@material-ui/core/styles'
+import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
 import { TabContext, TabList, TabPanel } from '@material-ui/lab'
 
 import { FigureData, UserData } from './types'
@@ -20,31 +21,40 @@ interface Props {
   user: UserData | null
 }
 
-const figStyles = makeStyles({
-  card: {
-    display: 'inline-block',
-    width: '12em',
-    margin: '6px',
-    textAlign: 'center',
-    verticalAlign: 'top',
-  },
-})
+const figStyles = (theme: Theme) =>
+  makeStyles({
+    card: {
+      display: 'inline-block',
+      width: '14em',
+      margin: '6px',
+      textAlign: 'center',
+      verticalAlign: 'top',
+    },
+    paper: {
+      backgroundColor: theme.palette.primary.light,
+      fontSize: '1.2rem',
+    },
+  })
 
 export const Figures = (props: Props) => {
   const { figures, today, user } = props
 
   const [activeTab, setActiveTab] = useState('died-today')
 
-  const classes = figStyles()
+  const theme = useTheme()
+  const classes = figStyles(theme)()
 
   if (user) {
     return (
       <Box alignItems='center' justifyContent='center' textAlign='center'>
         {today && <Typography paragraph={true}>Today is {today}.</Typography>}
-        <Typography paragraph={true}>
-          You were born on {user.born}, which was{' '}
-          {user.daysAlive.toLocaleString()} days ago.
-        </Typography>
+        <Paper className={classes.paper}>
+          <Typography paragraph={true}>
+            You were born on {user.born}, which was{' '}
+            {user.daysAlive.toLocaleString()} days ago
+            <br />({user.yearsDaysAlive}).
+          </Typography>
+        </Paper>
         <TabContext value={activeTab}>
           <AppBar position='static'>
             <TabList
@@ -78,10 +88,12 @@ export const Figures = (props: Props) => {
 
 // xxx figure out the right type for classes
 const renderFigs = (figs: FigureData[], showAge: boolean, classes: any) => {
+  showAge = true // xxx
+
   return (
     <>
       {figs.map((fig: FigureData) => (
-        <Card className={classes.card}>
+        <Card className={classes.card} key={fig.href}>
           <CardContent>
             <Link
               className='figure'

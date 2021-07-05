@@ -8,6 +8,7 @@ import {
   Tooltip,
   Typography,
 } from '@material-ui/core'
+import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
 
 import { post } from './post'
 import { UserData } from './types'
@@ -18,11 +19,22 @@ interface Props {
   setAlert: (alert: string) => void
 }
 
+const useStyles = (theme: Theme) => makeStyles({
+  paper: {
+    background: theme.palette.primary.main,
+    color: theme.palette.primary.contrastText,
+  },
+})
+
 export const LoggedInUser = (props: Props) => {
   const { user, setUser, setAlert } = props
+
   const { active, csrf, email, verified } = user
   const [receivingMail, setReceivingMail] = useState(verified && active)
   const [reverified, setReverified] = useState(false)
+
+  const theme = useTheme()
+  const classes = useStyles(theme)()
 
   const doSetReceivingMail = async (checked: boolean) => {
     try {
@@ -43,12 +55,14 @@ export const LoggedInUser = (props: Props) => {
   }
 
   return (
-    <Paper>
+    <Paper className={classes.paper}>
       <div>
-        <Typography variant='caption'>Logged in as {email}.</Typography>
         <form method='POST' action='/s/logout'>
+          <Typography variant='caption'>Logged in as {email}.</Typography>
           <input type='hidden' name='csrf' value={csrf} />
-          <Button type='submit'>Log out</Button>
+          <Button type='submit' variant='outlined' color='secondary'>
+            Log out
+          </Button>
         </form>
       </div>
       <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>

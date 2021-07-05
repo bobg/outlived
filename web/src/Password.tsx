@@ -15,12 +15,19 @@ interface Props {
   mode: string
   open: boolean
   onSubmit: (pw: string) => void
+  onForgot?: () => void
 }
 
 export const Password = (props: Props) => {
   const [pw, setPW] = useState('')
 
-  const { close, onSubmit, mode, open } = props
+  const { close, onSubmit, onForgot, mode, open } = props
+
+  const doForgot = () => {
+    if (!onForgot) { return }
+    onForgot()
+    close()
+  }
 
   return (
     <Dialog open={open}>
@@ -55,6 +62,7 @@ export const Password = (props: Props) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={close}>Cancel</Button>
+          {onForgot && <Button onClick={doForgot}>Forgot password</Button>}
           <Button disabled={pw === ''} type='submit'>
             Submit
           </Button>

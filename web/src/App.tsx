@@ -28,7 +28,24 @@ export const App = () => {
   const [today, setToday] = useState('')
   const [user, setUser] = useState<UserData | null>(null)
 
+  // https://paletton.com/#uid=22m0u0k7kn32b-b4CrHa8i+cwdl
   const theme = createMuiTheme({
+/*
+    palette: {
+      primary: {
+        light: '#9EAB84',
+        main: '#7E8D61',
+        dark: '#56633C',
+        contrastText: '#EBF0E0',
+      },
+      secondary: {
+        light: '#937285',
+        main: '#795369',
+        dark: '#553447',
+        contrastText: '#D3C5CD',
+      },
+    },
+*/
     typography: {
       button: {
         textTransform: 'none',

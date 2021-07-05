@@ -30,7 +30,7 @@ export const TopBar = (props: Props) => {
     <AppBar position='static'>
       <Toolbar>
         <Box className={classes.logo}>
-          <img src='outlived.png' alt='Outlived' width='50%' />
+          <img src='outlived.png' alt='Outlived' width='80%' />
         </Box>
         <Box className={classes.user}>
           <User user={user} setUser={setUser} setAlert={setAlert} />

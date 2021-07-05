@@ -8,6 +8,7 @@ import {
   TextField,
   Typography,
 } from '@material-ui/core'
+import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
 
 import { BirthdateDialog } from './BirthdateDialog'
 import { Password } from './Password'
@@ -21,6 +22,13 @@ interface Props {
   setAlert: (alert: string) => void
 }
 
+const useStyles = (theme: Theme) => makeStyles({
+  paper: {
+    background: theme.palette.primary.main,
+    color: theme.palette.primary.contrastText,
+  },
+})
+
 export const LoggedOutUser = (props: Props) => {
   const { setUser, setAlert } = props
 
@@ -29,6 +37,9 @@ export const LoggedOutUser = (props: Props) => {
   const [email, setEmail] = useState('')
   const [pwOpen, setPWOpen] = useState(false)
   const [pwMode, setPWMode] = useState('')
+
+  const theme = useTheme()
+  const classes = useStyles(theme)()
 
   const onLoginButton = () => {
     setPWOpen(true)
@@ -90,9 +101,25 @@ export const LoggedOutUser = (props: Props) => {
     }
   }
 
+  const doForgot = async () => {
+    if (!email) {
+      return
+    }
+    try {
+      const resp = await post('/s/login', {
+        email,
+        forgot: true,
+        tzname: tzname(),
+      })
+      setAlert('Check your e-mail for a password-reset message.') // xxx non-error alert
+    } catch (error) {
+      setAlert(`Login failed: ${error.message}`)
+    }
+  }
+
   return (
     <>
-      <Paper>
+      <Paper className={classes.paper}>
         <Typography variant='caption'>
           Log in to see whom you’ve recently outlived.
         </Typography>
@@ -111,10 +138,10 @@ export const LoggedOutUser = (props: Props) => {
           justifyContent='center'
         >
           <ButtonGroup>
-            <Button disabled={!emailValid(email)} onClick={onLoginButton}>
+            <Button disabled={!emailValid(email)} onClick={onLoginButton} color='primary'>
               Log in
             </Button>
-            <Button disabled={!emailValid(email)} onClick={onSignupButton}>
+            <Button disabled={!emailValid(email)} onClick={onSignupButton} color='primary'>
               Sign up
             </Button>
           </ButtonGroup>
@@ -130,6 +157,7 @@ export const LoggedOutUser = (props: Props) => {
         close={() => setPWOpen(false)}
         mode={pwMode}
         onSubmit={onSubmitPW}
+        onForgot={doForgot}
       />
     </>
   )
