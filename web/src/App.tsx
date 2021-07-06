@@ -15,7 +15,7 @@ import {
 } from '@material-ui/core'
 import { Alert } from '@material-ui/lab'
 import {
-  createMuiTheme,
+  createTheme,
   makeStyles,
   Theme,
   useTheme,
@@ -30,7 +30,7 @@ import { Data, FigureData, UserData } from './types'
 import { tzname } from './tz'
 
 // https://paletton.com/#uid=22m0u0k7kn32b-b4CrHa8i+cwdl
-const theme = createMuiTheme({
+const theme = createTheme({
   /*
     palette: {
     primary: {

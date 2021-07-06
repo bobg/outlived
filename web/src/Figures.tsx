@@ -18,7 +18,7 @@ import { FigureData, UserData } from './types'
 
 interface Props {
   diedToday: FigureData[]
-  outlived: FigureData[] | null
+  outlived?: FigureData[]
 }
 
 const useStyles = (theme: Theme) =>
