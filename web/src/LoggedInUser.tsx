@@ -1,13 +1,6 @@
 import React, { useCallback, useState } from 'react'
 
-import {
-  Button,
-  FormControlLabel,
-  Paper,
-  Switch,
-  Tooltip,
-  Typography,
-} from '@material-ui/core'
+import { Button, Switch, Tooltip, Typography } from '@material-ui/core'
 import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
 
 import { post } from './post'
@@ -19,12 +12,15 @@ interface Props {
   setAlert: (alert: string) => void
 }
 
-const useStyles = (theme: Theme) => makeStyles({
-  paper: {
-    background: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-  },
-})
+const useStyles = (theme: Theme) =>
+  makeStyles({
+    logout: {
+      background: theme.palette.secondary.light,
+      color: theme.palette.secondary.contrastText,
+      fontSize: theme.typography.caption.fontSize,
+      padding: '.25rem',
+    },
+  })
 
 export const LoggedInUser = (props: Props) => {
   const { user, setUser, setAlert } = props
@@ -55,33 +51,39 @@ export const LoggedInUser = (props: Props) => {
   }
 
   return (
-    <Paper className={classes.paper}>
+    <>
       <div>
         <form method='POST' action='/s/logout'>
-          <Typography variant='caption'>Logged in as {email}.</Typography>
           <input type='hidden' name='csrf' value={csrf} />
-          <Button type='submit' variant='outlined' color='secondary'>
-            Log out
-          </Button>
+          <Typography variant='caption'>
+            Logged in as {email}.{' '}
+            <Button
+              className={classes.logout}
+              type='submit'
+              variant='outlined'
+              color='secondary'
+            >
+              Log out
+            </Button>
+          </Typography>
         </form>
       </div>
       <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
-        <FormControlLabel
-          label='Receive Outlived mail?'
-          control={
-            <Switch
-              checked={receivingMail}
-              disabled={!verified}
-              onChange={(
-                event: React.ChangeEvent<HTMLInputElement>,
-                checked: boolean
-              ) => doSetReceivingMail(checked)}
-            />
-          }
-        />
+        <Typography variant='caption'>
+          Receive Outlived mail?{' '}
+          <Switch
+            size='small'
+            checked={receivingMail}
+            disabled={!verified}
+            onChange={(
+              event: React.ChangeEvent<HTMLInputElement>,
+              checked: boolean
+            ) => doSetReceivingMail(checked)}
+          />
+        </Typography>
       </Tooltip>
-      {!verified &&
-        (reverified ? (
+      {!verified ? (
+        reverified ? (
           <div id='reverified'>
             Check your e-mail for a verification message from Outlived.
           </div>
@@ -93,7 +95,8 @@ export const LoggedInUser = (props: Props) => {
               Resend verification
             </Button>
           </div>
-        ))}
-    </Paper>
+        )
+      ) : null}
+    </>
   )
 }

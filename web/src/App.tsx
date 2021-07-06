@@ -4,15 +4,22 @@ import ReactDOM from 'react-dom'
 import {
   AppBar,
   Box,
+  Card,
+  CardContent,
+  CardHeader,
   CircularProgress,
   Link,
-  Paper,
   Snackbar,
   ThemeProvider,
   Typography,
 } from '@material-ui/core'
 import { Alert } from '@material-ui/lab'
-import { createMuiTheme, makeStyles, Theme, useTheme } from '@material-ui/core/styles'
+import {
+  createMuiTheme,
+  makeStyles,
+  Theme,
+  useTheme,
+} from '@material-ui/core/styles'
 
 import { Figures } from './Figures'
 import { TopBar } from './TopBar'
@@ -47,14 +54,17 @@ const theme = createMuiTheme({
   },
 })
 
-const useStyles = (theme: Theme) => makeStyles({
-  today: {
-    backgroundColor: theme.palette.primary.light,
-    fontSize: '1.2rem',
-    margin: '1rem',
-    padding: '1rem',
-  },
-})
+const useStyles = (theme: Theme) =>
+  makeStyles({
+    today: {
+      backgroundColor: theme.palette.primary.light,
+      fontSize: '1.2rem',
+      margin: '1rem',
+      padding: '1rem',
+      textAlign: 'center',
+      width: 'fit-content',
+    },
+  })
 
 export const App = () => {
   const [alert, setAlert] = useState('')
@@ -94,13 +104,21 @@ export const App = () => {
       </Snackbar>
       {loaded ? (
         <>
-          <Paper className={classes.today}>
-            <Typography>Today is {today}.</Typography>
-          {user && (
-              <Typography>You were born on {user.born}, which was {user.daysAlive.toLocaleString()} days ago<br/>({user.yearsDaysAlive}).</Typography>
-          )}
-          </Paper>
-          <Figures diedToday={figures} outlived={user ? user.figures : null}/>
+          <Box display='flex' justifyContent='center' m='auto'>
+            <Card className={classes.today} raised={true}>
+              <CardContent>
+                <CardHeader title={`Today is ${today}`} />
+                {user ? (
+                  <Typography>
+                    You were born on {user.born}, which was{' '}
+                    {user.daysAlive.toLocaleString()} days ago
+                    <br />({user.yearsDaysAlive}).
+                  </Typography>
+                ) : null}
+              </CardContent>
+            </Card>
+          </Box>
+          <Figures diedToday={figures} outlived={user ? user.figures : null} />
           <Box alignItems='center' justifyContent='center' textAlign='center'>
             <Typography paragraph={true} variant='caption'>
               Data supplied by{' '}
@@ -131,7 +149,9 @@ export const App = () => {
           </Box>
         </>
       ) : (
-        <CircularProgress />
+        <Box display='flex' justifyContent='center' m='2em'>
+          <CircularProgress />
+        </Box>
       )}
     </ThemeProvider>
   )

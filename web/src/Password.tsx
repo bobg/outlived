@@ -24,7 +24,9 @@ export const Password = (props: Props) => {
   const { close, onSubmit, onForgot, mode, open } = props
 
   const doForgot = () => {
-    if (!onForgot) { return }
+    if (!onForgot) {
+      return
+    }
     onForgot()
     close()
   }
@@ -62,7 +64,9 @@ export const Password = (props: Props) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={close}>Cancel</Button>
-          {onForgot && <Button onClick={doForgot}>Forgot password</Button>}
+          {onForgot ? (
+            <Button onClick={doForgot}>Forgot password</Button>
+          ) : null}
           <Button disabled={pw === ''} type='submit'>
             Submit
           </Button>
