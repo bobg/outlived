@@ -13,6 +13,7 @@ export interface FigureData {
 export interface UserData {
   csrf: string
   born: string
+  bornyyyymmdd: string
   daysAlive: number
   yearsDaysAlive: string
   email: string

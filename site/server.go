@@ -75,6 +75,7 @@ func (s *Server) Serve(ctx context.Context) {
 	mux.Handle("/s/resetpw", mid.Err(s.handleResetPW))
 	mux.Handle("/s/reverify", s.sessHandler(mid.JSON(s.handleReverify)))
 	mux.Handle("/s/setactive", s.sessHandler(mid.JSON(s.handleSetActive)))
+	mux.Handle("/s/setbirthdate", s.sessHandler(mid.JSON(s.handleSetBirthdate)))
 	mux.Handle("/s/signup", mid.JSON(s.handleSignup))
 	mux.Handle("/s/verify", mid.Err(s.handleVerify))
 

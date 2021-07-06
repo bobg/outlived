@@ -13,12 +13,13 @@ interface Props {
   open: boolean
   close: () => void
   onSubmit: (d: Date) => void
+  defaultVal: string
 }
 
 // TODO: consider using the datepicker from https://material-ui-pickers.dev/
 
 export const BirthdateDialog = (props: Props) => {
-  const { open, close, onSubmit } = props
+  const { open, close, onSubmit, defaultVal } = props
 
   const [birthdate, setBirthdate] = useState<Date | null>(null)
 
@@ -39,7 +40,7 @@ export const BirthdateDialog = (props: Props) => {
             id='birthdate'
             label='Birth date'
             type='date'
-            defaultValue='1988-11-14'
+            defaultValue={defaultVal}
             onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
               try {
                 const d = new Date(ev.target.value)

@@ -41,6 +41,7 @@ type (
 	userData struct {
 		CSRF           string       `json:"csrf"`
 		Born           string       `json:"born"`
+		BornYYYYMMDD   string       `json:"bornyyyymmdd"`
 		DaysAlive      int          `json:"daysAlive"`
 		YearsDaysAlive string       `json:"yearsDaysAlive"`
 		Email          string       `json:"email"`
@@ -104,6 +105,7 @@ func (s *Server) getUserData2(ctx context.Context, sess *aesite.Session, u *outl
 	d := &userData{
 		CSRF:           csrf,
 		Born:           u.Born.String(),
+		BornYYYYMMDD:   u.Born.YYYYMMDD(),
 		DaysAlive:      alive,
 		YearsDaysAlive: today.YDSinceStr(u.Born),
 		Email:          u.Email,

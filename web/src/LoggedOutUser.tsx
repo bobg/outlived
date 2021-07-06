@@ -16,18 +16,20 @@ import { Password } from './Password'
 import { post } from './post'
 import { UserData } from './types'
 import { tzname } from './tz'
+import { datestr } from './util'
 
 interface Props {
   setUser: (user: UserData) => void
   setAlert: (alert: string) => void
 }
 
-const useStyles = (theme: Theme) => makeStyles({
-  paper: {
-    background: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-  },
-})
+const useStyles = (theme: Theme) =>
+  makeStyles({
+    paper: {
+      background: theme.palette.primary.main,
+      color: theme.palette.primary.contrastText,
+    },
+  })
 
 export const LoggedOutUser = (props: Props) => {
   const { setUser, setAlert } = props
@@ -138,10 +140,18 @@ export const LoggedOutUser = (props: Props) => {
           justifyContent='center'
         >
           <ButtonGroup>
-            <Button disabled={!emailValid(email)} onClick={onLoginButton} color='primary'>
+            <Button
+              disabled={!emailValid(email)}
+              onClick={onLoginButton}
+              color='primary'
+            >
               Log in
             </Button>
-            <Button disabled={!emailValid(email)} onClick={onSignupButton} color='primary'>
+            <Button
+              disabled={!emailValid(email)}
+              onClick={onSignupButton}
+              color='primary'
+            >
               Sign up
             </Button>
           </ButtonGroup>
@@ -151,6 +161,7 @@ export const LoggedOutUser = (props: Props) => {
         open={birthdateDialogOpen}
         close={() => setBirthdateDialogOpen(false)}
         onSubmit={onSubmitBirthdate}
+        defaultVal={'1988-11-14'}
       />
       <Password
         open={pwOpen}
@@ -166,11 +177,4 @@ export const LoggedOutUser = (props: Props) => {
 // Adapted from https://www.w3resource.com/javascript/form/email-validation.php.
 const emailValid = (inp?: string) => {
   return inp && /^\w+([.+-]\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(inp)
-}
-
-const datestr = (d: Date) => {
-  const y = d.getFullYear()
-  const m = 1 + d.getMonth() // come on javascript
-  const day = d.getDate() // come ON, javascript
-  return y + '-' + ('0' + m).substr(-2) + '-' + ('0' + day).substr(-2)
 }

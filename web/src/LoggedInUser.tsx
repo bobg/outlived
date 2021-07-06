@@ -1,10 +1,27 @@
 import React, { useCallback, useState } from 'react'
 
-import { Button, Link, Switch, Tooltip, Typography } from '@material-ui/core'
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  Link,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Switch,
+  Tooltip,
+  Typography,
+} from '@material-ui/core'
 import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
+import { Event } from '@material-ui/icons'
+
+import { BirthdateDialog } from './BirthdateDialog'
 
 import { post } from './post'
 import { UserData } from './types'
+import { tzname } from './tz'
+import { datestr } from './util'
 
 interface Props {
   user: UserData
@@ -32,6 +49,8 @@ export const LoggedInUser = (props: Props) => {
   const { active, csrf, email, verified } = user
   const [receivingMail, setReceivingMail] = useState(verified && active)
   const [reverified, setReverified] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [birthdateOpen, setBirthdateOpen] = useState(false)
 
   const theme = useTheme()
   const classes = useStyles(theme)()
@@ -54,8 +73,27 @@ export const LoggedInUser = (props: Props) => {
     }
   }
 
-  const onEmailClick = () => {
-    console.log(email)
+  const onNewBirthdate = async (newDate: Date) => {
+    const newStr = datestr(newDate)
+    if (newStr === user.bornyyyymmdd) {
+      return
+    }
+    try {
+      const resp = await post('/s/setbirthdate', {
+        csrf,
+        tzname: tzname(),
+        newdate: newStr,
+      })
+      const user = (await resp.json()) as UserData
+      setUser(user)
+    } catch (error) {
+      setAlert(error.message)
+    }
+  }
+
+  const chooseBirthdate = () => {
+    setSettingsOpen(false)
+    setBirthdateOpen(true)
   }
 
   return (
@@ -64,7 +102,14 @@ export const LoggedInUser = (props: Props) => {
         <form method='POST' action='/s/logout'>
           <input type='hidden' name='csrf' value={csrf} />
           <Typography variant='caption'>
-            Logged in as <Link className={classes.email} onClick={onEmailClick}>{email}</Link>.{' '}
+            Logged in as{' '}
+            <Link
+              className={classes.email}
+              onClick={() => setSettingsOpen(true)}
+            >
+              {email}
+            </Link>
+            .{' '}
             <Button
               className={classes.logout}
               type='submit'
@@ -90,6 +135,20 @@ export const LoggedInUser = (props: Props) => {
           />
         </Typography>
       </Tooltip>
+      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+        <DialogTitle>Settings</DialogTitle>
+        <List>
+          <ListItem button onClick={chooseBirthdate}>
+            <ListItemText primary='Birth date' />
+          </ListItem>
+        </List>
+      </Dialog>
+      <BirthdateDialog
+        open={birthdateOpen}
+        close={() => setBirthdateOpen(false)}
+        onSubmit={onNewBirthdate}
+        defaultVal={user.bornyyyymmdd}
+      />
       {!verified ? (
         reverified ? (
           <div id='reverified'>
@@ -104,7 +163,9 @@ export const LoggedInUser = (props: Props) => {
             </Button>
           </div>
         )
-      ) : undefined}
+      ) : (
+        undefined
+      )}
     </>
   )
 }

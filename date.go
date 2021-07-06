@@ -110,6 +110,10 @@ func (d Date) String() string {
 	return fmt.Sprintf("%d %s %d", d.D, m[:3], d.Y)
 }
 
+func (d Date) YYYYMMDD() string {
+	return fmt.Sprintf("%d-%02d-%02d", d.Y, d.M, d.D)
+}
+
 func daysInMonth(y int, m time.Month) int {
 	switch m {
 	case 1, 3, 5, 7, 8, 10, 12:
