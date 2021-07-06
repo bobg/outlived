@@ -29,24 +29,26 @@ import { post } from './post'
 import { Data, FigureData, UserData } from './types'
 import { tzname } from './tz'
 
-// https://paletton.com/#uid=22m0u0k7kn32b-b4CrHa8i+cwdl
+// https://paletton.com/#uid=22K0u0kfvtS5WOhaDChkaoXohkz
 const theme = createTheme({
-  /*
-    palette: {
+  palette: {
     primary: {
-    light: '#9EAB84',
-    main: '#7E8D61',
-    dark: '#56633C',
-    contrastText: '#EBF0E0',
+      light: '#A5E095',
+      main: '#7BC867',
+      dark: '#54A73E',
+      contrastText: '#378A21',
     },
     secondary: {
-    light: '#937285',
-    main: '#795369',
-    dark: '#553447',
-    contrastText: '#D3C5CD',
+      light: '#F7A5AF',
+      main: '#E47683',
+      dark: '#BF4755',
+      contrastText: '#9D2634',
     },
+    background: {
+      default: '#CCEFC3',
+      paper: '#CCEFC3',
     },
-  */
+  },
   typography: {
     button: {
       textTransform: 'none',
@@ -58,9 +60,10 @@ const useStyles = (theme: Theme) =>
   makeStyles({
     today: {
       backgroundColor: theme.palette.primary.light,
+      borderWidth: '4px',
+      color: theme.palette.primary.dark,
       fontSize: '1.2rem',
       margin: '1rem',
-      padding: '1rem',
       textAlign: 'center',
       width: 'fit-content',
     },
@@ -105,7 +108,7 @@ export const App = () => {
       {loaded ? (
         <>
           <Box display='flex' justifyContent='center' m='auto'>
-            <Card className={classes.today} raised={true}>
+            <Card className={classes.today} raised={true} variant='outlined'>
               <CardContent>
                 <CardHeader title={`Today is ${today}`} />
                 {user ? (
@@ -114,11 +117,16 @@ export const App = () => {
                     {user.daysAlive.toLocaleString()} days ago
                     <br />({user.yearsDaysAlive}).
                   </Typography>
-                ) : undefined}
+                ) : (
+                  undefined
+                )}
               </CardContent>
             </Card>
           </Box>
-          <Figures diedToday={figures} outlived={user ? user.figures : undefined} />
+          <Figures
+            diedToday={figures}
+            outlived={user ? user.figures : undefined}
+          />
           <Box alignItems='center' justifyContent='center' textAlign='center'>
             <Typography paragraph={true} variant='caption'>
               Data supplied by{' '}

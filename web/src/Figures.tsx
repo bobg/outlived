@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@material-ui/core'
 import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
+import { Person } from '@material-ui/icons'
 import { TabContext, TabList, TabPanel } from '@material-ui/lab'
 
 import { FigureData, UserData } from './types'
@@ -24,11 +25,17 @@ interface Props {
 const useStyles = (theme: Theme) =>
   makeStyles({
     card: {
+      backgroundColor: theme.palette.primary.light,
+      color: theme.palette.secondary.dark,
       display: 'inline-block',
       width: '14em',
       margin: '6px',
       textAlign: 'center',
       verticalAlign: 'top',
+    },
+    figlink: {
+      color: theme.palette.secondary.dark,
+      fontWeight: 'bold',
     },
   })
 
@@ -84,7 +91,7 @@ const renderFigs = (figs: FigureData[], classes: any) => {
         <Card className={classes.card} key={fig.href}>
           <CardContent>
             <Link
-              className='figure'
+              className={classes.figlink}
               target='_blank'
               rel='noopener noreferrer'
               href={fig.href}
@@ -99,7 +106,7 @@ const renderFigs = (figs: FigureData[], classes: any) => {
                   <br />
                 </>
               ) : (
-                undefined
+                undefined // xxx why can I not use <Person/> here?
               )}
               {fig.name}
             </Link>

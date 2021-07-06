@@ -29,6 +29,9 @@ const useStyles = (theme: Theme) =>
       background: theme.palette.primary.main,
       color: theme.palette.primary.contrastText,
     },
+    email: {
+      padding: '0.2rem',
+    },
   })
 
 export const LoggedOutUser = (props: Props) => {
@@ -126,12 +129,14 @@ export const LoggedOutUser = (props: Props) => {
           Log in to see whom you’ve recently outlived.
         </Typography>
         <TextField
+          inputProps={{ className: classes.email }}
           autoFocus
           defaultValue=''
           onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
             setEmail(ev.target.value)
           }}
           placeholder='E-mail address'
+          variant='filled'
         />
         <Box
           display='flex'
@@ -143,14 +148,18 @@ export const LoggedOutUser = (props: Props) => {
             <Button
               disabled={!emailValid(email)}
               onClick={onLoginButton}
-              color='primary'
+              color='secondary'
+              variant='outlined'
+              size='small'
             >
               Log in
             </Button>
             <Button
               disabled={!emailValid(email)}
               onClick={onSignupButton}
-              color='primary'
+              color='secondary'
+              variant='outlined'
+              size='small'
             >
               Sign up
             </Button>

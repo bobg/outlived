@@ -63,11 +63,11 @@ export const Password = (props: Props) => {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button onClick={close}>Cancel</Button>
+          <Button onClick={close} variant='contained'>Cancel</Button>
           {onForgot ? (
-            <Button onClick={doForgot}>Forgot password</Button>
+            <Button onClick={doForgot} variant='contained'>Forgot password</Button>
           ) : undefined}
-          <Button disabled={pw === ''} type='submit'>
+          <Button disabled={pw === ''} type='submit' variant='contained' color='primary'>
             Submit
           </Button>
         </DialogActions>

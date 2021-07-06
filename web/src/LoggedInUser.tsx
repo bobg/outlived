@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react'
 
 import {
+  Box,
   Button,
   Dialog,
   DialogTitle,
@@ -100,25 +101,33 @@ export const LoggedInUser = (props: Props) => {
     <>
       <div>
         <form method='POST' action='/s/logout'>
-          <input type='hidden' name='csrf' value={csrf} />
-          <Typography variant='caption'>
-            Logged in as{' '}
-            <Link
-              className={classes.email}
-              onClick={() => setSettingsOpen(true)}
-            >
-              {email}
-            </Link>
-            .{' '}
-            <Button
-              className={classes.logout}
-              type='submit'
-              variant='outlined'
-              color='secondary'
-            >
-              Log out
-            </Button>
-          </Typography>
+          <Box display='flex'>
+            <Box>
+              <input type='hidden' name='csrf' value={csrf} />
+              <Typography variant='caption'>
+                Logged in as{' '}
+                <Tooltip title='Tap for settings'>
+                  <Link
+                    className={classes.email}
+                    onClick={() => setSettingsOpen(true)}
+                  >
+                    {email}
+                  </Link>
+                </Tooltip>
+                .
+              </Typography>
+            </Box>
+            <Box>
+              <Button
+                className={classes.logout}
+                type='submit'
+                variant='outlined'
+                color='secondary'
+              >
+                Log&nbsp;out
+              </Button>
+            </Box>
+          </Box>
         </form>
       </div>
       <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
