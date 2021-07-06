@@ -104,7 +104,7 @@ export const LoggedInUser = (props: Props) => {
             </Button>
           </div>
         )
-      ) : null}
+      ) : undefined}
     </>
   )
 }

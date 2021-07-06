@@ -114,11 +114,11 @@ export const App = () => {
                     {user.daysAlive.toLocaleString()} days ago
                     <br />({user.yearsDaysAlive}).
                   </Typography>
-                ) : null}
+                ) : undefined}
               </CardContent>
             </Card>
           </Box>
-          <Figures diedToday={figures} outlived={user ? user.figures : null} />
+          <Figures diedToday={figures} outlived={user ? user.figures : undefined} />
           <Box alignItems='center' justifyContent='center' textAlign='center'>
             <Typography paragraph={true} variant='caption'>
               Data supplied by{' '}

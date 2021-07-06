@@ -66,7 +66,7 @@ export const Password = (props: Props) => {
           <Button onClick={close}>Cancel</Button>
           {onForgot ? (
             <Button onClick={doForgot}>Forgot password</Button>
-          ) : null}
+          ) : undefined}
           <Button disabled={pw === ''} type='submit'>
             Submit
           </Button>

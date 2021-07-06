@@ -35,9 +35,7 @@ const useStyles = (theme: Theme) =>
 export const Figures = (props: Props) => {
   const { diedToday, outlived } = props
 
-  const [activeTab, setActiveTab] = useState(
-    outlived ? 'you-outlived' : 'died-today'
-  )
+  const [activeTab, setActiveTab] = useState('you-outlived')
 
   const theme = useTheme()
   const classes = useStyles(theme)()
@@ -52,7 +50,7 @@ export const Figures = (props: Props) => {
 
   return (
     <Box alignItems='center' justifyContent='center' textAlign='center'>
-      <TabContext value={activeTab}>
+      <TabContext value={outlived ? activeTab : 'died-today'}>
         <AppBar position='static'>
           <TabList
             onChange={(event: React.ChangeEvent<{}>, newValue: string) =>
@@ -71,7 +69,7 @@ export const Figures = (props: Props) => {
         </AppBar>
         <TabPanel value='died-today'>{renderFigs(diedToday, classes)}</TabPanel>
         <TabPanel value='you-outlived'>
-          {outlived ? renderFigs(outlived, classes) : null}
+          {outlived ? renderFigs(outlived, classes) : undefined}
         </TabPanel>
       </TabContext>
     </Box>
@@ -100,12 +98,14 @@ const renderFigs = (figs: FigureData[], classes: any) => {
                   />
                   <br />
                 </>
-              ) : undefined}
+              ) : (
+                undefined
+              )}
               {fig.name}
             </Link>
             <br />
             {fig.desc}
-            {fig.desc ? <br /> : null}
+            {fig.desc ? <br /> : undefined}
             {fig.born}&mdash;{fig.died}
             <br />({fig.yearsDaysAlive})
           </CardContent>
