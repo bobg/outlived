@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 
-import { Button, Switch, Tooltip, Typography } from '@material-ui/core'
+import { Button, Link, Switch, Tooltip, Typography } from '@material-ui/core'
 import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
 
 import { post } from './post'
@@ -19,6 +19,10 @@ const useStyles = (theme: Theme) =>
       color: theme.palette.secondary.contrastText,
       fontSize: theme.typography.caption.fontSize,
       padding: '.25rem',
+    },
+    email: {
+      color: theme.palette.primary.contrastText,
+      cursor: 'pointer',
     },
   })
 
@@ -50,13 +54,17 @@ export const LoggedInUser = (props: Props) => {
     }
   }
 
+  const onEmailClick = () => {
+    console.log(email)
+  }
+
   return (
     <>
       <div>
         <form method='POST' action='/s/logout'>
           <input type='hidden' name='csrf' value={csrf} />
           <Typography variant='caption'>
-            Logged in as {email}.{' '}
+            Logged in as <Link className={classes.email} onClick={onEmailClick}>{email}</Link>.{' '}
             <Button
               className={classes.logout}
               type='submit'
