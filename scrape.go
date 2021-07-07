@@ -42,7 +42,8 @@ var (
 
 	paren = regexp.MustCompile(`^(.*\S)\s*\([^()]*\)$`)
 
-	maybeBornDied = regexp.MustCompile(`^\s*\(([^()]+)–([^()]+)\)`)
+	maybeBornDied  = regexp.MustCompile(`^\s*\(([^()]+)–([^()]+)\)`)
+	maybeBornDied2 = regexp.MustCompile(`^\s*\(born\s+([A-Za-z0-9 ]+).*died\s+([A-Za-z0-9 ]+)[^()]*\)`)
 )
 
 func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, onPerson func(ctx context.Context, href, title, desc string) error) error {
@@ -230,8 +231,7 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 		return n.DataAtom == atom.Section
 	})
 	if secNode == nil {
-		err = fmt.Errorf("no infobox and no section node in %s", href)
-		return
+		return parsePersonWithoutInfoBoxOrSection(ctx, tree, href, title)
 	}
 
 	// Look for the first <p> under secNode.
@@ -274,7 +274,7 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 		}
 		tNodeText := buf.String()
 		m := maybeBornDied.FindStringSubmatch(tNodeText)
-		if m == nil {
+		if len(m) == 0 {
 			continue
 		}
 
@@ -319,6 +319,71 @@ func parsePersonWithoutInfoBox(ctx context.Context, tree *html.Node, href, title
 		return
 	}
 	imgAlt, _ = htree.Text(captionEl)
+	return
+}
+
+func parsePersonWithoutInfoBoxOrSection(ctx context.Context, tree *html.Node, href, title string) (
+	fullname, imgSrc, imgAlt string,
+	bornY, bornM, bornD, diedY, diedM, diedD int,
+	err error,
+) {
+	// Look for the first <b>...</b> that contains the title of the page
+	// (i.e., the person's name).
+	bNode := htree.FindEl(tree, func(n *html.Node) bool {
+		if n.DataAtom != atom.B {
+			return false
+		}
+		txt, err := htree.Text(n)
+		if err != nil {
+			return false
+		}
+		return txt == title
+	})
+	if bNode == nil {
+		err = fmt.Errorf("no infobox or bolded person name in %s", href)
+		return
+	}
+
+	fullname, err = htree.Text(bNode)
+	if err != nil {
+		err = errors.Wrap(err, "converting fullname to text")
+		return
+	}
+	if fullname != title {
+		err = fmt.Errorf(`found fullname "%s", which does not match title "%s"`, fullname, title)
+		return
+	}
+
+	buf := new(bytes.Buffer)
+	for tNode := bNode.NextSibling; tNode != nil; tNode = tNode.NextSibling {
+		err = htree.WriteText(buf, tNode)
+		if err != nil {
+			err = errors.Wrap(err, "converting intro text to plain text")
+			return
+		}
+	}
+	tNodeText := buf.String()
+
+	fmt.Printf("xxx tNodeText %s\n\n", tNodeText)
+
+	m := maybeBornDied.FindStringSubmatch(tNodeText)
+	if len(m) == 0 {
+		m = maybeBornDied2.FindStringSubmatch(tNodeText)
+	}
+	if len(m) == 0 {
+		err = fmt.Errorf("found bolded person name but no dates in %s", href)
+		return
+	}
+
+	bornY, bornM, bornD, err = parseDate(m[1])
+	if err != nil {
+		err = errors.Wrapf(err, "parsing birth date in %s", href)
+		return
+	}
+
+	diedY, diedM, diedD, err = parseDate(m[2])
+	err = errors.Wrapf(err, "parsing death date in %s", href)
+
 	return
 }
 

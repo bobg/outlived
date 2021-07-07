@@ -289,6 +289,11 @@ func TestParsePerson(t *testing.T) {
 			title:        "Thomas Campion",
 			wantFullname: "Thomas Campion",
 		},
+		{
+			srcfile:      "testdata/vincenzogalilei.html",
+			title:        "Vincenzo Galilei",
+			wantFullname: "Vincenzo Galilei",
+		},
 	}
 
 	ctx := context.Background()
