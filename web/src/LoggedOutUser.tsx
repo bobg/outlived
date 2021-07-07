@@ -34,6 +34,9 @@ const useStyles = (theme: Theme) =>
       padding: '0.2rem',
       width: '14rem',
     },
+    loginLabel: {
+      fontSize: theme.typography.caption.fontSize,
+    },
   })
 
 export const LoggedOutUser = (props: Props) => {
@@ -127,18 +130,22 @@ export const LoggedOutUser = (props: Props) => {
   return (
     <>
       <Paper className={classes.paper}>
-        <Typography variant='caption'>
-          Log in to see whom you’ve recently outlived.
-        </Typography>
-        <TextField
-          inputProps={{ className: classes.email }}
-          autoFocus
-          defaultValue=''
-          onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
-            setEmail(ev.target.value)
-          }}
-          placeholder='E-mail address'
-          variant='filled'
+        <FormControlLabel
+          labelPlacement='top'
+          classes={{label: classes.loginLabel}}
+          control={
+            <TextField
+              inputProps={{ className: classes.email }}
+              autoFocus
+              defaultValue=''
+              onChange={(ev: React.ChangeEvent<HTMLInputElement>) => {
+                setEmail(ev.target.value)
+              }}
+              placeholder='E-mail address'
+              variant='filled'
+            />
+          }
+          label='Log in to see whom you’ve recently outlived.'
         />
         <Box
           display='flex'
