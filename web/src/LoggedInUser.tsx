@@ -129,7 +129,7 @@ export const LoggedInUser = (props: Props) => {
                   className={classes.logout}
                   type='submit'
                   variant='outlined'
-                  color='secondary'
+                  color='primary'
                   size='small'
                 >
                   Log&nbsp;out
@@ -176,7 +176,7 @@ export const LoggedInUser = (props: Props) => {
                     onClick={reverify}
                     size='small'
                     variant='outlined'
-                    color='secondary'
+                    color='primary'
                   >
                     Resend&nbsp;verification
                   </Button>

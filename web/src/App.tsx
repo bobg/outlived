@@ -29,24 +29,20 @@ import { post } from './post'
 import { Data, FigureData, UserData } from './types'
 import { tzname } from './tz'
 
-// https://paletton.com/#uid=22K0u0kfvtS5WOhaDChkaoXohkz
+// https://paletton.com/#uid=23+0u0k87oa2jC650sPbokcd+eW
 const theme = createTheme({
   palette: {
     primary: {
-      light: '#A5E095',
-      main: '#7BC867',
-      dark: '#54A73E',
-      contrastText: '#378A21',
+      light: '#B8B8C3',
+      main: '#8B8BA1',
+      dark: '#6A6A87',
+      contrastText: '#343453',
     },
     secondary: {
-      light: '#F7A5AF',
-      main: '#E47683',
-      dark: '#BF4755',
-      contrastText: '#9D2634',
-    },
-    background: {
-      default: '#CCEFC3',
-      paper: '#CCEFC3',
+      light: '#FFFAED',
+      main: '#E6DDC2',
+      dark: '#C1B490',
+      contrastText: '#776A43',
     },
   },
   typography: {

@@ -26,7 +26,7 @@ const useStyles = (theme: Theme) =>
   makeStyles({
     card: {
       backgroundColor: theme.palette.primary.light,
-      color: theme.palette.secondary.dark,
+      color: theme.palette.secondary.contrastText,
       display: 'inline-block',
       width: '14em',
       margin: '6px',
@@ -34,7 +34,7 @@ const useStyles = (theme: Theme) =>
       verticalAlign: 'top',
     },
     figlink: {
-      color: theme.palette.secondary.dark,
+      color: theme.palette.secondary.contrastText,
       fontWeight: 'bold',
     },
     person: {

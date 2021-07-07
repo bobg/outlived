@@ -27,7 +27,7 @@ interface Props {
 const useStyles = (theme: Theme) =>
   makeStyles({
     paper: {
-      background: theme.palette.primary.main,
+      background: theme.palette.primary.light,
       color: theme.palette.primary.contrastText,
     },
     email: {
