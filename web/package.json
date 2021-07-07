@@ -33,7 +33,7 @@
     "typescript": "4.0.2"
   },
   "scripts": {
-    "build": "esbuild src/App.tsx --bundle --define:process.env.NODE_ENV=\\\"development\\\" --sourcemap --outfile=public/bundle.js",
-    "ship": "esbuild src/App.tsx --bundle --define:process.env.NODE_ENV=\\\"production\\\" --minify --outfile=public/bundle.js"
+    "build": "esbuild src/App.tsx --bundle --define:process.env.NODE_ENV=\\\"development\\\" --sourcemap --outfile=build/bundle.js",
+    "ship": "esbuild src/App.tsx --bundle --define:process.env.NODE_ENV=\\\"production\\\" --minify --outfile=build/bundle.js"
   }
 }
