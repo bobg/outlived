@@ -16,7 +16,7 @@ func main() {
 	var (
 		creds      = flag.String("creds", "", "path to credentials file")
 		test       = flag.Bool("test", false, "run in test mode")
-		projectID  = flag.String("project", "retronet", "Google Cloud project ID")
+		projectID  = flag.String("project", "outlived-163105", "Google Cloud project ID")
 		locationID = flag.String("location", "us-central1", "location ID")
 	)
 	flag.Parse()
@@ -63,7 +63,13 @@ func main() {
 		locationID: *locationID,
 		projectID:  *projectID,
 	}
-	err = subcmd.Run(ctx, c, flag.Args())
+
+	args := flag.Args()
+	if len(args) == 0 {
+		args = []string{"serve"}
+	}
+
+	err = subcmd.Run(ctx, c, args)
 	if err != nil {
 		log.Fatal(err)
 	}
