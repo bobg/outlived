@@ -364,8 +364,6 @@ func parsePersonWithoutInfoBoxOrSection(ctx context.Context, tree *html.Node, hr
 	}
 	tNodeText := buf.String()
 
-	fmt.Printf("xxx tNodeText %s\n\n", tNodeText)
-
 	m := maybeBornDied.FindStringSubmatch(tNodeText)
 	if len(m) == 0 {
 		m = maybeBornDied2.FindStringSubmatch(tNodeText)
