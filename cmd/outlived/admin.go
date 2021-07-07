@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,82 +9,47 @@ import (
 
 	"cloud.google.com/go/datastore"
 	"github.com/bobg/aesite"
+	"github.com/bobg/subcmd"
 	"github.com/pkg/errors"
 	"golang.org/x/time/rate"
 	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 
-	"github.com/bobg/outlived"
+	"outlived"
 )
 
-var adminCommands = map[string]func(context.Context, *flag.FlagSet, []string) error{
-	"list-figures": cliAdminListFigures,
-	"list-users":   cliAdminListUsers,
-	"get":          cliAdminGet,
-	"set":          cliAdminSet,
-	"scrape":       cliAdminScrape,
+func (c *maincmd) admin(ctx context.Context, args []string) error {
+	a := admincmd{c: c}
+	return subcmd.Run(ctx, a, args)
 }
 
-func cliAdmin(ctx context.Context, flagset *flag.FlagSet, args []string) error {
-	err := flagset.Parse(args)
-	if err != nil {
-		return err
-	}
-
-	if flagset.NArg() == 0 {
-		return errors.New("usage: outlived admin <subcommand> [args]")
-	}
-
-	cmd := flagset.Arg(0)
-	fn, ok := adminCommands[cmd]
-	if !ok {
-		return fmt.Errorf("unknown admin subcommand %s", cmd)
-	}
-
-	args = flagset.Args()
-	return fn(ctx, flag.NewFlagSet("", flag.ContinueOnError), args[1:])
+type admincmd struct {
+	c *maincmd
 }
 
-func cliAdminListFigures(ctx context.Context, flagset *flag.FlagSet, args []string) error {
-	var (
-		creds     = flagset.String("creds", "", "credentials file")
-		projectID = flagset.String("project", "outlived-163105", "project ID")
-		test      = flagset.Bool("test", false, "run in test mode")
-		diedStr   = flagset.String("died", "", "died-on date, like Jan-2")
-		limit     = flagset.Int("limit", 100, "limit on figures to return")
+func (a admincmd) Subcmds() subcmd.Map {
+	return subcmd.Commands(
+		"list-figures", a.listFigures, subcmd.Params(
+			"died", subcmd.String, "", "died-on date, like Jan-2",
+			"limit", subcmd.Int, 100, "limit on figures to return",
+		),
+		"list-users", a.listUsers, nil,
+		"get", a.get, nil,
+		"set", a.set, nil,
+		"scrape", a.scrape, subcmd.Params(
+			"month", subcmd.String, "", "3-letter month",
+			"day", subcmd.Int, 0, "day of month",
+			"limit", subcmd.Duration, time.Second, "rate limit",
+		),
 	)
+}
 
-	err := flagset.Parse(args)
+func (a admincmd) listFigures(ctx context.Context, diedStr string, limit int, _ []string) error {
+	died, err := time.Parse("Jan-2", diedStr)
 	if err != nil {
 		return err
 	}
 
-	if *test {
-		if *creds != "" {
-			return fmt.Errorf("cannot supply both -test and -creds")
-		}
-
-		err := aesite.DSTest(ctx, *projectID)
-		if err != nil {
-			return err
-		}
-	}
-
-	var options []option.ClientOption
-	if *creds != "" {
-		options = append(options, option.WithCredentialsFile(*creds))
-	}
-	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
-	if err != nil {
-		return errors.Wrap(err, "creating datastore client")
-	}
-
-	died, err := time.Parse("Jan-2", *diedStr)
-	if err != nil {
-		return err
-	}
-
-	figs, err := outlived.FiguresDiedOn(ctx, dsClient, died.Month(), died.Day(), *limit)
+	figs, err := outlived.FiguresDiedOn(ctx, a.c.dsClient, died.Month(), died.Day(), limit)
 	if err != nil {
 		return err
 	}
@@ -95,40 +59,9 @@ func cliAdminListFigures(ctx context.Context, flagset *flag.FlagSet, args []stri
 	return nil
 }
 
-func cliAdminListUsers(ctx context.Context, flagset *flag.FlagSet, args []string) error {
-	var (
-		creds     = flagset.String("creds", "", "credentials file")
-		projectID = flagset.String("project", "outlived-163105", "project ID")
-		test      = flagset.Bool("test", false, "run in test mode")
-	)
-
-	err := flagset.Parse(args)
-	if err != nil {
-		return err
-	}
-
-	if *test {
-		if *creds != "" {
-			return fmt.Errorf("cannot supply both -test and -creds")
-		}
-
-		err := aesite.DSTest(ctx, *projectID)
-		if err != nil {
-			return err
-		}
-	}
-
-	var options []option.ClientOption
-	if *creds != "" {
-		options = append(options, option.WithCredentialsFile(*creds))
-	}
-	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
-	if err != nil {
-		return errors.Wrap(err, "creating datastore client")
-	}
-
+func (a admincmd) listUsers(ctx context.Context, _ []string) error {
 	q := datastore.NewQuery("User")
-	it := dsClient.Run(ctx, q)
+	it := a.c.dsClient.Run(ctx, q)
 	for {
 		var u outlived.User
 		_, err := it.Next(&u)
@@ -143,43 +76,12 @@ func cliAdminListUsers(ctx context.Context, flagset *flag.FlagSet, args []string
 	}
 }
 
-func cliAdminGet(ctx context.Context, flagset *flag.FlagSet, args []string) error {
-	var (
-		creds     = flagset.String("creds", "", "credentials file")
-		projectID = flagset.String("project", "outlived-163105", "project ID")
-		test      = flagset.Bool("test", false, "run in test mode")
-	)
-
-	err := flagset.Parse(args)
-	if err != nil {
-		return err
-	}
-
-	if flagset.NArg() != 1 {
+func (a admincmd) get(ctx context.Context, args []string) error {
+	if len(args) != 1 {
 		return errors.New("usage: outlived admin get VAR")
 	}
 
-	if *test {
-		if *creds != "" {
-			return fmt.Errorf("cannot supply both -test and -creds")
-		}
-
-		err := aesite.DSTest(ctx, *projectID)
-		if err != nil {
-			return err
-		}
-	}
-
-	var options []option.ClientOption
-	if *creds != "" {
-		options = append(options, option.WithCredentialsFile(*creds))
-	}
-	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
-	if err != nil {
-		return errors.Wrap(err, "creating datastore client")
-	}
-
-	val, err := aesite.GetSetting(ctx, dsClient, flagset.Arg(0))
+	val, err := aesite.GetSetting(ctx, a.c.dsClient, args[0])
 	if err != nil {
 		return err
 	}
@@ -188,43 +90,12 @@ func cliAdminGet(ctx context.Context, flagset *flag.FlagSet, args []string) erro
 	return nil
 }
 
-func cliAdminSet(ctx context.Context, flagset *flag.FlagSet, args []string) error {
-	var (
-		creds     = flagset.String("creds", "", "credentials file")
-		projectID = flagset.String("project", "outlived-163105", "project ID")
-		test      = flagset.Bool("test", false, "run in test mode")
-	)
-
-	err := flagset.Parse(args)
-	if err != nil {
-		return err
-	}
-
-	if flagset.NArg() != 2 {
+func (a admincmd) set(ctx context.Context, args []string) error {
+	if len(args) != 2 {
 		return errors.New("usage: outlived admin set VAR VALUE")
 	}
 
-	if *test {
-		if *creds != "" {
-			return fmt.Errorf("cannot supply both -test and -creds")
-		}
-
-		err := aesite.DSTest(ctx, *projectID)
-		if err != nil {
-			return err
-		}
-	}
-
-	var options []option.ClientOption
-	if *creds != "" {
-		options = append(options, option.WithCredentialsFile(*creds))
-	}
-	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
-	if err != nil {
-		return errors.Wrap(err, "creating datastore client")
-	}
-
-	return aesite.SetSetting(ctx, dsClient, flagset.Arg(0), []byte(flagset.Arg(1)))
+	return aesite.SetSetting(ctx, a.c.dsClient, args[0], []byte(args[1]))
 }
 
 var daysInMonth = []int{
@@ -243,67 +114,34 @@ var daysInMonth = []int{
 	31,
 }
 
-func cliAdminScrape(ctx context.Context, flagset *flag.FlagSet, args []string) error {
-	var (
-		creds     = flagset.String("creds", "", "credentials file")
-		projectID = flagset.String("project", "outlived-163105", "project ID")
-		test      = flagset.Bool("test", false, "run in test mode")
-		monthStr  = flagset.String("month", "", "3-letter month")
-		onlyDay   = flagset.Int("day", 0, "day of month")
-		limit     = flagset.Duration("limit", time.Second, "rate limit")
-	)
-	err := flagset.Parse(args)
-	if err != nil {
-		return err
-	}
-
-	if *test {
-		if *creds != "" {
-			return fmt.Errorf("cannot supply both -test and -creds")
-		}
-
-		err := aesite.DSTest(ctx, *projectID)
-		if err != nil {
-			return err
-		}
-	}
-
-	var options []option.ClientOption
-	if *creds != "" {
-		options = append(options, option.WithCredentialsFile(*creds))
-	}
-	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
-	if err != nil {
-		return errors.Wrap(err, "creating datastore client")
-	}
-
+func (a admincmd) scrape(ctx context.Context, monthStr string, onlyDay int, limit time.Duration, _ []string) error {
 	var (
 		startMonth = time.January
 		endMonth   = time.December
 	)
-	if *monthStr == "" && *onlyDay != 0 {
-		return fmt.Errorf("must specify -month with -day")
+	if monthStr == "" && onlyDay != 0 {
+		return errors.New("must specify -month with -day")
 	}
 	client := &http.Client{
 		Transport: &rlroundtripper{
-			limiter: rate.NewLimiter(rate.Every(*limit), 1),
+			limiter: rate.NewLimiter(rate.Every(limit), 1),
 			rt:      http.DefaultTransport,
 		},
 	}
-	if *monthStr != "" {
-		d, err := time.Parse("Jan", *monthStr)
+	if monthStr != "" {
+		d, err := time.Parse("Jan", monthStr)
 		if err != nil {
 			return err
 		}
-		if *onlyDay != 0 {
-			return scrapeMonthDay(ctx, client, dsClient, d.Month(), *onlyDay)
+		if onlyDay != 0 {
+			return scrapeMonthDay(ctx, client, a.c.dsClient, d.Month(), onlyDay)
 		}
 		startMonth = d.Month()
 		endMonth = d.Month()
 	}
 	for m := startMonth; m <= endMonth; m++ {
 		for d := 1; d <= daysInMonth[m]; d++ {
-			err = scrapeMonthDay(ctx, client, dsClient, m, d)
+			err := scrapeMonthDay(ctx, client, a.c.dsClient, m, d)
 			if err != nil {
 				return err
 			}

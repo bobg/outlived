@@ -13,6 +13,7 @@ export interface FigureData {
 export interface UserData {
   csrf: string
   born: string
+  bornyyyymmdd: string
   daysAlive: number
   yearsDaysAlive: string
   email: string
@@ -24,5 +25,5 @@ export interface UserData {
 export interface Data {
   figures: FigureData[]
   today: string
-  user?: UserData
+  user: UserData | null
 }

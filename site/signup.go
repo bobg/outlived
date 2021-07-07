@@ -9,19 +9,19 @@ import (
 	"github.com/bobg/mid"
 	"github.com/pkg/errors"
 
-	"github.com/bobg/outlived"
+	"outlived"
 )
 
 func (s *Server) handleSignup(
 	ctx context.Context,
 	req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		BornStr  string `json:"born"`
-		TZName   string `json:"tzname"`
+		Email    string
+		Password string
+		Born     string
+		TZName   string
 	},
 ) (*userData, error) {
-	born, err := outlived.ParseDate(req.BornStr)
+	born, err := outlived.ParseDate(req.Born)
 	if err != nil {
 		return nil, errors.Wrap(mid.CodeErr{C: http.StatusBadRequest, Err: err}, "parsing birthdate")
 	}

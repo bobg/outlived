@@ -1,92 +1,170 @@
-import React from 'react'
-import './App.css'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'react-toggle/style.css'
-import 'semantic-ui-css/semantic.min.css'
-import { Loader } from 'semantic-ui-react'
+import React, { useCallback, useState } from 'react'
+import ReactDOM from 'react-dom'
 
-import { Alert, doAlert, setAlertRef } from './Alert'
+import {
+  AppBar,
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  CircularProgress,
+  Link,
+  Snackbar,
+  ThemeProvider,
+  Typography,
+} from '@material-ui/core'
+import { Alert } from '@material-ui/lab'
+import {
+  createTheme,
+  makeStyles,
+  Theme,
+  useTheme,
+} from '@material-ui/core/styles'
+
 import { Figures } from './Figures'
+import { TopBar } from './TopBar'
+import { User } from './User'
+
 import { post } from './post'
-import { LoggedInUser, LoggedOutUser } from './User'
 import { Data, FigureData, UserData } from './types'
 import { tzname } from './tz'
 
-interface State {
-  figures: FigureData[]
-  loaded: boolean
-  today?: string
-  user?: UserData
-}
+// https://paletton.com/#uid=23+0u0k87oa2jC650sPbokcd+eW
+const theme = createTheme({
+  palette: {
+    primary: {
+      light: '#B8B8C3',
+      main: '#8B8BA1',
+      dark: '#6A6A87',
+      contrastText: '#343453',
+    },
+    secondary: {
+      light: '#FFFAED',
+      main: '#E6DDC2',
+      dark: '#C1B490',
+      contrastText: '#776A43',
+    },
+  },
+  typography: {
+    button: {
+      textTransform: 'none',
+    },
+  },
+})
 
-class App extends React.Component<{}, State> {
-  public state: State = { figures: [], loaded: false }
+const useStyles = (theme: Theme) =>
+  makeStyles({
+    today: {
+      backgroundColor: theme.palette.primary.light,
+      borderWidth: '4px',
+      color: theme.palette.primary.dark,
+      fontSize: '1.2rem',
+      margin: '1rem',
+      textAlign: 'center',
+      width: 'fit-content',
+    },
+  })
 
-  private getData = async () => {
+export const App = () => {
+  const [alert, setAlert] = useState('')
+  const [alertSeverity, setAlertSeverity] = useState('error')
+  const [figures, setFigures] = useState<FigureData[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const [today, setToday] = useState('')
+  const [user, setUser] = useState<UserData | null>(null)
+
+  const classes = useStyles(theme)()
+
+  const getData = async () => {
     try {
-      const resp = await post('/s/data', {
-        tzname: tzname(),
-      })
+      const resp = await post('/s/data', { tzname: tzname() })
       const data = (await resp.json()) as Data
-      const { figures, today, user } = data
-      this.setState({ figures, loaded: true, today, user })
+      if (!data.figures) {
+        setAlert('Error: received no figures from server')
+      } else {
+        setFigures(data.figures)
+        setToday(data.today)
+        setUser(data.user)
+        setLoaded(true)
+      }
     } catch (error) {
-      doAlert('Error loading data. Please try reloading this page in a moment.')
+      setAlert(`Error loading data: ${error.message}`)
     }
   }
 
-  public componentDidMount = () => this.getData()
+  if (!loaded && !alert) {
+    getData()
+  }
 
-  private onLogin = (user: UserData) => this.setState({ user })
+  const setAlertAPI = (msg: string, severity?: string) => {
+    setAlertSeverity(severity || 'error')
+    setAlert(msg)
+  }
 
-  public render() {
-    const { figures, loaded, today, user } = this.state
-
-    return (
-      <div className='App'>
-        <Alert ref={(r: Alert) => setAlertRef(r)} />
-        <header>
-          <img src='outlived.png' alt='Outlived' width="80%" />
-        </header>
-        {loaded ? (
-          <>
-            {user && <LoggedInUser user={user} />}
-            {!user && <LoggedOutUser onLogin={this.onLogin} />}
-            {figures.length > 0 && (
-              <Figures figures={figures} today={today} user={user} />
-            )}
-            <p>
+  return (
+    <ThemeProvider theme={theme}>
+      <TopBar user={user} setUser={setUser} setAlert={setAlertAPI} />
+      <Snackbar open={!!alert} onClose={() => setAlert('')}>
+        <Alert severity={alertSeverity}>{alert}</Alert>
+      </Snackbar>
+      {loaded ? (
+        <>
+          <Box display='flex' justifyContent='center' m='auto'>
+            <Card className={classes.today} raised={true} variant='outlined'>
+              <CardContent>
+                <CardHeader title={`Today is ${today}`} />
+                {user ? (
+                  <Typography>
+                    You were born on {user.born}, which was{' '}
+                    {user.daysAlive.toLocaleString()} days ago
+                    <br />({user.yearsDaysAlive}).
+                  </Typography>
+                ) : (
+                  undefined
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+          <Figures
+            diedToday={figures}
+            outlived={user ? user.figures : undefined}
+          />
+          <Box alignItems='center' justifyContent='center' textAlign='center'>
+            <Typography paragraph={true} variant='caption'>
               Data supplied by{' '}
-              <a
+              <Link
                 target='_blank'
                 rel='noopener noreferrer'
                 href='https://en.wikipedia.org/'
               >
                 Wikipedia
-              </a>
+              </Link>
               , the free encyclopedia.
-            </p>
-            <p>
-              Some graphic design elements supplied by Suzanne Glickstein. Thanks Suze!
-            </p>
-            <p>
+            </Typography>
+            <Typography paragraph={true} variant='caption'>
+              Some graphic design elements supplied by Suzanne Glickstein.
+              Thanks Suze!
+            </Typography>
+            <Typography paragraph={true} variant='caption'>
               Curious about how this site works? Read the source at{' '}
-              <a
+              <Link
                 target='_blank'
                 rel='noopener noreferrer'
                 href='https://github.com/bobg/outlived/'
               >
                 github.com/bobg/outlived
-              </a>
+              </Link>
               !
-            </p>
-          </>
-        ) : (
-          <Loader active size='large' />
-        )}
-      </div>
-    )
-  }
+            </Typography>
+          </Box>
+        </>
+      ) : (
+        <Box display='flex' justifyContent='center' m='2em'>
+          <CircularProgress />
+        </Box>
+      )}
+    </ThemeProvider>
+  )
 }
 
-export default App
+ReactDOM.render(<App />, document.getElementById('root'))

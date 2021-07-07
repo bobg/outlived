@@ -13,7 +13,7 @@ import (
 	"github.com/bobg/basexx"
 	"github.com/pkg/errors"
 
-	"github.com/bobg/outlived"
+	"outlived"
 )
 
 var daysInMonth = []int{

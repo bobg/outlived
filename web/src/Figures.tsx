@@ -1,92 +1,124 @@
-import React from 'react'
-import { Tab, Tabs } from 'react-bootstrap'
+import React, { useCallback, useState } from 'react'
+
+import {
+  AppBar,
+  Box,
+  Card,
+  CardContent,
+  Link,
+  Paper,
+  Tab,
+  Tooltip,
+  Typography,
+} from '@material-ui/core'
+import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
+import { Person } from '@material-ui/icons'
+import { TabContext, TabList, TabPanel } from '@material-ui/lab'
 
 import { FigureData, UserData } from './types'
 
 interface Props {
-  figures: FigureData[]
-  today?: string
-  user?: UserData
+  diedToday: FigureData[]
+  outlived?: FigureData[]
 }
 
-interface State {
-  activeTab: string
-}
+const useStyles = (theme: Theme) =>
+  makeStyles({
+    card: {
+      backgroundColor: theme.palette.primary.light,
+      color: theme.palette.secondary.contrastText,
+      display: 'inline-block',
+      width: '14em',
+      margin: '6px',
+      textAlign: 'center',
+      verticalAlign: 'top',
+    },
+    figlink: {
+      color: theme.palette.secondary.contrastText,
+      fontWeight: 'bold',
+    },
+    person: {
+      zoom: '500%',
+    },
+  })
 
-export class Figures extends React.Component<Props, State> {
-  public state: State = { activeTab: '2' }
+export const Figures = (props: Props) => {
+  const { diedToday, outlived } = props
 
-  private handleTab = (activeTab: string|null) => {
-    if (activeTab) {
-      this.setState({ activeTab })
-    }
-  }
+  const [activeTab, setActiveTab] = useState('you-outlived')
 
-  public render = () => {
-    const { figures, today, user } = this.props
-    if (!figures) {
-      return null
-    }
+  const theme = useTheme()
+  const classes = useStyles(theme)()
 
-    if (user) {
-      return (
-        <div className='figures logged-in'>
-          {today && <div>Today is {today}.</div>}
-          <div>
-            You were born on {user.born}, which was{' '}
-            {user.daysAlive.toLocaleString()} days ago.
-          </div>
-          <Tabs
-            id='figures'
-            activeKey={this.state.activeTab}
-            onSelect={this.handleTab}
+  const outlivedTab = (
+    <Tab
+      value='you-outlived'
+      disabled={!outlived}
+      label='You have recently outlived'
+    />
+  )
+
+  return (
+    <Box alignItems='center' justifyContent='center' textAlign='center'>
+      <TabContext value={outlived ? activeTab : 'died-today'}>
+        <AppBar position='static'>
+          <TabList
+            onChange={(event: React.ChangeEvent<{}>, newValue: string) =>
+              setActiveTab(newValue)
+            }
           >
-            <Tab eventKey={'1'} title='Died on this date'>
-              {renderFigs(figures, true)}
-            </Tab>
-            <Tab eventKey={'2'} title='You have recently outlived'>
-              {renderFigs(user.figures, false)}
-            </Tab>
-          </Tabs>
-        </div>
-      )
-    }
-
-    return (
-      <div className='figures logged-out'>
-        {today && <div>Today is {today}.</div>}
-        <div>Died on this date:</div>
-        {renderFigs(figures, true)}
-      </div>
-    )
-  }
+            <Tab value='died-today' label='Died on this date' />
+            {outlived ? (
+              outlivedTab
+            ) : (
+              <Tooltip title='Log in to see whom you’ve recently outlived.'>
+                <span>{outlivedTab}</span>
+              </Tooltip>
+            )}
+          </TabList>
+        </AppBar>
+        <TabPanel value='died-today'>{renderFigs(diedToday, classes)}</TabPanel>
+        <TabPanel value='you-outlived'>
+          {outlived ? renderFigs(outlived, classes) : undefined}
+        </TabPanel>
+      </TabContext>
+    </Box>
+  )
 }
 
-const renderFigs = (figs: FigureData[], showAge: boolean) => (
-  <ul className='grid'>
-    {figs.map((fig: FigureData) => (
-      <li>
-        <a
-          className='figure'
-          target='_blank'
-          rel='noopener noreferrer'
-          href={fig.href}
-        >
-          {fig.imgSrc && (
-            <span>
-              <img className='img128' src={fig.imgSrc} alt={fig.imgAlt} />
+// xxx figure out the right type for classes
+const renderFigs = (figs: FigureData[], classes: any) => {
+  return (
+    <>
+      {figs.map((fig: FigureData) => (
+        <Card className={classes.card} key={fig.href}>
+          <CardContent>
+            <Link
+              className={classes.figlink}
+              target='_blank'
+              rel='noopener noreferrer'
+              href={fig.href}
+            >
+              {fig.imgSrc ? (
+                <img
+                  className={classes.image}
+                  src={fig.imgSrc}
+                  alt={fig.imgAlt}
+                />
+              ) : (
+                <Person className={classes.person} />
+              )}
               <br />
-            </span>
-          )}
-          {fig.name}
-        </a>
-        <br />
-        {fig.desc}
-        {fig.desc && <br />}
-        {fig.born}&mdash;{fig.died}
-        {showAge && <br />}
-        {showAge && '(' + fig.yearsDaysAlive + ')'}
-      </li>
-    ))}
-  </ul>
-)
+              {fig.name}
+            </Link>
+            <br />
+            {fig.desc}
+            {fig.desc ? <br /> : undefined}
+            {fig.born}&mdash;{fig.died}
+            <br />({fig.yearsDaysAlive})
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  )
+}

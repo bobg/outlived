@@ -1,8 +1,11 @@
 {
-  "name": "web",
-  "version": "0.1.0",
+  "name": "outlived",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.11.2",
+    "@material-ui/lab": "^4.0.0-alpha.57",
     "@types/jest": "24.0.18",
     "@types/node": "12.7.4",
     "@types/react": "16.9.12",
@@ -13,6 +16,7 @@
     "bootstrap": "^4.3.1",
     "esbuild": "^0.8.29",
     "ini": "^1.3.8",
+    "material-ui": "^0.20.2",
     "node-notifier": "^8.0.1",
     "object-path": "^0.11.5",
     "prettier": "^1.18.2",
@@ -29,24 +33,7 @@
     "typescript": "4.0.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "build": "esbuild src/App.tsx --bundle --define:process.env.NODE_ENV=\\\"development\\\" --sourcemap --outfile=build/bundle.js",
+    "ship": "esbuild src/App.tsx --bundle --define:process.env.NODE_ENV=\\\"production\\\" --minify --outfile=build/bundle.js"
   }
 }

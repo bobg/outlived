@@ -4,52 +4,93 @@ import (
 	"context"
 	"flag"
 	"log"
-	"os"
-	"os/signal"
+
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	"cloud.google.com/go/datastore"
+	"github.com/bobg/aesite"
+	"github.com/bobg/subcmd"
+	"google.golang.org/api/option"
 )
 
-var commands = map[string]func(context.Context, *flag.FlagSet, []string) error{
-	"admin": cliAdmin,
-	// "scrape": cliScrape,
-	"serve": cliServe,
-}
-
 func main() {
-	ctx := context.Background()
-
+	var (
+		creds      = flag.String("creds", "", "path to credentials file")
+		test       = flag.Bool("test", false, "run in test mode")
+		projectID  = flag.String("project", "outlived-163105", "Google Cloud project ID")
+		locationID = flag.String("location", "us-central1", "location ID")
+	)
 	flag.Parse()
 
-	flagset := flag.NewFlagSet("", flag.ContinueOnError)
-
-	if flag.NArg() == 0 {
-		log.Print("running server in default mode")
-		err := cliServe(ctx, flagset, nil)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
+	if *test && *creds != "" {
+		log.Fatal("Cannot supply both -test and -creds")
 	}
 
-	cmd := flag.Arg(0)
-	fn, ok := commands[cmd]
-	if !ok {
-		log.Fatalf("unknown command %s", cmd)
-	}
-
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
-	go func() {
-		sig := <-sigCh
-		log.Printf("got signal %s", sig)
-		cancel()
-	}()
+	var (
+		done <-chan struct{}
+		err  error
+	)
+	if *test {
+		done, err = aesite.DSTestWithDoneChan(ctx, *projectID)
+		if err != nil {
+			log.Fatalf("Starting test datastore service: %s", err)
+		}
+	}
+
+	var options []option.ClientOption
+	if *creds != "" {
+		options = append(options, option.WithCredentialsFile(*creds))
+	}
+
+	dsClient, err := datastore.NewClient(ctx, *projectID, options...)
+	if err != nil {
+		log.Fatalf("Creating datastore client: %s", err)
+	}
+
+	var ctClient *cloudtasks.Client
+	if !*test {
+		ctClient, err = cloudtasks.NewClient(ctx, options...)
+		if err != nil {
+			log.Fatalf("Creating cloudtasks client: %s", err)
+		}
+	}
+
+	c := &maincmd{
+		dsClient:   dsClient,
+		ctClient:   ctClient,
+		locationID: *locationID,
+		projectID:  *projectID,
+	}
 
 	args := flag.Args()
-	err := fn(ctx, flagset, args[1:])
+	if len(args) == 0 {
+		args = []string{"serve"}
+	}
+
+	err = subcmd.Run(ctx, c, args)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if done != nil {
+		cancel()
+		<-done
+	}
+}
+
+type maincmd struct {
+	dsClient              *datastore.Client
+	ctClient              *cloudtasks.Client
+	projectID, locationID string
+}
+
+func (c *maincmd) Subcmds() subcmd.Map {
+	return subcmd.Commands(
+		"serve", c.serve, subcmd.Params(
+			"content", subcmd.String, "web/public", "path to directory containing static content (for test mode)",
+		),
+		"admin", c.admin, nil,
+	)
 }
