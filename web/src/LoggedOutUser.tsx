@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   ButtonGroup,
+  FormControlLabel,
   Paper,
   TextField,
   Typography,
@@ -20,7 +21,7 @@ import { datestr } from './util'
 
 interface Props {
   setUser: (user: UserData) => void
-  setAlert: (alert: string) => void
+  setAlert: (alert: string, severity?: string) => void
 }
 
 const useStyles = (theme: Theme) =>
@@ -31,6 +32,7 @@ const useStyles = (theme: Theme) =>
     },
     email: {
       padding: '0.2rem',
+      width: '14rem',
     },
   })
 
@@ -116,7 +118,7 @@ export const LoggedOutUser = (props: Props) => {
         forgot: true,
         tzname: tzname(),
       })
-      setAlert('Check your e-mail for a password-reset message.') // xxx non-error alert
+      setAlert('Check your e-mail for a password-reset message.', 'info')
     } catch (error) {
       setAlert(`Login failed: ${error.message}`)
     }
@@ -152,7 +154,7 @@ export const LoggedOutUser = (props: Props) => {
               variant='outlined'
               size='small'
             >
-              Log in
+              Log&nbsp;in
             </Button>
             <Button
               disabled={!emailValid(email)}
@@ -161,7 +163,7 @@ export const LoggedOutUser = (props: Props) => {
               variant='outlined'
               size='small'
             >
-              Sign up
+              Sign&nbsp;up
             </Button>
           </ButtonGroup>
         </Box>

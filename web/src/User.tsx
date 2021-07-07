@@ -12,7 +12,7 @@ import { UserData } from './types'
 interface Props {
   user: UserData | null
   setUser: (user: UserData) => void
-  setAlert: (alert: string) => void
+  setAlert: (alert: string, severity?: string) => void
 }
 
 const useStyles = (theme: Theme) =>

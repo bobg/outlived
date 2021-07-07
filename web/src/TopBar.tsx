@@ -9,7 +9,7 @@ import { UserData } from './types'
 interface Props {
   user: UserData | null
   setUser: (user: UserData) => void
-  setAlert: (alert: string) => void
+  setAlert: (alert: string, severity?: string) => void
 }
 
 const useStyles = makeStyles({
@@ -17,7 +17,7 @@ const useStyles = makeStyles({
     flexGrow: 1,
   },
   user: {
-    minWidth: '12em',
+    // minWidth: '12em',
   },
 })
 
@@ -29,11 +29,13 @@ export const TopBar = (props: Props) => {
   return (
     <AppBar position='static'>
       <Toolbar>
-        <Box className={classes.logo}>
-          <img src='outlived.png' alt='Outlived' width='80%' />
-        </Box>
-        <Box className={classes.user}>
-          <User user={user} setUser={setUser} setAlert={setAlert} />
+        <Box display='flex'>
+          <Box className={classes.logo}>
+            <img src='outlived.png' alt='Outlived' width='80%' />
+          </Box>
+          <Box className={classes.user}>
+            <User user={user} setUser={setUser} setAlert={setAlert} />
+          </Box>
         </Box>
       </Toolbar>
     </AppBar>

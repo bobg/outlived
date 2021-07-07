@@ -71,6 +71,7 @@ const useStyles = (theme: Theme) =>
 
 export const App = () => {
   const [alert, setAlert] = useState('')
+  const [alertSeverity, setAlertSeverity] = useState('error')
   const [figures, setFigures] = useState<FigureData[]>([])
   const [loaded, setLoaded] = useState(false)
   const [today, setToday] = useState('')
@@ -99,11 +100,16 @@ export const App = () => {
     getData()
   }
 
+  const setAlertAPI = (msg: string, severity?: string) => {
+    setAlertSeverity(severity || 'error')
+    setAlert(msg)
+  }
+
   return (
     <ThemeProvider theme={theme}>
-      <TopBar user={user} setUser={setUser} setAlert={setAlert} />
+      <TopBar user={user} setUser={setUser} setAlert={setAlertAPI} />
       <Snackbar open={!!alert} onClose={() => setAlert('')}>
-        <Alert severity='error'>{alert}</Alert>
+        <Alert severity={alertSeverity}>{alert}</Alert>
       </Snackbar>
       {loaded ? (
         <>

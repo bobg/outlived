@@ -37,6 +37,9 @@ const useStyles = (theme: Theme) =>
       color: theme.palette.secondary.dark,
       fontWeight: 'bold',
     },
+    person: {
+      zoom: '500%',
+    },
   })
 
 export const Figures = (props: Props) => {
@@ -97,17 +100,15 @@ const renderFigs = (figs: FigureData[], classes: any) => {
               href={fig.href}
             >
               {fig.imgSrc ? (
-                <>
-                  <img
-                    className={classes.image}
-                    src={fig.imgSrc}
-                    alt={fig.imgAlt}
-                  />
-                  <br />
-                </>
+                <img
+                  className={classes.image}
+                  src={fig.imgSrc}
+                  alt={fig.imgAlt}
+                />
               ) : (
-                undefined // xxx why can I not use <Person/> here?
+                <Person className={classes.person} />
               )}
+              <br />
               {fig.name}
             </Link>
             <br />
