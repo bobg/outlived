@@ -12,10 +12,10 @@ handlers:
   script: auto
   secure: always
 - url: /(..*)
-  static_files: web/build/\1
-  upload: web/build/.*
+  static_files: web/public/\1
+  upload: web/public/.*
   secure: always
 - url: /
-  static_files: web/build/index.html
-  upload: web/build/index.html
+  static_files: web/public/index.html
+  upload: web/public/index.html
   secure: always

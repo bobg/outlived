@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import ReactDOM from 'react-dom'
 
 import {
@@ -28,6 +28,7 @@ import { User } from './User'
 import { post } from './post'
 import { Data, FigureData, UserData } from './types'
 import { tzname } from './tz'
+import { daysInMonth } from './util'
 
 // https://paletton.com/#uid=23+0u0k87oa2jC650sPbokcd+eW
 const theme = createTheme({
@@ -67,7 +68,7 @@ const useStyles = (theme: Theme) =>
 
 export const App = () => {
   const [alert, setAlert] = useState('')
-  const [alertSeverity, setAlertSeverity] = useState('error')
+  const [alertSeverity, setAlertSeverity] = useState<'error' | 'info'>('error')
   const [figures, setFigures] = useState<FigureData[]>([])
   const [loaded, setLoaded] = useState(false)
   const [today, setToday] = useState('')
@@ -87,16 +88,41 @@ export const App = () => {
         setUser(data.user)
         setLoaded(true)
       }
+
+      // Queue a refetch of the data for when the date changes.
+
+      const now = new Date()
+      let y = now.getFullYear()
+      let m = 1 + now.getMonth()
+      let d = now.getDate()
+
+      d++
+      if (d > daysInMonth(y, m)) {
+        d = 1
+        m++
+      }
+      if (m > 12) {
+        m = 1
+        y++
+      }
+
+      const tomw = new Date(y, m - 1, d)
+
+      // Reload happens at 1 second + up to 5 minutes into the new day (to avoid a stampede).
+      window.setTimeout(getData, (tomw.getTime() - now.getTime()) + 1000 + (Math.random() * 300000))
     } catch (error) {
       setAlert(`Error loading data: ${error.message}`)
     }
   }
 
-  if (!loaded && !alert) {
-    getData()
-  }
+  // Calling getData inside useEffect this way eliminates duplicate calls to the server.
+  useEffect(() => {
+    if (!loaded && !alert) {
+      getData()
+    }
+  }, [loaded, alert])
 
-  const setAlertAPI = (msg: string, severity?: string) => {
+  const setAlertAPI = (msg: string, severity?: 'error' | 'info') => {
     setAlertSeverity(severity || 'error')
     setAlert(msg)
   }

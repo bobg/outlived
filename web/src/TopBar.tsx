@@ -9,7 +9,7 @@ import { UserData } from './types'
 interface Props {
   user: UserData | null
   setUser: (user: UserData) => void
-  setAlert: (alert: string, severity?: string) => void
+  setAlert: (alert: string, severity?: 'error'|'info') => void
 }
 
 const useStyles = makeStyles({

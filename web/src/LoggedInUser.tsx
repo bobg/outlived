@@ -29,7 +29,7 @@ import { datestr } from './util'
 interface Props {
   user: UserData
   setUser: (user: UserData) => void
-  setAlert: (alert: string, severity?: string) => void
+  setAlert: (alert: string, severity?: 'error'|'info') => void
 }
 
 const useStyles = (theme: Theme) =>

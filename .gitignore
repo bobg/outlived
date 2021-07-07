@@ -2,3 +2,6 @@
 old
 older
 creds.json
+outlived
+web/public/bundle.js
+web/public/bundle.js.map

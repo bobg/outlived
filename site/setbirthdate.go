@@ -15,7 +15,7 @@ func (s *Server) handleSetBirthdate(
 	req struct {
 		CSRF    string
 		NewDate string
-		TZName string
+		TZName  string
 	},
 ) (*userData, error) {
 	sess := getSess(ctx)
