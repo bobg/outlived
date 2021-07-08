@@ -11,7 +11,7 @@ import {
   Tooltip,
   Typography,
 } from '@material-ui/core'
-import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
+import { makeStyles, Theme } from '@material-ui/core/styles'
 import { Person } from '@material-ui/icons'
 import { TabContext, TabList, TabPanel } from '@material-ui/lab'
 
@@ -22,33 +22,34 @@ interface Props {
   outlived?: FigureData[]
 }
 
-const useStyles = (theme: Theme) =>
-  makeStyles({
-    card: {
-      backgroundColor: theme.palette.primary.light,
-      color: theme.palette.secondary.contrastText,
-      display: 'inline-block',
-      width: '14em',
-      margin: '6px',
-      textAlign: 'center',
-      verticalAlign: 'top',
-    },
-    figlink: {
-      color: theme.palette.secondary.contrastText,
-      fontWeight: 'bold',
-    },
-    person: {
-      zoom: '500%',
-    },
-  })
+const useStyles = makeStyles((theme: Theme) => ({
+  card: {
+    backgroundColor: theme.palette.primary.light,
+    color: theme.palette.secondary.contrastText,
+    display: 'inline-block',
+    width: '13em',
+    margin: '6px',
+    textAlign: 'center',
+    verticalAlign: 'top',
+  },
+  figlink: {
+    color: theme.palette.secondary.contrastText,
+    fontWeight: 'bold',
+  },
+  personIcon: {
+    zoom: '500%',
+  },
+  image: {
+    width: '100%',
+  },
+}))
 
 export const Figures = (props: Props) => {
   const { diedToday, outlived } = props
 
   const [activeTab, setActiveTab] = useState('you-outlived')
 
-  const theme = useTheme()
-  const classes = useStyles(theme)()
+  const classes = useStyles()
 
   const outlivedTab = (
     <Tab
@@ -106,7 +107,7 @@ const renderFigs = (figs: FigureData[], classes: any) => {
                   alt={fig.imgAlt}
                 />
               ) : (
-                <Person className={classes.person} />
+                <Person className={classes.personIcon} />
               )}
               <br />
               {fig.name}

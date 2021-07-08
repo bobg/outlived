@@ -16,7 +16,7 @@ import {
   Tooltip,
   Typography,
 } from '@material-ui/core'
-import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
+import { makeStyles, Theme } from '@material-ui/core/styles'
 import { Event } from '@material-ui/icons'
 
 import { BirthdateDialog } from './BirthdateDialog'
@@ -29,26 +29,25 @@ import { datestr } from './util'
 interface Props {
   user: UserData
   setUser: (user: UserData) => void
-  setAlert: (alert: string, severity?: 'error'|'info') => void
+  setAlert: (alert: string, severity?: 'error' | 'info') => void
 }
 
-const useStyles = (theme: Theme) =>
-  makeStyles({
-    logout: {
-      padding: '.25rem',
-    },
-    email: {
-      color: theme.palette.primary.contrastText,
-      cursor: 'pointer',
-    },
-    paper: {
-      margin: '2px',
-      padding: '2px',
-    },
-    receiveLabel: {
-      fontSize: theme.typography.caption.fontSize,
-    },
-  })
+const useStyles = makeStyles((theme: Theme) => ({
+  logout: {
+    padding: '.25rem',
+  },
+  email: {
+    color: theme.palette.primary.contrastText,
+    cursor: 'pointer',
+  },
+  paper: {
+    margin: '2px',
+    padding: '2px',
+  },
+  receiveLabel: {
+    fontSize: theme.typography.caption.fontSize,
+  },
+}))
 
 export const LoggedInUser = (props: Props) => {
   const { user, setUser, setAlert } = props
@@ -59,8 +58,7 @@ export const LoggedInUser = (props: Props) => {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [birthdateOpen, setBirthdateOpen] = useState(false)
 
-  const theme = useTheme()
-  const classes = useStyles(theme)()
+  const classes = useStyles()
 
   const doSetReceivingMail = async (checked: boolean) => {
     try {
@@ -145,15 +143,16 @@ export const LoggedInUser = (props: Props) => {
           <Tooltip title='Up to one message per day showing the notable figures you’ve just outlived.'>
             <Box>
               <FormControlLabel
-                classes={{label: classes.receiveLabel}}
+                classes={{ label: classes.receiveLabel }}
                 control={
                   <Switch
-                    size='small'
                     checked={receivingMail}
                     onChange={(
                       event: React.ChangeEvent<HTMLInputElement>,
                       checked: boolean
                     ) => doSetReceivingMail(checked)}
+                    size='small'
+                    color='primary'
                   />
                 }
                 disabled={!verified}

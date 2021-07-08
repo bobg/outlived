@@ -53,18 +53,17 @@ const theme = createTheme({
   },
 })
 
-const useStyles = (theme: Theme) =>
-  makeStyles({
-    today: {
-      backgroundColor: theme.palette.primary.light,
-      borderWidth: '4px',
-      color: theme.palette.primary.dark,
-      fontSize: '1.2rem',
-      margin: '1rem',
-      textAlign: 'center',
-      width: 'fit-content',
-    },
-  })
+const useStyles = makeStyles((theme: Theme) => ({
+  today: {
+    backgroundColor: theme.palette.primary.light,
+    borderWidth: '4px',
+    color: theme.palette.primary.dark,
+    fontSize: '1.2rem',
+    margin: '1rem',
+    textAlign: 'center',
+    width: 'fit-content',
+  },
+}))
 
 export const App = () => {
   const [alert, setAlert] = useState('')
@@ -74,7 +73,7 @@ export const App = () => {
   const [today, setToday] = useState('')
   const [user, setUser] = useState<UserData | null>(null)
 
-  const classes = useStyles(theme)()
+  const classes = useStyles()
 
   const getData = async () => {
     try {
@@ -109,7 +108,10 @@ export const App = () => {
       const tomw = new Date(y, m - 1, d)
 
       // Reload happens at 1 second + up to 5 minutes into the new day (to avoid a stampede).
-      window.setTimeout(getData, (tomw.getTime() - now.getTime()) + 1000 + (Math.random() * 300000))
+      window.setTimeout(
+        getData,
+        tomw.getTime() - now.getTime() + 1000 + Math.random() * 300000
+      )
     } catch (error) {
       setAlert(`Error loading data: ${error.message}`)
     }

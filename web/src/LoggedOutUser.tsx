@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
 } from '@material-ui/core'
-import { makeStyles, Theme, useTheme } from '@material-ui/core/styles'
+import { makeStyles, Theme } from '@material-ui/core/styles'
 
 import { BirthdateDialog } from './BirthdateDialog'
 import { Password } from './Password'
@@ -21,23 +21,22 @@ import { datestr } from './util'
 
 interface Props {
   setUser: (user: UserData) => void
-  setAlert: (alert: string, severity?: 'error'|'info') => void
+  setAlert: (alert: string, severity?: 'error' | 'info') => void
 }
 
-const useStyles = (theme: Theme) =>
-  makeStyles({
-    paper: {
-      background: theme.palette.primary.light,
-      color: theme.palette.primary.contrastText,
-    },
-    email: {
-      padding: '0.2rem',
-      width: '14rem',
-    },
-    loginLabel: {
-      fontSize: theme.typography.caption.fontSize,
-    },
-  })
+const useStyles = makeStyles((theme: Theme) => ({
+  paper: {
+    background: theme.palette.secondary.light,
+    color: theme.palette.primary.contrastText,
+  },
+  email: {
+    padding: '0.2rem',
+    width: '14rem',
+  },
+  loginLabel: {
+    fontSize: theme.typography.caption.fontSize,
+  },
+}))
 
 export const LoggedOutUser = (props: Props) => {
   const { setUser, setAlert } = props
@@ -48,8 +47,7 @@ export const LoggedOutUser = (props: Props) => {
   const [pwOpen, setPWOpen] = useState(false)
   const [pwMode, setPWMode] = useState('')
 
-  const theme = useTheme()
-  const classes = useStyles(theme)()
+  const classes = useStyles()
 
   const onLoginButton = () => {
     setPWOpen(true)
@@ -132,7 +130,7 @@ export const LoggedOutUser = (props: Props) => {
       <Paper className={classes.paper}>
         <FormControlLabel
           labelPlacement='top'
-          classes={{label: classes.loginLabel}}
+          classes={{ label: classes.loginLabel }}
           control={
             <TextField
               inputProps={{ className: classes.email }}
@@ -157,7 +155,7 @@ export const LoggedOutUser = (props: Props) => {
             <Button
               disabled={!emailValid(email)}
               onClick={onLoginButton}
-              color='secondary'
+              color='primary'
               variant='outlined'
               size='small'
             >
@@ -166,7 +164,7 @@ export const LoggedOutUser = (props: Props) => {
             <Button
               disabled={!emailValid(email)}
               onClick={onSignupButton}
-              color='secondary'
+              color='primary'
               variant='outlined'
               size='small'
             >
