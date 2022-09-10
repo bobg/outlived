@@ -107,7 +107,10 @@ func (d Date) YDSinceStr(other Date) string {
 
 func (d Date) String() string {
 	m := d.M.String()
-	return fmt.Sprintf("%d %s %d", d.D, m[:3], d.Y)
+	if d.Y > 0 {
+		return fmt.Sprintf("%d %s %d", d.D, m[:3], d.Y)
+	}
+	return fmt.Sprintf("%d %s %d BC", d.D, m[:3], -d.Y)
 }
 
 func (d Date) YYYYMMDD() string {
