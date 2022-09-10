@@ -99,9 +99,9 @@ func ScrapeDay(ctx context.Context, client *http.Client, m time.Month, d int, on
 			href := htree.ElAttr(aNode, "href")
 			href = strings.TrimPrefix(href, "./")
 
-			// We skip certain hrefs. See https://github.com/bobg/outlived/issues/36
+			// We skip certain hrefs. See https://github.com/bobg/outlived/issues/36, https://github.com/bobg/outlived/issues/47
 			switch href {
-			case "/wiki/Wright_brothers":
+			case "/wiki/Wright_brothers", "/wiki/The_Andrews_Sisters":
 				continue
 			}
 
