@@ -7,7 +7,7 @@ require (
 	github.com/bobg/basexx v0.0.0-20191130163404-b0c4bda224a5
 	github.com/bobg/htree v1.2.1
 	github.com/bobg/mid v1.3.0
-	github.com/bobg/subcmd v0.1.0 // indirect
+	github.com/bobg/subcmd v0.1.0
 	github.com/facebookgo/ensure v0.0.0-20200202191622-63f1cf65ac4c // indirect
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
@@ -32,4 +32,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-go 1.12
+go 1.16
