@@ -10,9 +10,10 @@ import (
 	"time"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	"cloud.google.com/go/datastore"
+	"github.com/bobg/aesite"
 	"github.com/pkg/errors"
 	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
 
@@ -21,16 +22,23 @@ type taskService interface {
 	enqueueTask(ctx context.Context, queue, taskName, url string) error
 }
 
-type gCloudTasks cloudtasks.Client
+type gCloudTasks struct {
+	client   *cloudtasks.Client
+	dsClient *datastore.Client
+	baseURL  string
+}
 
-func newGCloudTasks(ctx context.Context, options ...option.ClientOption) (*gCloudTasks, error) {
-	client, err := cloudtasks.NewClient(ctx, options...)
-	return (*gCloudTasks)(client), err
+func newGCloudTasks(client *cloudtasks.Client, dsClient *datastore.Client, baseURL string) *gCloudTasks {
+	return &gCloudTasks{
+		client:   client,
+		dsClient: dsClient,
+		baseURL:  baseURL,
+	}
 }
 
 func (t *gCloudTasks) queueEmpty(ctx context.Context, queue string) (bool, error) {
 	ltreq := &taskspb.ListTasksRequest{Parent: queue}
-	iter := (*cloudtasks.Client)(t).ListTasks(ctx, ltreq)
+	iter := t.client.ListTasks(ctx, ltreq)
 	_, err := iter.Next()
 	if err != nil && err != iterator.Done {
 		return false, errors.Wrapf(err, "gCloudTasks: checking queue %s for emptiness", queue)
@@ -38,20 +46,37 @@ func (t *gCloudTasks) queueEmpty(ctx context.Context, queue string) (bool, error
 	return err == iterator.Done, nil
 }
 
-func (t *gCloudTasks) enqueueTask(ctx context.Context, queue, taskName, url string) error {
-	_, err := (*cloudtasks.Client)(t).CreateTask(ctx, &taskspb.CreateTaskRequest{
+func (t *gCloudTasks) enqueueTask(ctx context.Context, queue, taskName, relativeURL string) error {
+	u, err := url.Parse(t.baseURL)
+	if err != nil {
+		return errors.Wrap(err, "parsing base URL")
+	}
+	ref, err := url.Parse(relativeURL)
+	if err != nil {
+		return errors.Wrap(err, "parsing relative URL")
+	}
+	fullURL := u.ResolveReference(ref).String()
+
+	headers := make(map[string]string)
+	masterKey, err := aesite.GetSetting(ctx, t.dsClient, "master-key")
+	if err == nil {
+		headers["X-Outlived-Key"] = string(masterKey)
+	}
+
+	_, err = t.client.CreateTask(ctx, &taskspb.CreateTaskRequest{
 		Parent: queue,
 		Task: &taskspb.Task{
 			Name: taskName,
-			MessageType: &taskspb.Task_AppEngineHttpRequest{
-				AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
-					HttpMethod:  taskspb.HttpMethod_GET,
-					RelativeUri: url,
+			MessageType: &taskspb.Task_HttpRequest{
+				HttpRequest: &taskspb.HttpRequest{
+					HttpMethod: taskspb.HttpMethod_GET,
+					Url:        fullURL,
+					Headers:    headers,
 				},
 			},
 		},
 	})
-	return errors.Wrapf(err, "gCloudTasks: enqueueing task %s, queue %s, url %s", taskName, queue, url)
+	return errors.Wrapf(err, "gCloudTasks: enqueueing task %s, queue %s, url %s", taskName, queue, relativeURL)
 }
 
 type localTasks struct {

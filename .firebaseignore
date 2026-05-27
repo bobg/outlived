@@ -1,0 +1,23 @@
+# Ignore everything except web/public
+.git/
+.github/
+.gemini/
+cmd/
+site/
+testdata/
+*.go
+go.mod
+go.sum
+Makefile
+Dockerfile
+app.yaml
+cron.yaml
+index.yaml
+Guide.md
+Migration.md
+Readme.md
+web/src/
+web/tsconfig.json
+web/package.json
+web/package-lock.json
+web/node_modules/

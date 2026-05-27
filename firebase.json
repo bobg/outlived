@@ -1,0 +1,33 @@
+{
+  "hosting": {
+    "public": "web/public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/r",
+        "run": {
+          "serviceId": "outlived-backend",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/s/**",
+        "run": {
+          "serviceId": "outlived-backend",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/t/**",
+        "run": {
+          "serviceId": "outlived-backend",
+          "region": "us-central1"
+        }
+      }
+    ]
+  }
+}

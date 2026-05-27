@@ -85,8 +85,10 @@ func rlink(target string) (*url.URL, error) {
 		v.Set("et", rest)
 	} else if rest := try("//upload.wikimedia.org/wikipedia/en/"); rest != "" {
 		v.Set("e", rest)
-	} else {
+	} else if strings.HasPrefix(target, "/wiki/") {
 		v.Set("w", strings.TrimPrefix(target, "/wiki/"))
+	} else {
+		return url.Parse(target)
 	}
 
 	r.RawQuery = v.Encode()
