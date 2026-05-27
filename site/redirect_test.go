@@ -54,8 +54,10 @@ func TestRlink(t *testing.T) {
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("case_%02d", i), func(t *testing.T) {
 			u, _ := rlink(c.inp)
-			u.Scheme = ""
-			u.Host = ""
+			if u.Host == homeURL.Host && u.Scheme == homeURL.Scheme {
+				u.Scheme = ""
+				u.Host = ""
+			}
 			got := u.String()
 			if got != c.want {
 				t.Errorf("got %s, want %s", got, c.want)

@@ -16,6 +16,10 @@ import (
 	"google.golang.org/appengine"
 )
 
+func isProduction() bool {
+	return os.Getenv("K_SERVICE") != "" || os.Getenv("GAE_ENV") != ""
+}
+
 func NewServer(ctx context.Context, contentDir, projectID, locationID string, dsClient *datastore.Client, ctClient *cloudtasks.Client) (*Server, error) {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -31,8 +35,8 @@ func NewServer(ctx context.Context, contentDir, projectID, locationID string, ds
 		dsClient:   dsClient,
 	}
 
-	if appengine.IsAppEngine() {
-		s.tasks = (*gCloudTasks)(ctClient)
+	if isProduction() {
+		s.tasks = newGCloudTasks(ctClient, dsClient, homeURL.String())
 
 		domain, err := aesite.GetSetting(ctx, dsClient, "mailgun_domain")
 		if err != nil {
@@ -133,24 +137,26 @@ func (w *respWriter) WriteHeader(code int) {
 	w.w.WriteHeader(code)
 }
 
-// See
-// https://cloud.google.com/appengine/docs/standard/go112/scheduling-jobs-with-cron-yaml#validating_cron_requests.
 func (s *Server) checkCron(req *http.Request) error {
-	if !appengine.IsAppEngine() {
+	if !isProduction() {
 		return nil
 	}
 
-	h := strings.TrimSpace(req.Header.Get("X-Appengine-Cron"))
-	if h != "true" {
-		return mid.CodeErr{C: http.StatusUnauthorized}
+	if req.Header.Get("X-Appengine-Cron") == "true" || req.Header.Get("X-CloudScheduler") == "true" {
+		return nil
 	}
-	return nil
+
+	ctx := req.Context()
+	masterKey, err := aesite.GetSetting(ctx, s.dsClient, "master-key")
+	if err == nil && strings.TrimSpace(req.Header.Get("X-Outlived-Key")) == string(masterKey) {
+		return nil
+	}
+
+	return mid.CodeErr{C: http.StatusUnauthorized}
 }
 
-// See
-// https://cloud.google.com/tasks/docs/creating-appengine-handlers#reading_request_headers.
 func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
-	if !appengine.IsAppEngine() {
+	if !isProduction() {
 		return nil
 	}
 
@@ -161,16 +167,17 @@ func (s *Server) checkTaskQueue(req *http.Request, queue string) error {
 	}
 
 	h := strings.TrimSpace(req.Header.Get("X-AppEngine-QueueName"))
-	if h != queue {
-		return mid.CodeErr{C: http.StatusUnauthorized}
+	if h == queue {
+		return nil
 	}
-	return nil
+
+	return mid.CodeErr{C: http.StatusUnauthorized}
 }
 
 var homeURL *url.URL
 
 func init() {
-	if appengine.IsAppEngine() {
+	if isProduction() {
 		homeURL = &url.URL{
 			Scheme: "https",
 			Host:   "outlived.net",
